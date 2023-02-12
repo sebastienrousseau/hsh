@@ -148,6 +148,15 @@ jobs:
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
         shell: /bin/bash -e {0}
 
+      - name: Install Cross 🦀
+        id: install-cross
+        run: |
+          # Install cross
+          cargo install cross
+          # Clean the build artifacts
+          cargo clean --verbose
+        shell: /bin/bash -e {0}
+
       - name: Build targets 🏗
         uses: actions-rs/cargo@v1
         with:
