@@ -179,14 +179,14 @@ jobs:
         id: package-binary
         run: |
           mkdir -p target/package
-          tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
+          tar czf target/package/all-targets.tar.gz -C target .
 
       - name: Deploy binary 🚀
         id: deploy-binary
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.target }}.tar.gz
-          path: target/package/${{ matrix.target }}.tar.gz
+          name: all-targets.tar.gz
+          path: target/package/all-targets.tar.gz
 
       - name: Generate Changelog 📜
         id: generate-changelog
@@ -221,9 +221,59 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
-          asset_name: ${{ matrix.target }}.tar.gz
+          asset_path: ${{ github.workspace }}/target/package/all-targets.tar.gz
+          asset_name: all-targets.tar.gz
           asset_content_type: application/gzip
+
+      # - name: Package the binary 📦
+      #   id: package-binary
+      #   run: |
+      #     mkdir -p target/package
+      #     tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
+
+      # - name: Deploy binary 🚀
+      #   id: deploy-binary
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: ${{ matrix.target }}.tar.gz
+      #     path: target/package/${{ matrix.target }}.tar.gz
+
+      # - name: Generate Changelog 📜
+      #   id: generate-changelog
+      #   run: |
+      #     # Append version information to CHANGELOG.md
+      #     echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
+      #     # Copy content of template file to CHANGELOG.md
+      #     cat README.md > ${{ github.workspace }}/CHANGELOG.md
+      #     # Append git log to CHANGELOG.md
+      #     echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
+      #     # Append empty line to CHANGELOG.md
+      #     echo "" >> ${{ github.workspace }}/CHANGELOG.md
+      #     # Append empty line to CHANGELOG.md
+      #     echo "" >> ${{ github.workspace }}/CHANGELOG.md
+
+      # - name: Create Release 🚀
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: v${{ env.VERSION }}
+      #     release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+      #     body_path: ${{ github.workspace }}/CHANGELOG.md
+      #     draft: true
+      #     prerelease: false
+
+      # - name: Upload Release Asset 📦
+      #   id: upload_release_asset
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
+      #     asset_name: ${{ matrix.target }}.tar.gz
+      #     asset_content_type: application/gzip
 
       # - name: Publish to Crates.io 🚀
       #   id: publish-crates
