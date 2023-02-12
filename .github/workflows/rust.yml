@@ -9,6 +9,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+
   build-project:
     name: Build project 🛠️
     runs-on: ubuntu-latest
@@ -164,71 +165,72 @@ jobs:
           name: ${{ matrix.target }}.tar.gz
           path: target/package/${{ matrix.target }}.tar.gz
 
-   deploy-release:
+  deploy-release:
     runs-on: ubuntu-latest
     name: Deploy Release 🚀
     needs: build-targets
     steps:
-      - name: Checkout repository 🛎️
-        id: run-checkout-repository
-        uses: actions/checkout@v3
-        with: { submodules: true }
 
-      - name: Installing Rust 🦀
-        id: run-install-rust
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-        shell: /bin/bash -e {0}
+    - name: Checkout repository 🛎️
+      id: run-checkout-repository
+      uses: actions/checkout@v3
+      with: { submodules: true }
 
-      - name: Update version number 🧮
-        id: run-update-version
-        run: |
-          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-        shell: /bin/bash -e {0}
+    - name: Installing Rust 🦀
+      id: run-install-rust
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      shell: /bin/bash -e {0}
 
-      - name: Generate Changelog 📜
-        id: generate-changelog
-        run: |
-          # Append version information to CHANGELOG.md
-          echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
-          # Copy content of template file to CHANGELOG.md
-          cat README.md > ${{ github.workspace }}/CHANGELOG.md
-          # Append git log to CHANGELOG.md
-          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
+    - name: Update version number 🧮
+      id: run-update-version
+      run: |
+        NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+        echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+      shell: /bin/bash -e {0}
 
-      - name: Create Release 🚀
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-          body_path: ${{ github.workspace }}/CHANGELOG.md
-          draft: true
-          prerelease: false
+    - name: Generate Changelog 📜
+      id: generate-changelog
+      run: |
+        # Append version information to CHANGELOG.md
+        echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
+        # Copy content of template file to CHANGELOG.md
+        cat README.md > ${{ github.workspace }}/CHANGELOG.md
+        # Append git log to CHANGELOG.md
+        echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
+        # Append empty line to CHANGELOG.md
+        echo "" >> ${{ github.workspace }}/CHANGELOG.md
+        # Append empty line to CHANGELOG.md
+        echo "" >> ${{ github.workspace }}/CHANGELOG.md
 
-      - name: Upload Release Asset 📦
-        id: upload_release_asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
-          asset_name: ${{ matrix.target }}.tar.gz
-          asset_content_type: application/gzip
+    - name: Create Release 🚀
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.VERSION }}
+        release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+        body_path: ${{ github.workspace }}/CHANGELOG.md
+        draft: true
+        prerelease: false
 
-      # - name: Publish to Crates.io 🚀
-      #   id: publish-crates
-      #   if: github.ref == 'refs/heads/main'
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     use-cross: true
-      #     command: publish
-      #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
+    - name: Upload Release Asset 📦
+      id: upload_release_asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
+        asset_name: ${{ matrix.target }}.tar.gz
+        asset_content_type: application/gzip
+
+    # - name: Publish to Crates.io 🚀
+    #   id: publish-crates
+    #   if: github.ref == 'refs/heads/main'
+    #   uses: actions-rs/cargo@v1
+    #   with:
+    #     use-cross: true
+    #     command: publish
+    #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
