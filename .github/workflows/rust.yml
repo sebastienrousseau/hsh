@@ -10,6 +10,7 @@ env:
 
 jobs:
   checkout-repository:
+    name: Checkout repository 🛎️
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository 🛎️
@@ -76,7 +77,7 @@ jobs:
           verbose: false
 
   build-targets:
-    name: mf_${{ matrix.target }}
+    name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     needs: checkout-repository
     strategy:
@@ -169,32 +170,32 @@ jobs:
       max-parallel: 2
 
     steps:
-      # - name: Checkout repository 🛎️
-      #   id: checkout-repository
-      #   uses: actions/checkout@v3
-      #   with: { submodules: true }
+      - name: Checkout repository 🛎️
+        id: checkout-repository
+        uses: actions/checkout@v3
+        with: { submodules: true }
 
-      # - name: Installing Rust 🦀
-      #   id: install-rust
-      #   run: |
-      #     curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-      #   shell: /bin/bash -e {0}
+      - name: Installing Rust 🦀
+        id: install-rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        shell: /bin/bash -e {0}
 
-      # - name: Update version number 🧮
-      #   id: update-version
-      #   run: |
-      #     NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-      #     echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-      #   shell: /bin/bash -e {0}
+      - name: Update version number 🧮
+        id: update-version
+        run: |
+          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        shell: /bin/bash -e {0}
 
-      # - name: Install Cross 🦀
-      #   id: install-cross
-      #   run: |
-      #     # Install cross
-      #     cargo install cross
-      #     # Clean the build artifacts
-      #     cargo clean --verbose
-      #   shell: /bin/bash -e {0}
+      - name: Install Cross 🦀
+        id: install-cross
+        run: |
+          # Install cross
+          cargo install cross
+          # Clean the build artifacts
+          cargo clean --verbose
+        shell: /bin/bash -e {0}
 
       - name: Build targets 🏗
         id: build-targets
