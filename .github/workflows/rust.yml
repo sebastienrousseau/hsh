@@ -220,23 +220,23 @@ jobs:
           draft: true
           prerelease: false
 
-      # - name: Upload Release Asset 📦
-      #   id: upload_release_asset
-      #   if: github.ref == 'refs/heads/main'
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
-      #     asset_name: ${{ matrix.target }}.tar.gz
-      #     asset_content_type: application/gzip
+      - name: Upload Release Asset 📦
+        id: upload_release_asset
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
+          asset_name: ${{ matrix.target }}.tar.gz
+          asset_content_type: application/gzip
 
-      # # - name: Publish to Crates.io 🚀
-      # #   id: publish-crates
-      # #   if: github.ref == 'refs/heads/main'
-      # #   uses: actions-rs/cargo@v1
-      # #   with:
-      # #     use-cross: true
-      # #     command: publish
-      # #     args: --token ${{ secrets.CRATES_TOKEN }} --verbose
+      - name: Publish to Crates.io 🚀
+        id: publish-crates
+        if: github.ref == 'refs/heads/main'
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: publish
+          args: --token ${{ secrets.CARGO_TOKEN }} --verbose
