@@ -210,6 +210,16 @@ jobs:
     name: Build Release 🚀
     needs: [prepare-release, build-targets]
     steps:
+      - name: Copy CHANGELOG.md
+        run: |
+          cp ${{ env.GITHUB_WORKSPACE }}/CHANGELOG.md /tmp/CHANGELOG.md
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+          body_path: /tmp/CHANGELOG.md
+          draft: true
+          prerelease: false
+
       - name: Create Release 🚀
         id: create_release
         uses: actions/create-release@v1
