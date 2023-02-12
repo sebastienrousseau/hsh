@@ -232,11 +232,11 @@ jobs:
           asset_name: ${{ matrix.target }}.tar.gz
           asset_content_type: application/gzip
 
-      - name: Publish to Crates.io 🚀
-        id: publish-crates
-        if: github.ref == 'refs/heads/main'
-        uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: publish
-          args: --token ${{ secrets.CARGO_TOKEN }} --verbose
+      # - name: Publish to Crates.io 🚀
+      #   id: publish-crates
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     use-cross: true
+      #     command: publish
+      #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
