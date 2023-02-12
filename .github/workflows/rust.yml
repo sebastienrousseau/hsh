@@ -1,0 +1,244 @@
+name: ❯ HSH Release
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  targets:
+    name: mf_${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          # List of targets: https://doc.rust-lang.org/nightly/rustc/platform-support.html
+
+          # Linux targets 🐧
+          - aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture                ✅ Tested
+          - aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture               ✅ Tested
+          - arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)                    ✅ Tested
+          - armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)     ✅ Tested
+          - i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)                    ✅ Tested
+          - i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)                     ✅ Tested
+          # - mips-unknown-linux-gnu # MIPS Linux (kernel 2.6.32+, glibc 2.11+)                 ❌ Tested
+          # - mips-unknown-linux-musl # MIPS Linux (kernel 2.6.32+, musl libc)                  ❌ Tested
+          # - mips64-unknown-linux-gnuabi64 # MIPS64 Linux (kernel 2.6.32+, glibc 2.11+)        ❌ Tested
+          # - mips64el-unknown-linux-gnuabi64 # MIPS64el Linux (kernel 2.6.32+, glibc 2.11+)    ❌ Tested
+          # - mipsel-unknown-linux-gnu # MIPSel Linux (kernel 2.6.32+, glibc 2.11+)             ❌ Tested
+          # - powerpc64le-unknown-linux-gnu # 64-bit PowerPC Linux (kernel 2.6.32+, glibc 2.11+)❌ Tested
+          - x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)               ✅ Tested
+          - x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)                ✅ Tested
+
+          # macOS targets 🍎
+          - x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)                             ✅ Tested
+
+          # Windows targets 🪟
+          # - i686-pc-windows-msvc # 32-bit Windows                                             ❌ Tested
+          # - x86_64-pc-windows-msvc # 64-bit Windows                                           ❌ Tested
+
+        include:
+          # Linux targets 🐧
+          - target: aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture
+            os: ubuntu-latest
+            cross: true
+          - target: aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture
+            os: ubuntu-latest
+            cross: true
+          - target: arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)
+            os: ubuntu-latest
+            cross: true
+          - target: armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)
+            os: ubuntu-latest
+            cross: true
+          - target: i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)
+            os: ubuntu-latest
+            cross: true
+          - target: i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)
+            os: ubuntu-latest
+            cross: true
+          # - target: mips-unknown-linux-gnu # MIPS Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: mips-unknown-linux-musl # MIPS Linux (kernel 2.6.32+, musl libc)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: mips64-unknown-linux-gnuabi64 # MIPS64 Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: mips64el-unknown-linux-gnuabi64 # MIPS64el Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: mipsel-unknown-linux-gnu # MIPSel Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: powerpc64le-unknown-linux-gnu # 64-bit PowerPC Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          - target: x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)
+            os: ubuntu-latest
+            cross: true
+
+          # macOS targets 🍎
+          - target: x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)
+            os: macos-latest
+            cross: true
+
+          # Windows targets 🪟
+          # - target: i686-pc-windows-msvc # 32-bit Windows
+          # os: windows-latest
+          # cross: true
+          # - target: x86_64-pc-windows-msvc # 64-bit Windows
+          #   os: windows-latest
+          #   cross: true
+
+      max-parallel: 2
+
+    steps:
+      - name: Checkout repository 🛎️
+        id: checkout-repository
+        uses: actions/checkout@v3
+        with: { submodules: true }
+
+      - name: Installing Rust 🦀
+        id: install-rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        shell: /bin/bash -e {0}
+
+      - name: Update version number 🧮
+        id: update-version
+        run: |
+          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        shell: /bin/bash -e {0}
+
+      - name: Install Cross 🦀
+        id: install-cross
+        run: |
+          # Install cross
+          cargo install cross
+
+          # Clean the build artifacts
+          cargo clean --verbose
+        shell: /bin/bash -e {0}
+
+      - name: Build targets 🏗
+        id: build-targets
+        uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          command: build
+          args: --verbose --release --target ${{ matrix.target }}
+
+      - name: Run Cargo Format 🦀
+        id: run-check-format
+        run: |
+          cargo check --all --all-features --release --verbose
+
+      - name: Run Clippy 🦀
+        id: run-check-clippy
+        run: |
+          cargo clippy --all-targets --all-features --release -- -D warnings
+
+      - name: Run Cargo Doc 🦀
+        id: run-check-doc
+        run: |
+          cargo doc --color always --no-deps --all-features --release --verbose
+
+      - name: Run Cargo Test 🦀
+        id: run-check-test
+        run: |
+          cargo test --all-targets --workspace --all-features
+
+      - name: Run Cargo Code Coverage 🦀
+        id: run-check-code-coverage
+        run: |
+          # Install tarpaulin
+          cargo install cargo-tarpaulin
+
+          # Run tarpaulin and generate the code coverage report
+          cargo tarpaulin --all --all-features --workspace --out Xml
+
+      - name: Upload to codecov.io 📊
+        id: upload-codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: false
+
+      - name: Package the binary 📦
+        id: package-binary
+        run: |
+          mkdir -p target/package
+          for target in $(ls target/release); do
+            tar czf target/package/${{ matrix.target }}-${{ env.VERSION }}-${target}.tar.gz -C target/release/${target} .
+          done
+          # tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
+
+      # - name: Deploy binary 🚀
+      #   id: deploy-binary
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: ${{ matrix.target }}.tar.gz
+      #     path: target/package/${{ matrix.target }}.tar.gz
+
+      - name: Upload binaries 📦
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: package
+
+      - name: Generate Changelog 📜
+        id: generate-changelog
+        run: |
+          # Append version information to CHANGELOG.md
+          echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
+          # Copy content of template file to CHANGELOG.md
+          cat README.md > ${{ github.workspace }}/CHANGELOG.md
+          # Append git log to CHANGELOG.md
+          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
+          # Append empty line to CHANGELOG.md
+          echo "" >> ${{ github.workspace }}/CHANGELOG.md
+          # Append empty line to CHANGELOG.md
+          echo "" >> ${{ github.workspace }}/CHANGELOG.md
+
+      - name: Create Release 🚀
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+          body_path: ${{ github.workspace }}/CHANGELOG.md
+          draft: true
+          prerelease: false
+
+      - name: Upload Release Asset 📦
+        id: upload_release_asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
+          asset_name: ${{ matrix.target }}.tar.gz
+          asset_content_type: application/gzip
+
+      # - name: Publish to Crates.io 🚀
+      #   id: publish-crates
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     use-cross: true
+      #     command: publish
+      #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
