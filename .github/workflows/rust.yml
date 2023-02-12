@@ -76,83 +76,58 @@ jobs:
           fail_ci_if_error: false
           verbose: false
 
-  prepare-release:
-    runs-on: ubuntu-latest
-    needs: build-project
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
-      - name: Generate Changelog 📜
-        id: generate-changelog
-        run: |
-          # Append version information to CHANGELOG.md
-          echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
-          # Copy content of template file to CHANGELOG.md
-          cat README.md > ${{ github.workspace }}/CHANGELOG.md
-          # Append git log to CHANGELOG.md
-          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build-targets:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    needs: [build-project, prepare-release]
+    needs: build-project
     strategy:
       fail-fast: false
       matrix:
         target:
           # Linux targets 🐧
           - aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture                ✅ Tested
-          - aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture               ✅ Tested
-          - arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)                    ✅ Tested
-          - armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)     ✅ Tested
-          - i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)                    ✅ Tested
-          - i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)                     ✅ Tested
-          - x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)               ✅ Tested
-          - x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)                ✅ Tested
+          # - aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture               ✅ Tested
+          # - arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)                    ✅ Tested
+          # - armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)     ✅ Tested
+          # - i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)                    ✅ Tested
+          # - i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)                     ✅ Tested
+          # - x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)               ✅ Tested
+          # - x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)                ✅ Tested
 
           # macOS targets 🍎
-          - x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)                             ✅ Tested
+          # - x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)                             ✅ Tested
 
         include:
           # Linux targets 🐧
           - target: aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture
             os: ubuntu-latest
             cross: true
-          - target: aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture
-            os: ubuntu-latest
-            cross: true
-          - target: arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)
-            os: ubuntu-latest
-            cross: true
-          - target: armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)
-            os: ubuntu-latest
-            cross: true
-          - target: i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)
-            os: ubuntu-latest
-            cross: true
-          - target: i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)
-            os: ubuntu-latest
-            cross: true
-          - target: x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)
-            os: ubuntu-latest
-            cross: true
-          - target: x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)
-            os: ubuntu-latest
-            cross: true
+          # - target: aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)
+          #   os: ubuntu-latest
+          #   cross: true
+          # - target: x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)
+          #   os: ubuntu-latest
+          #   cross: true
 
           # macOS targets 🍎
-          - target: x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)
-            os: macos-latest
-            cross: true
+          # - target: x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)
+          #   os: macos-latest
+          #   cross: true
 
       max-parallel: 4
 
@@ -207,9 +182,30 @@ jobs:
 
   deploy-release:
     runs-on: ubuntu-latest
-    name: Build Release 🚀
-    needs: [prepare-release, build-targets]
+    name: Deploy Release 🚀
+    needs: build-targets
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+
+      - name: Generate Changelog 📜
+        id: generate-changelog
+        run: |
+          # Append version information to CHANGELOG.md
+          echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
+          # Copy content of template file to CHANGELOG.md
+          cat README.md > ${{ github.workspace }}/CHANGELOG.md
+          # Append git log to CHANGELOG.md
+          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
+          # Append empty line to CHANGELOG.md
+          echo "" >> ${{ github.workspace }}/CHANGELOG.md
+          # Append empty line to CHANGELOG.md
+          echo "" >> ${{ github.workspace }}/CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Copy CHANGELOG.md
         run: |
           cp ${{ env.GITHUB_WORKSPACE }}/CHANGELOG.md /tmp/CHANGELOG.md
