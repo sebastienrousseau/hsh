@@ -1,9 +1,6 @@
 name: ❯ HSH Release
 
-on:
-  push:
-    tags:
-      - "v*"
+on: [push]
 
 env:
   CARGO_TERM_COLOR: always
