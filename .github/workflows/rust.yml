@@ -176,9 +176,9 @@ jobs:
           verbose: false
 
       - name: Package the binary 📦
-        id: package-binary
         run: |
           mkdir -p target/package
+          rm -f target/package/all-targets.tar.gz
           tar czf target/package/all-targets.tar.gz -C target .
 
       - name: Deploy binary 🚀
