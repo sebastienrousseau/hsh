@@ -255,6 +255,7 @@ jobs:
 
   prepare-release:
     runs-on: ubuntu-latest
+    needs: build-targets
     steps:
       - name: Generate Changelog 📜
         id: generate-changelog
