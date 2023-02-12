@@ -1,0 +1,72 @@
+name: HSH Release
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Build targets
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --all-targets --release
+
+      - name: Package binaries
+        id: package-binaries
+        run: |
+          mkdir -p target/package
+          for target in $(ls target/release); do
+            tar -czf target/package/$target.tar.gz -C target/release/$target .
+          done
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v2
+        with:
+          name: packages
+          path: package
+
+      - name: Generate Changelog
+        id: generate-changelog
+        run: |
+          echo "## [$(grep version Cargo.toml | cut -d '"' -f 2)] - $(date +'%Y-%m-%d')" >> CHANGELOG.md
+          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> CHANGELOG.md
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v$(grep version Cargo.toml | cut -d '"' -f 2)
+          release_name: Hash (HSH) 🦀 v$(grep version Cargo.toml | cut -d '"' -f 2)
+          body_path: CHANGELOG.md
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Assets
+        id: upload-release-assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create-release.outputs.upload_url }}
+          asset_path: package/${{ steps.package-binaries.outputs.target }}.tar.gz
+          asset_name: ${{ steps.package-binaries.outputs.target }}.tar.gz
+          asset_content_type: application/gzip

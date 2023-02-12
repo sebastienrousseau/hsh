@@ -221,10 +221,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ github.workspace }}/target/package/all-targets.tar.gz
-          asset_name: all-targets.tar.gz
+          asset_path: ${{ github.workspace }}/target/package/${{ matrix.target }}.tar.gz
+          asset_name: ${{ matrix.target }}.tar.gz
           asset_content_type: application/gzip
-
 
       # - name: Publish to Crates.io 🚀
       #   id: publish-crates
