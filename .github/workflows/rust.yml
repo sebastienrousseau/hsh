@@ -185,36 +185,17 @@ jobs:
     name: Deploy Release 🚀
     needs: build-targets
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
+      - name: Checkout repository 🛎️
+        id: run-checkout-repository
+        uses: actions/checkout@v3
+        with: { submodules: true }
 
-      - name: Generate Changelog 📜
-        id: generate-changelog
+      - name: Update version number 🧮
+        id: run-update-version
         run: |
-          # Append version information to CHANGELOG.md
-          echo "## [${{ env.VERSION }}] - $(date +'%Y-%m-%d')" >> ${{ github.workspace }}/CHANGELOG.md
-          # Copy content of template file to CHANGELOG.md
-          cat README.md > ${{ github.workspace }}/CHANGELOG.md
-          # Append git log to CHANGELOG.md
-          echo "$(git log --pretty=format:'%s' --reverse $(git describe --tags --abbrev=0)..HEAD)" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-          # Append empty line to CHANGELOG.md
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Copy CHANGELOG.md
-        run: |
-          cp ${{ env.GITHUB_WORKSPACE }}/CHANGELOG.md /tmp/CHANGELOG.md
-          with:
-            tag_name: v${{ env.VERSION }}
-            release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-            body_path: /tmp/CHANGELOG.md
-            draft: true
-            prerelease: false
+          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        shell: /bin/bash -e {0}
 
       - name: Create Release 🚀
         id: create_release
@@ -224,7 +205,7 @@ jobs:
         with:
           tag_name: v${{ env.VERSION }}
           release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-          body_path: ${{ github.workspace }}/CHANGELOG.md
+          body_path: ${{ github.workspace }}/README.md
           draft: true
           prerelease: false
 
