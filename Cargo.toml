@@ -1,0 +1,84 @@
+[package]
+authors = ["Sebastian Rousseau <sebastian.rousseau@gmail.com"]
+categories = ["algorithms", "data-structures", "cryptography"]
+description = "Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust"
+edition = "2021"
+homepage = "https://minifunctions.com/"
+keywords = ["blake3", "hsh", "hash", "hasher", "mini-functions"]
+license = "MIT OR Apache-2.0"
+name = "hsh"
+repository = "https://github.com/sebastienrousseau/hsh/"
+rust-version = "1.66.1"
+version = "0.0.2"
+include = [
+    "../../LICENSE-APACHE",
+    "../../LICENSE-MIT",
+    "/benches/**",
+    "/build.rs",
+    "/Cargo.toml",
+    "/examples/**",
+    "/README.md",
+    "/src/**",
+    "/tests/**",
+]
+
+[[bench]]
+name = "benchmark"
+harness = false
+path = "benches/hsh.rs"
+
+[profile.bench]
+debug = true
+
+[dependencies]
+argon2rs = "0.2.5"
+serde = { version = "1.0.152", features = ["derive"] }
+
+[dev-dependencies]
+criterion = "0.4.0"
+
+[lib]
+crate-type = ["lib"]
+name = "hsh"
+path = "src/lib.rs"
+
+[features]
+default = []
+
+[package.metadata.docs.rs]
+all-features = true
+
+[profile.dev]
+codegen-units = 256
+debug = true
+debug-assertions = true
+incremental = true
+lto = false
+opt-level = 0
+overflow-checks = true
+panic = 'unwind'
+rpath = false
+strip = false
+
+[profile.release]
+codegen-units = 1        # Compile crates one after another so the compiler can optimize better
+debug = false            # Disable debug information
+debug-assertions = false # Disable debug assertions
+incremental = false      # Disable incremental compilation
+lto = true               # Enables link to optimizations
+opt-level = "s"          # Optimize for binary size
+overflow-checks = false  # Disable overflow checks
+panic = "abort"          # Strip expensive panic clean-up logic
+rpath = false            # Disable rpath
+strip = "symbols"        # Automatically strip symbols from the binary.
+
+[profile.test]
+codegen-units = 256
+debug = true
+debug-assertions = true
+incremental = true
+lto = false
+opt-level = 0
+overflow-checks = true
+rpath = false
+strip = false
