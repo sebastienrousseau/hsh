@@ -232,14 +232,6 @@ jobs:
           asset_name: ${{ matrix.target }}.tar.gz
           asset_content_type: application/gzip
 
-      - name: Login to crates.io 🔒
-        id: login-crates
-        uses: actions/login-to-registry@v1
-        with:
-          registry: crates-io
-          username: crates-io
-          password: ${{ secrets.CRATES_TOKEN }}
-
       - name: Publish to Crates.io 🚀
         id: publish-crates
         if: github.ref == 'refs/heads/main'
