@@ -104,13 +104,11 @@ jobs:
   build-targets:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    needs: checkout-repository
+    needs: [build-project, prepare-release]
     strategy:
       fail-fast: false
       matrix:
         target:
-          # List of targets: https://doc.rust-lang.org/nightly/rustc/platform-support.html
-
           # Linux targets 🐧
           - aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture                ✅ Tested
           - aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture               ✅ Tested
@@ -207,7 +205,7 @@ jobs:
           name: ${{ matrix.target }}.tar.gz
           path: target/package/${{ matrix.target }}.tar.gz
 
-  build-release:
+  deploy-release:
     runs-on: ubuntu-latest
     name: Build Release 🚀
     needs: [prepare-release, build-targets]
