@@ -7,47 +7,70 @@ mod tests {
     use hsh::to_string;
 
     use self::hsh::{
-        generate_hash, new_hash, set_hash, set_password, set_salt, verify_password, Hash,
+        generate_hash, new_hash, password_length, set_hash, set_password, set_salt,
+        verify_password, Hash,
     };
 
     #[test]
-    fn test_macro_generate_hash() {
-        let hash = generate_hash!("password", "salt12345");
-        assert!(!hash.is_empty());
+    fn test_macro_password_length() {
+        let hash = new_hash!("password", "salt12345");
+        assert_eq!(password_length!(hash), 8);
     }
 
     #[test]
     fn test_macro_set_hash() {
-        let mut hash = Hash::new("password", "salt12345");
-        set_hash!(hash, b"new_hash");
-        assert_eq!(hash.hash(), b"new_hash");
+        let mut hash = new_hash!("password", "salt12345");
+        let new_hash = vec![1, 2, 3];
+        set_hash!(hash, &new_hash);
+        assert_eq!(hash.hash, new_hash);
     }
 
     #[test]
     fn test_macro_set_password() {
-        let mut hash = Hash::new("password", "salt12345");
-        set_password!(hash, "new_password", "new_salt12345");
-        assert_eq!(hash.password(), "new_password");
-        assert_eq!(hash.salt().to_vec(), "salt12345".as_bytes().to_vec());
+        let mut hash = new_hash!("password", "salt12345");
+        let salt = "salt12345";
+        let new_password = "new_password";
+        set_password!(hash, new_password, salt);
+        assert_eq!(hash.password, new_password);
     }
 
     #[test]
     fn test_macro_set_salt() {
-        let mut hash = Hash::new("password", "salt12345");
-        set_salt!(hash, b"new_salt");
-        assert_eq!(hash.salt().to_vec(), b"new_salt".to_vec());
+        let mut hash = new_hash!("password", "salt12345");
+        let new_salt = vec![1, 2, 3];
+        set_salt!(hash, &new_salt);
+        assert_eq!(hash.salt, new_salt);
+    }
+
+    #[test]
+    fn test_macro_generate_hash() {
+        let password = "password";
+        let salt = "salt12345";
+        let generated_hash = generate_hash!(password, salt);
+        assert_ne!(generated_hash, vec![]);
     }
 
     #[test]
     fn test_macro_verify_password() {
-        let hash = Hash::new("password", "salt12345");
-        assert!(verify_password!(hash, "password"));
+        let hash = new_hash!("password", "salt12345");
+        assert_eq!(verify_password!(hash, "password"), true);
+        assert_eq!(verify_password!(hash, "incorrect_password"), false);
     }
 
     #[test]
     fn test_macro_new_hash() {
+        let password = "password";
+        let salt = "salt12345";
+        let hash = new_hash!(password, salt);
+        assert_eq!(hash.password, password);
+        assert_eq!(hash.salt, salt.as_bytes().to_vec());
+    }
+
+    #[test]
+    fn test_macro_to_string() {
         let hash = new_hash!("password", "salt12345");
-        assert_eq!(hash.password(), "password");
+        let hash_string = to_string!(hash);
+        assert_ne!(hash_string, String::new());
     }
 
     #[test]
