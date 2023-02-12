@@ -185,10 +185,23 @@ jobs:
     name: Deploy Release 🚀
     needs: build-targets
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          submodules: recursive
+      - name: Checkout repository 🛎️
+        id: run-checkout-repository
+        uses: actions/checkout@v3
+        with: { submodules: true }
+
+      - name: Installing Rust 🦀
+        id: run-install-rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        shell: /bin/bash -e {0}
+
+      - name: Update version number 🧮
+        id: run-update-version
+        run: |
+          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+        shell: /bin/bash -e {0}
 
       - name: Generate Changelog 📜
         id: generate-changelog
