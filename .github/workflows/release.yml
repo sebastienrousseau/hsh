@@ -31,9 +31,9 @@ jobs:
       - name: Package binaries
         id: package-binaries
         run: |
-          mkdir -p package
+          mkdir -p target/package
           for target in $(ls target/release); do
-            tar -czf package/$target.tar.gz -C target/release/$target .
+            tar -czf target/package/$target.tar.gz -C target/release/$target .
           done
 
       - name: Upload binaries
