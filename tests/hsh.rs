@@ -53,8 +53,8 @@ mod tests {
     #[test]
     fn test_macro_verify_password() {
         let hash = new_hash!("password", "salt12345");
-        assert_eq!(verify_password!(hash, "password"), true);
-        assert_eq!(verify_password!(hash, "incorrect_password"), false);
+        assert!(verify_password!(hash, "password"));
+        assert!(verify_password!(hash, "incorrect_password"));
     }
 
     #[test]
