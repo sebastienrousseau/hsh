@@ -179,23 +179,14 @@ jobs:
         id: package-binary
         run: |
           mkdir -p target/package
-          for target in $(ls target/release); do
-            tar czf target/package/${{ matrix.target }}-${{ env.VERSION }}-${target}.tar.gz -C target/release/${target} .
-          done
-          # tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
+          tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
 
-      # - name: Deploy binary 🚀
-      #   id: deploy-binary
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: ${{ matrix.target }}.tar.gz
-      #     path: target/package/${{ matrix.target }}.tar.gz
-
-      - name: Upload binaries 📦
-        uses: actions/upload-artifact@v2
+      - name: Deploy binary 🚀
+        id: deploy-binary
+        uses: actions/upload-artifact@v3
         with:
-          name: packages
-          path: package
+          name: ${{ matrix.target }}.tar.gz
+          path: target/package/${{ matrix.target }}.tar.gz
 
       - name: Generate Changelog 📜
         id: generate-changelog
