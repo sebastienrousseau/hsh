@@ -173,18 +173,6 @@ jobs:
           mkdir -p target/package
           tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
 
-      # - name: Create Release 🚀
-      #   id: create_release
-      #   uses: actions/create-release@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     tag_name: v${{ env.VERSION }}
-      #     release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-      #     body_path: ${{ github.workspace }}/README.md
-      #     draft: true
-      #     prerelease: false
-
       - name: Deploy binary 🚀
         id: deploy-binary
         uses: actions/upload-artifact@v3
@@ -311,41 +299,3 @@ jobs:
           asset_path: x86_64-unknown-linux-musl.tar.gz
           asset_name: x86_64-unknown-linux-musl.tar.gz
           asset_content_type: application/gzip
-  # deploy-release:
-  #   runs-on: ubuntu-latest
-  #   name: Deploy Release 🚀
-  #   needs: build-targets
-  #   steps:
-  #     - name: Checkout repository 🛎️
-  #       id: run-checkout-repository
-  #       uses: actions/checkout@v3
-  #       with: { submodules: true }
-
-  #     - name: Update version number 🧮
-  #       id: run-update-version
-  #       run: |
-  #         NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-  #         echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-  #       shell: /bin/bash -e {0}
-
-  #     - name: Create Release 🚀
-  #       id: create_release
-  #       uses: actions/create-release@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         tag_name: v${{ env.VERSION }}
-  #         release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-  #         body_path: ${{ github.workspace }}/README.md
-  #         draft: true
-  #         prerelease: false
-
-
-      # - name: Publish to Crates.io 🚀
-      #   id: publish-crates
-      #   if: github.ref == 'refs/heads/main'
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     use-cross: true
-      #     command: publish
-      #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
