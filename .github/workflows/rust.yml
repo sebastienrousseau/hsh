@@ -44,22 +44,18 @@ jobs:
         id: run-check-format
         run: |
           cargo check --all --all-features --release --verbose
-
       - name: Run Clippy 🦀
         id: run-check-clippy
         run: |
           cargo clippy --all-targets --all-features --release -- -D warnings
-
       - name: Run Cargo Doc 🦀
         id: run-check-doc
         run: |
           cargo doc --color always --no-deps --all-features --release --verbose
-
       - name: Run Cargo Test 🦀
         id: run-check-test
         run: |
           cargo test --all-targets --workspace --all-features
-
       - name: Run Cargo Code Coverage 🦀
         id: run-check-code-coverage
         run: |
@@ -67,7 +63,6 @@ jobs:
           cargo install cargo-tarpaulin
           # Run tarpaulin and generate the code coverage report
           cargo tarpaulin --all --all-features --workspace --out Xml
-
       - name: Upload to codecov.io 📊
         id: run-upload-codecov
         uses: codecov/codecov-action@v3
@@ -172,6 +167,17 @@ jobs:
         run: |
           mkdir -p target/package
           tar czf target/package/${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release .
+      - name: Create Release 🚀
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.VERSION }}
+          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+          body_path: ${{ github.workspace }}/README.md
+          draft: true
+          prerelease: false
 
       - name: Deploy binary 🚀
         id: deploy-binary
@@ -191,111 +197,42 @@ jobs:
           asset_name: ${{ matrix.target }}.tar.gz
           asset_content_type: application/gzip
 
-  create-release:
-    name: Create Release 🚀
-    runs-on: ubuntu-latest
-    needs: build-targets
-    steps:
-      - name: Checkout repository 🛎️
-        id: run-checkout-repository
-        uses: actions/checkout@v3
-        with: { submodules: true }
 
-      - name: Update version number 🧮
-        id: run-update-version
-        run: |
-          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
-        shell: /bin/bash -e {0}
+  # deploy-release:
+  #   runs-on: ubuntu-latest
+  #   name: Deploy Release 🚀
+  #   needs: build-targets
+  #   steps:
+  #     - name: Checkout repository 🛎️
+  #       id: run-checkout-repository
+  #       uses: actions/checkout@v3
+  #       with: { submodules: true }
 
-      - name: Create Release 🚀
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-          body_path: ${{ github.workspace }}/README.md
-          draft: true
-          prerelease: false
+  #     - name: Update version number 🧮
+  #       id: run-update-version
+  #       run: |
+  #         NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
+  #         echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+  #       shell: /bin/bash -e {0}
 
-      - name: Add aarch64-unknown-linux-gnu
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: aarch64-unknown-linux-gnu.tar.gz
-          asset_name: aarch64-unknown-linux-gnu.tar.gz
-          asset_content_type: application/gzip
+  #     - name: Create Release 🚀
+  #       id: create_release
+  #       uses: actions/create-release@v1
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         tag_name: v${{ env.VERSION }}
+  #         release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
+  #         body_path: ${{ github.workspace }}/README.md
+  #         draft: true
+  #         prerelease: false
 
-      - name: Add aarch64-unknown-linux-musl
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: aarch64-unknown-linux-musl.tar.gz
-          asset_name: aarch64-unknown-linux-musl.tar.gz
-          asset_content_type: application/gzip
 
-      - name: Add arm-unknown-linux-gnueabi
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: arm-unknown-linux-gnueabi.tar.gz
-          asset_name: arm-unknown-linux-gnueabi.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Add armv7-unknown-linux-gnueabihf
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: armv7-unknown-linux-gnueabihf.tar.gz
-          asset_name: armv7-unknown-linux-gnueabihf.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Add i686-unknown-linux-gnu
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: i686-unknown-linux-gnu.tar.gz
-          asset_name: i686-unknown-linux-gnu.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Add i686-unknown-linux-musl
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: i686-unknown-linux-musl.tar.gz
-          asset_name: i686-unknown-linux-musl.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Add x86_64-unknown-linux-gnu
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: x86_64-unknown-linux-gnu.tar.gz
-          asset_name: x86_64-unknown-linux-gnu.tar.gz
-          asset_content_type: application/gzip
-
-      - name: Add x86_64-unknown-linux-musl
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: x86_64-unknown-linux-musl.tar.gz
-          asset_name: x86_64-unknown-linux-musl.tar.gz
-          asset_content_type: application/gzip
+      # - name: Publish to Crates.io 🚀
+      #   id: publish-crates
+      #   if: github.ref == 'refs/heads/main'
+      #   uses: actions-rs/cargo@v1
+      #   with:
+      #     use-cross: true
+      #     command: publish
+      #     args: --token ${{ secrets.CARGO_TOKEN }} --verbose
