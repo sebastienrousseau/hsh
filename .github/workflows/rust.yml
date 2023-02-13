@@ -232,6 +232,85 @@ jobs:
           draft: true
           prerelease: false
 
+      - name: Add aarch64-unknown-linux-gnu
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: aarch64-unknown-linux-gnu.tar.gz
+          asset_name: aarch64-unknown-linux-gnu.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add aarch64-unknown-linux-musl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: aarch64-unknown-linux-musl.tar.gz
+          asset_name: aarch64-unknown-linux-musl.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add arm-unknown-linux-gnueabi
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: arm-unknown-linux-gnueabi.tar.gz
+          asset_name: arm-unknown-linux-gnueabi.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add armv7-unknown-linux-gnueabihf
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: armv7-unknown-linux-gnueabihf.tar.gz
+          asset_name: armv7-unknown-linux-gnueabihf.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add i686-unknown-linux-gnu
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: i686-unknown-linux-gnu.tar.gz
+          asset_name: i686-unknown-linux-gnu.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add i686-unknown-linux-musl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: i686-unknown-linux-musl.tar.gz
+          asset_name: i686-unknown-linux-musl.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add x86_64-unknown-linux-gnu
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: x86_64-unknown-linux-gnu.tar.gz
+          asset_name: x86_64-unknown-linux-gnu.tar.gz
+          asset_content_type: application/gzip
+
+      - name: Add x86_64-unknown-linux-musl
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: x86_64-unknown-linux-musl.tar.gz
+          asset_name: x86_64-unknown-linux-musl.tar.gz
+          asset_content_type: application/gzip
   # deploy-release:
   #   runs-on: ubuntu-latest
   #   name: Deploy Release 🚀
