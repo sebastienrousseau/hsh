@@ -102,7 +102,7 @@ It is important to note that the library uses the `argon2rs` crate for password 
 [banner]: https://raw.githubusercontent.com/sebastienrousseau/vault/main/assets/hsh/banners/banner-hsh-1597x377.svg "HSH Banner"
 [codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/hsh?style=for-the-badge&token=X3ZP0K1SGI 'Codecov'
 [crates-badge]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge 'Crates.io'
-[divider]: https://raw.githubusercontent.com/sebastienrousseau/vault/main/assets/elements/divider.svg "divider"
+[divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/hsh.svg?style=for-the-badge 'Docs.rs'
 [libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.3-orange.svg?style=for-the-badge 'Lib.rs'
 [license-badge]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge 'License'
