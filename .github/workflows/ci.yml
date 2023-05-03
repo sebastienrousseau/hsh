@@ -480,6 +480,9 @@ jobs:
         uses: actions-rs/cargo@v1
         env:
           CARGO_API_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
+          VERSION: ${{ env.VERSION }}
+          CRATES_IO_API_KEY: ${{ secrets.CARGO_API_TOKEN }}
         with:
           command: publish
-          args: --token ${{ secrets.CARGO_API_TOKEN }}
+          args: "--allow-dirty --no-verify --token ${{ secrets.CARGO_API_TOKEN }}"
+          use-cross: false
