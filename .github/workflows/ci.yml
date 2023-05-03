@@ -476,6 +476,7 @@ jobs:
 
       # Log in to crates.io
       - name: Log in to crates.io
+        id: login-crate-io
         run: cargo login ${{ secrets.CARGO_API_TOKEN }}
 
       # Publish the Rust library to Crate.io
