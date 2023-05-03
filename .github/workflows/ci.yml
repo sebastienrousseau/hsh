@@ -475,12 +475,6 @@ jobs:
         shell: /bin/bash -e {0}
 
       # Publish the Rust library to Crate.io
-      - name: Publish Library to Crate.io
-        id: publish-library
-        uses: actions-rs/cargo@v1
+      - run: cargo publish --no-verify --allow-dirty --token ${CARGO_API_TOKEN}
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
-        with:
-          command: publish
-          args: "--no-verify --allow-dirty"
-          use-cross: false
+          CRATES_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
