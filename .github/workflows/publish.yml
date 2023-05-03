@@ -95,7 +95,7 @@ jobs:
             x86_64-unknown-linux-musl
           )
           for target in "${targets[@]}"; do
-            link="ssg-$target-v${{ env.VERSION }}.tar.gz"
+            link="hsh-$target-v${{ env.VERSION }}.tar.gz"
             artifact_link="${{ github.server_url }}/${{ github.repository }}/releases/download/v${{ env.VERSION }}/$link"
             echo "* [$link]($artifact_link)" >> ${{ github.workspace }}/CHANGELOG.md
           done
