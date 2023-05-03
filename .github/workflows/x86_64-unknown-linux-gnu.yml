@@ -60,7 +60,7 @@ jobs:
 
       # Tar the binary for the target
       - name: Tar files
-        run: tar -czvf hsh-${{ matrix.target }}-v${{ env.VERSION }}.tar.gz target/release/hsh
+        run: tar -czvf hsh-${{ matrix.target }}-v${{ env.VERSION }}.tar.gz target/release/libhsh
 
       # Upload the tarball for the target
       - name: Upload Artifact
