@@ -9,8 +9,6 @@ alt="Hash (HSH) logo" width="261" align="right" />
 Quantum-Resistant Cryptographic Hash Library for Password Hashing and
 Verification in Rust 🦀
 
-*Part of the [Mini Functions][0] family of libraries.*
-
 <!-- markdownlint-disable MD033 MD041 -->
 <center>
 <!-- markdownlint-enable MD033 MD041 -->
@@ -102,125 +100,15 @@ It means that developers can add secure password storage to their
 applications without having to worry about significant performance
 overheads.
 
-## Installation 📦
+## Changelog 📚
 
-It takes just a few minutes to get up and running with `hsh`.
-
-### Requirements
-
-The minimum supported Rust toolchain version is currently Rust
-**1.69.0** or later (stable). It is recommended that you install the
-latest stable version of Rust.
-
-### Platform support
-
-`Hash (HSH)` is supported and tested on the following platforms:
-
-### Tier 1 platforms 🏆
-
-| | Operating System | Target | Description |
-| --- | --- | --- | --- |
-| ✅ | Linux   | aarch64-unknown-linux-gnu | 64-bit Linux systems on ARM architecture |
-| ✅ | Linux   | i686-unknown-linux-gnu | 32-bit Linux (kernel 3.2+, glibc 2.17+) |
-| ✅ | Linux   | x86_64-unknown-linux-gnu | 64-bit Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | macOS   | x86_64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
-| ✅ | Windows | i686-pc-windows-gnu | 32-bit Windows (7 or later) |
-| ✅ | Windows | i686-pc-windows-msvc | 32-bit Windows (7 or later) |
-| ✅ | Windows | x86_64-pc-windows-gnu | 64-bit Windows (7 or later) |
-| ✅ | Windows | x86_64-pc-windows-msvc | 64-bit Windows (7 or later) |
-
-### Tier 2 platforms 🥈
-
-| | Operating System | Target | Description |
-| --- | --- | --- | --- |
-| ✅ | Linux   | aarch64-unknown-linux-musl | 64-bit Linux systems on ARM architecture |
-| ✅ | Linux   | arm-unknown-linux-gnueabi | ARMv6 Linux (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | arm-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | armv7-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | mips-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mips64-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mips64el-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mipsel-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | macOS   | aarch64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
-| ✅ | Windows | aarch64-pc-windows-msvc | 64-bit Windows (7 or later) |
-
-The [GitHub Actions][10] shows the platforms in which the
-`Hash (HSH)` library tests are run.
-
-### Documentation
-
-> ℹ️ **Info:** Please check out our [website][0] for more information
-and find our documentation on [docs.rs][9], [lib.rs][10] and
-[crates.io][8].
-
-## Usage 📖
-
-To use `hsh` in your project, add the following to your `Cargo.toml`
-file:
-
-```toml
-[dependencies]
-hsh = "0.0.3"
-```
-
-Add the following to your `main.rs` file:
-
-```rust
-extern crate hsh;
-use hsh::*;
-```
-
-then you can use the functions in your application code.
-
-### Examples
-
-`Hash (HSH)` comes with a set of examples that you can use to get
-started. The examples are located in the `examples` directory of the
-project. To run the examples, clone the repository and run the following
-command in your terminal from the project root directory.
-
-```shell
-cargo run --example hsh
-```
-
-## Semantic Versioning Policy 🚥
-
-For transparency into our release cycle and in striving to maintain
-backward compatibility, `Hash (HSH)` follows [semantic versioning][7].
-
-## License 📝
-
-The project is licensed under the terms of both the MIT license and the
-Apache License (Version 2.0).
-
-- [Apache License, Version 2.0][1]
-- [MIT license][2]
-
-## Contribution 🤝
-
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms
-or conditions.
-
-![divider][divider]
-
-## Acknowledgements 💙
-
-A big thank you to all the awesome contributors of [Mini Functions][6]
-for their help and support.
-
-And a special thank you goes to the
-[Rust Reddit](https://www.reddit.com/r/rust/) community for providing a
-lot of useful suggestions on how to improve this project.
+-
 
 [0]: https://minifunctions.com/hsh
-[1]: http://www.apache.org/licenses/LICENSE-2.0
 [2]: http://opensource.org/licenses/MIT
 [3]: https://github.com/sebastienrousseau/hsh/issues
 [4]: https://raw.githubusercontent.com/sebastienrousseau/hsh/main/.github/CONTRIBUTING.md
 [6]: https://github.com/sebastienrousseau/hsh/graphs/contributors
-[7]: http://semver.org/
 [8]: https://crates.io/crates/hsh
 [9]: https://docs.rs/hsh
 [10]: https://lib.rs/crates/hsh

@@ -1,1 +1,2 @@
-# default
+edition = "2021"
+tab_spaces = 4

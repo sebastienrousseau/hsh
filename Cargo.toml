@@ -4,12 +4,12 @@ categories = ["algorithms", "data-structures", "cryptography"]
 description = "Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust"
 edition = "2021"
 homepage = "https://minifunctions.com/"
-keywords = ["argon2rs", "hash", "hashing-algorithm", "hsh", "post-quantum"]
+keywords = ["argon2rs", "bcrypt", "hash", "hashing-algorithm", "hsh", "post-quantum", "scrypt"]
 license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
-rust-version = "1.66.1"
-version = "0.0.2"
+rust-version = "1.69.0"
+version = "0.0.3"
 include = [
     "../../LICENSE-APACHE",
     "../../LICENSE-MIT",
@@ -32,7 +32,11 @@ debug = true
 
 [dependencies]
 argon2rs = "0.2.5"
-serde = { version = "1.0.152", features = ["derive"] }
+base64 = "0.21.0"
+bcrypt = "0.14.0"
+scrypt = "0.11.0"
+serde = { version = "1.0.160", features = ["derive"] }
+vrd = "0.0.1"
 
 [dev-dependencies]
 criterion = "0.4.0"

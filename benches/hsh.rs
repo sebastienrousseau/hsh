@@ -1,25 +1,39 @@
 extern crate argon2rs;
 extern crate criterion;
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{
+    black_box, criterion_group, criterion_main, Criterion,
+};
 
 extern crate hsh;
 use self::hsh::Hash;
 
 fn generate_hash_benchmark(c: &mut Criterion) {
     c.bench_function("generate_hash", |b| {
-        b.iter(|| Hash::generate_hash(black_box("password"), black_box("salt12345")))
+        b.iter(|| {
+            Hash::generate_hash(
+                black_box("password"),
+                black_box("salt12345"),
+                black_box("argon2i"),
+            )
+        })
     });
 }
 
 fn new_hash_benchmark(c: &mut Criterion) {
     c.bench_function("new_hash", |b| {
-        b.iter(|| Hash::new(black_box("password"), black_box("salt12345")))
+        b.iter(|| {
+            Hash::new(
+                black_box("password"),
+                black_box("salt12345"),
+                black_box("argon2i"),
+            )
+        })
     });
 }
 
 fn set_password_benchmark(c: &mut Criterion) {
-    let mut hash = Hash::new("password", "salt12345");
+    let mut hash = Hash::new("password", "salt12345", "argon2i");
 
     c.bench_function("set_password", |b| {
         b.iter(|| {
@@ -27,13 +41,14 @@ fn set_password_benchmark(c: &mut Criterion) {
                 &mut hash,
                 black_box("new_password"),
                 black_box("new_salt12345"),
+                black_box("argon2i"),
             )
         })
     });
 }
 
 fn verify_password_benchmark(c: &mut Criterion) {
-    let hash = Hash::new("password", "salt12345");
+    let hash = Hash::new("password", "salt12345", "argon2i");
 
     c.bench_function("verify_password", |b| {
         b.iter(|| Hash::verify(&hash, black_box("password")))
