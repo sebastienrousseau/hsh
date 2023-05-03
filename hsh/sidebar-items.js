@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["HashAlgorithm"],"macro":["display_hash","generate_hash","new_hash","password_length","set_hash","set_password","set_salt","to_string","verify_password"],"mod":["macros"],"struct":["Hash"],"type":["Salt"]};
