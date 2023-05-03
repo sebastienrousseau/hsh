@@ -1,1 +1,1 @@
-window.ALL_CRATES = ["hsh"];
+window.ALL_CRATES = ["hsh","xtask"];
