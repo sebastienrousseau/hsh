@@ -164,15 +164,13 @@ jobs:
         id: install-target
         run: rustup target add ${{ matrix.target }}
 
-      # Install the cross-compilation toolchain
       - name: Install Cross and clean artifacts
-        id: install-cross
         run: |
           # Install cross
           cargo install cross
           # Clean the build artifacts
           cargo clean --verbose
-        shell: /bin/bash -e {0}
+        shell: bash
 
       # Build the targets
       - name: Build targets
