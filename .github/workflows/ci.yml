@@ -1,4 +1,4 @@
-name: ❯ HSH Release
+name: 🧪 Release
 
 on:
   pull_request:
@@ -11,201 +11,6 @@ on:
       - 'feat/*'
 
 jobs:
-  # This job checks a local package and all of its dependencies for
-  # errors.
-  check:
-    name: ❯ Check 💵
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - rust: stable
-            target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-
-    steps:
-      # Check out the repository code
-      - name: Checkout sources
-        id: checkout
-        uses: actions/checkout@v3
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        id: install-toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Run cargo check to check for errors
-      - uses: actions-rs/cargo@v1
-        with:
-          command: check
-          args: --all-targets --workspace --all-features
-
-  # This job runs the tests for the project.
-  test:
-    name: ❯ Test 🧪
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - rust: stable
-            target: x86_64-unknown-linux-gnu
-
-    steps:
-      # Check out the repository code
-      - name: Checkout sources
-        id: checkout
-        uses: actions/checkout@v3
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        id: install-toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Run cargo hack to check for errors
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-        id: install-cargo-hack
-
-      - run: cargo test --all-targets --workspace --all-features
-
-  # This job runs the tests for the project.
-  coverage:
-    name: ❯ Coverage 📊
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - rust: stable
-            target: x86_64-unknown-linux-gnu
-
-    steps:
-      # Check out the repository code
-      - name: Checkout sources
-        id: checkout
-        uses: actions/checkout@v3
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        id: install-toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.rust }}
-          override: true
-          components: llvm-tools-preview
-
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Install grcov
-      - name: Install grcov
-        run: |
-          mkdir -p "${HOME}/.local/bin"
-          curl -sL https://github.com/mozilla/grcov/releases/download/v0.8.18/grcov-x86_64-unknown-linux-gnu.tar.bz2 | tar jxf - -C "${HOME}/.local/bin"
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-
-      # Use grcov to generate a coverage report
-      - name: Generate coverage report
-        id: coverage
-        uses: actions-rs/cargo@v1
-        with:
-          command: xtask
-          args: coverage
-
-      # Upload the coverage report to codecov
-      - name: Upload coverage report to codecov
-        id: codecov
-        uses: codecov/codecov-action@v3
-        with:
-          files: coverage/*.lcov
-
-  lints:
-    name: ❯ Lints 🧹
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - rust: stable
-            target: x86_64-unknown-linux-gnu
-    steps:
-      # Check out the repository code
-      - name: Checkout sources
-        id: checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: true
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: clippy
-
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Run cargo clippy to check for linting errors
-      - name: Run cargo clippy
-        if: github.ref == !github.event.check_run.conclusion
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets --all-features -- -D warnings
-
-      # Run Cargo Format for the code style
-      - name: Run Cargo Format
-        id: run-check-format
-        if: github.ref == !github.event.check_run.conclusion
-        run: |
-          cargo check --all --all-features --workspace --verbose
-
-      # Run cargo clippy to check for linting errors
-      - name: Run Clippy
-        id: run-check-clippy
-        if: github.ref == !github.event.check_run.conclusion
-        run: |
-          cargo clippy --all-targets --all-features --workspace -- -D warnings
-
-
   build:
     # This job builds the project for all the targets and generates a
     # release artifact that contains the binaries for all the targets.
@@ -217,35 +22,70 @@ jobs:
         target:
           # List of targets: https://doc.rust-lang.org/nightly/rustc/platform-support.html
 
-          # FreeBSD targets 🐬
-          - x86_64-unknown-freebsd # 64-bit FreeBSD on x86-64                                     ✅ Tested
-
-          # Linux targets 🐧
+          ## Tier 1 platforms 🏆
           - aarch64-unknown-linux-gnu # 64-bit Linux systems on ARM architecture                  ✅ Tested
+          - i686-pc-windows-gnu # 32-bit Windows (i686-pc-windows-gnu)                            ✅ Tested
+          - i686-pc-windows-msvc # 32-bit Windows (i686-pc-windows-msvc)                          ✅ Tested
+          - i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)                      ✅ Tested
+          - x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)                               ✅ Tested
+          - x86_64-pc-windows-gnu # 64-bit Windows (x86_64-pc-windows-gnu)                        ✅ Tested
+          - x86_64-pc-windows-msvc # 64-bit Windows (x86_64-pc-windows-msvc)                      ✅ Tested
+          - x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)                 ✅ Tested
+
+          ### Tier 2 platforms 🥈
+          - aarch64-apple-darwin # 64-bit macOS on Apple Silicon                                  ✅ Tested
+          - aarch64-pc-windows-msvc # 64-bit Windows (aarch64-pc-windows-msvc)                    ✅ Tested
           - aarch64-unknown-linux-musl # 64-bit Linux systems on ARM architecture                 ✅ Tested
           - arm-unknown-linux-gnueabi # ARMv6 Linux (kernel 3.2, glibc 2.17)                      ✅ Tested
+          - arm-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)         ✅ Tested
           - armv7-unknown-linux-gnueabihf # ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17)       ✅ Tested
-          - i686-unknown-linux-gnu # 32-bit Linux (kernel 3.2+, glibc 2.17+)                      ✅ Tested
-          - i686-unknown-linux-musl # 32-bit Linux (kernel 3.2+, musl libc)                       ✅ Tested
-          - x86_64-unknown-linux-gnu # 64-bit Linux (kernel 2.6.32+, glibc 2.11+)                 ✅ Tested
-          - x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)                  ✅ Tested
-
-          # macOS targets 🍎
-          - aarch64-apple-darwin # 64-bit macOS on Apple Silicon                                  ✅ Tested
-          - x86_64-apple-darwin # 64-bit macOS (10.7 Lion or later)                               ✅ Tested
-
-          # Illumos targets 🌞
+          - mips-unknown-linux-gnu # MIPS Linux (kernel 3.2, glibc 2.17)                          ✅ Tested
+          - mips64-unknown-linux-gnuabi64 # MIPS64 Linux (kernel 3.2, glibc 2.17)                 ✅ Tested
+          - mips64el-unknown-linux-gnuabi64 # MIPS64el Linux (kernel 3.2, glibc 2.17)             ✅ Tested
+          - mipsel-unknown-linux-gnu # MIPSel Linux (kernel 3.2, glibc 2.17)                      ✅ Tested
+          - powerpc-unknown-linux-gnu # PowerPC Linux (kernel 3.2, glibc 2.17)                    ✅ Tested
+          - powerpc64-unknown-linux-gnu # PowerPC64 Linux (kernel 3.2, glibc 2.17)                ✅ Tested
+          - powerpc64le-unknown-linux-gnu # PowerPC64le Linux (kernel 3.2, glibc 2.17)            ✅ Tested
+          - riscv64gc-unknown-linux-gnu # RISC-V Linux (kernel 3.2, glibc 2.17)                   ✅ Tested
+          - s390x-unknown-linux-gnu # s390x Linux (kernel 3.2, glibc 2.17)                        ✅ Tested
+          - x86_64-unknown-freebsd # 64-bit FreeBSD on x86-64                                     ✅ Tested
           - x86_64-unknown-illumos # 64-bit Illumos on x86-64                                     ✅ Tested
+          - x86_64-unknown-linux-musl # 64-bit Linux (kernel 2.6.32+, musl libc)                  ✅ Tested
+          - x86_64-unknown-netbsd # 64-bit NetBSD on x86-64                                       ✅ Tested
 
         include:
-          # FreeBSD targets 🐬
-          - target: x86_64-unknown-freebsd
+          ## Tier 1 platforms 🏆
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: i686-pc-windows-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: i686-pc-windows-msvc
+            os: windows-latest
+            cross: true
+          - target: i686-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            cross: true
+          - target: x86_64-pc-windows-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: true
+          - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             cross: true
 
-          # Linux targets 🐧
-          - target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
+          ### Tier 2 platforms 🥈
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            cross: true
+          - target: aarch64-pc-windows-msvc
+            os: windows-latest
             cross: true
           - target: aarch64-unknown-linux-musl
             os: ubuntu-latest
@@ -253,33 +93,50 @@ jobs:
           - target: arm-unknown-linux-gnueabi
             os: ubuntu-latest
             cross: true
+          - target: arm-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            cross: true
           - target: armv7-unknown-linux-gnueabihf
             os: ubuntu-latest
             cross: true
-          - target: i686-unknown-linux-gnu
+          - target: mips-unknown-linux-gnu
             os: ubuntu-latest
             cross: true
-          - target: i686-unknown-linux-musl
+          - target: mips64-unknown-linux-gnuabi64
             os: ubuntu-latest
             cross: true
-          - target: x86_64-unknown-linux-gnu
+          - target: mips64el-unknown-linux-gnuabi64
+            os: ubuntu-latest
+            cross: true
+          - target: mipsel-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: powerpc-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: powerpc64-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: powerpc64le-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: riscv64gc-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: s390x-unknown-linux-gnu
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-unknown-freebsd
+            os: ubuntu-latest
+            cross: true
+          - target: x86_64-unknown-illumos
             os: ubuntu-latest
             cross: true
           - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
             cross: true
-
-          # Illumos targets 🌞
-          - target: x86_64-unknown-illumos
+          - target: x86_64-unknown-netbsd
             os: ubuntu-latest
-            cross: true
-
-          # macOS targets 🍎
-          - target: aarch64-apple-darwin
-            os: macos-latest
-            cross: true
-          - target: x86_64-apple-darwin
-            os: macos-latest
             cross: true
 
     runs-on: ${{ matrix.os }}
@@ -391,16 +248,16 @@ jobs:
       # Download the artifacts from the build job
       - name: Download artifacts
         run: |
-          for target in x86_64-unknown-freebsd aarch64-unknown-linux-gnu aarch64-unknown-linux-musl arm-unknown-linux-gnueabi armv7-unknown-linux-gnueabihf i686-unknown-linux-gnu i686-unknown-linux-musl x86_64-unknown-linux-gnu x86_64-unknown-linux-musl aarch64-apple-darwin x86_64-apple-darwin x86_64-unknown-illumos; do
-            echo "Downloading $target artifact"
-            name="${target}.tar.gz"
-            echo "Artifact name: $name"
-            mkdir -p target/package
-            curl -sSL -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" -L "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${BUILD_ID}/artifacts/${name}" -o "target/package/${name}"
+          for target in "${{ matrix.target[@] }}"; do
+              echo "Downloading $target artifact"
+              name="${target}.tar.gz"
+              echo "Artifact name: $name"
+              mkdir -p target/package
+              curl -sSL -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" -L "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}/artifacts/${name}" -o "target/package/${name}"
           done
+
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BUILD_ID: ${{ github.run_id }}
 
       # Generate the changelog based on git log and template file
       - name: Generate Changelog
@@ -421,7 +278,7 @@ jobs:
           echo "## Artifacts 🎁" >> ${{ github.workspace }}/CHANGELOG.md
           for filename in target/package/*.tar.gz; do
             link="$(basename $filename)"
-            echo "* [$link](${{ github.server_url }}/${{ github.repository }}/releases/download/v${{ env.VERSION }}/$link)" >> ${{ github.workspace }}/CHANGELOG.md
+            echo "* [${link}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/v${{ env.VERSION }}/$link)" >> ${{ github.workspace }}/CHANGELOG.md
           done
 
       # Create the release on GitHub Releases
