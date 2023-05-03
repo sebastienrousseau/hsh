@@ -159,13 +159,13 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-
 
-      # Install the targets for the cross compilation toolchain
+      # Install the targets for the cross-compilation toolchain
       - name: Install target
         id: install-target
         run: rustup target add ${{ matrix.target }}
 
-      # Install the cross compilation toolchain
-      - name: Install Cross
+      # Install the cross-compilation toolchain
+      - name: Install Cross and clean artifacts
         id: install-cross
         run: |
           # Install cross
