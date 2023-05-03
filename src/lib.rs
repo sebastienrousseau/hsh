@@ -236,7 +236,7 @@ impl Hash {
     /// ## Example
     ///
     /// ```rust
-    ///
+    /// extern crate hsh;
     /// use hsh::{Hash,generate_hash};
     ///
     /// fn main() {
@@ -287,7 +287,7 @@ impl Hash {
                     &mut output,
                 ) {
                     Ok(_) => output.to_vec(),
-                    Err(e) => return e.to_string().into_bytes(),
+                    Err(e) => e.to_string().into_bytes(),
                 }
             }
             _ => panic!("Unsupported hash algorithm: {}", algo),
@@ -417,7 +417,7 @@ impl Hash {
         };
         bcrypt::verify(
             password,
-            &String::from_utf8_lossy(hashed_password).to_string(),
+            &String::from_utf8_lossy(hashed_password),
         )
         .unwrap_or(false)
     }
@@ -535,10 +535,7 @@ impl Hash {
             }
             HashAlgorithm::Bcrypt => {
                 let hash = bcrypt::hash(password, 4).unwrap();
-                match bcrypt::verify(password, &hash) {
-                    Ok(result) => result,
-                    Err(_) => false,
-                }
+                bcrypt::verify(password, &hash).unwrap_or(false)
             }
             HashAlgorithm::Scrypt => {
                 let scrypt_params =

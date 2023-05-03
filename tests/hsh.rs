@@ -58,7 +58,7 @@ fn test_macro_verify_password() {
     let mut hash = new_hash!(password, salt, "bcrypt");
     let verification = verify_password!(password, hash);
     assert_eq!(hash.password, password);
-    assert_eq!(verification, false);
+    assert!(!verification);
 }
 
 #[test]

@@ -1,106 +1,121 @@
-<!-- markdownlint-disable MD041 -->
-## Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust 🦀
+<!-- markdownlint-disable MD033 MD041 -->
 
-[![Made With Rust][made-with-rust]][6] [![Crates.io][crates-badge]][8] [![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][9] [![License][license-badge]][2] [![Codecov][codecov-badge]][11]
+<img src="https://kura.pro/hsh/images/logos/hsh.svg"
+alt="Hash (HSH) logo" width="261" align="right" />
+
+<!-- markdownlint-enable MD033 MD041 -->
+# Hash (HSH)
+
+Quantum-Resistant Cryptographic Hash Library for Password Hashing and
+Verification in Rust 🦀
+
+<!-- markdownlint-disable MD033 MD041 -->
+<center>
+<!-- markdownlint-enable MD033 MD041 -->
+
+![Hash (HSH) Banner][banner]
+
+[![Made With Rust][made-with-rust]][6] [![Crates.io][crates-badge]][8]
+[![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][9]
+[![License][license-badge]][2] [![Codecov][codecov-badge]][11]
+
+• [Website][0] • [Documentation][9] • [Report Bug][3]
+• [Request Feature][3] • [Contributing Guidelines][4]
+
+<!-- markdownlint-disable MD033 MD041 -->
+</center>
+<!-- markdownlint-enable MD033 MD041 -->
 
 ![divider][divider]
 
-## Welcome to HSH 👋
-
-![HSH Banner][banner]
-
-<!-- markdownlint-disable MD033 -->
-<center>
-
-**[Website][0]
-• [Documentation][9]
-• [Report Bug][3]
-• [Request Feature][3]
-• [Contributing Guidelines][4]**
-
-</center>
-
-<!-- markdownlint-enable MD033 -->
-
 ## Overview 📖
 
-The Hash (HSH) library is a cryptographic hash library for password hashing and verification in Rust, based on the `argon2rs` crate.
+The Hash (HSH) library is a cryptographic hash library for password
+hashing and verification in Rust, designed to provide robust security
+for passwords, utilizing the latest advancements in quantum-resistant
+cryptography.
 
-This library is designed to provide robust security for passwords, utilizing the latest advancements in quantum-resistant cryptography.
+The library is designed to be easy to use, with a simple API that allows
+for the generation, retrieval, and verification of password hashes.
 
-It is based on the `argon2rs` crate. The library implements a struct named `Hash` that provides various methods for password hash generation, retrieval, and verification.
+It supports the following hash algorithms:
+
+- [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A memory-
+hard password hashing function designed to be secure against both
+brute-force attacks and rainbow table attacks.
+- [**Bcrypt**](<https://en.wikipedia.org/wiki/Bcrypt>): A password
+hashing function designed to be secure against brute-force attacks.
+It is a work-factor function, which means that it takes a certain
+amount of time to compute. This makes it difficult to attack with a
+brute-force algorithm.
+- [**Scrypt**](<https://en.wikipedia.org/wiki/Scrypt>): A password
+hashing function designed to be secure against both brute-force
+attacks and rainbow table attacks. It is a memory-hard and work-
+factor function, which means that it requires a lot of memory and
+time to compute. This makes it very difficult to attack with a GPU
+or other parallel computing device.
 
 ## Features ✨
 
-### Hash Struct
+- Generates string representations of the hash
+- Includes methods for setting and verifying passwords against the hash
+- Provides functions for generating hashes and salts
+- Rust library for hashing and verifying passwords
+- Supports external crates such as argon2rs, base64, bcrypt, scrypt, and
+  vrd.
+- Supports multiple hash algorithms (argon2i, bcrypt, scrypt)
+- Written in Rust for speed and security
 
-The `Hash` struct has three fields:
+### Secure password storage
 
-- `password`: A string that stores the plaintext password.
-- `hash`: A vector of bytes that stores the hashed password.
-- `salt`: A vector of bytes that stores the salt used for password
-  hashing.
+Hash (HSH) provides a secure way to store and verify hashed passwords.
+Passwords are hashed using the argon2i, bcrypt, scrypt algorithms, which
+are considered one of the most secure hashing algorithms available
+today. The library provides a simple interface for generating and
+verifying hashes, making it easy to implement secure password storage
+in any Rust application.
 
-### Hash Methods
+### Easy to use
 
-The `Hash` structure provides the following methods for password hashing
-and verification:
+Hash (HSH) includes simple functions for generating and verifying
+password hashes, and managing password and salt values. Developers can
+easily integrate the library into their Rust projects and start using
+it right away. The library is designed to be intuitive and easy to use,
+so developers can build apps without worrying about password security.
 
-- `generate_hash`: A static method that generates a hash from a plaintext password and salt.
-- `hash`: A method that returns the hash as a slice of bytes.
-- `salt`: A method that returns the salt as a slice of bytes.
-- `hash_length`: A method that returns the length of the hash.
-- `new`: A constructor method that creates a new `Hash` struct instance with the given plaintext password and salt.
-- `password`: A method that returns the password as a string.
-- `password_length`: A method that returns the length of the password.
-- `set_password`: A method that sets a new password and generates a new hash.
-- `set_hash`: A method that sets a new hash.
-- `set_salt`: A method that sets a new salt.
-- `from_hash`: A method that creates a `Hash` struct instance from a given hash.
-- `verify`: A method that verifies a plaintext password against the stored hash.
-- `to_string_representation`: A method that returns the hash as a string.
+### Flexible
 
-### Traits
+Hash (HSH) allows users to customize the length of passwords and salts
+used in generating hashes. This flexibility allows developers to tailor
+the library to their specific needs, whether they require shorter or
+longer password and salt values. The library also includes macros that
+make it easy to work with the Hash structure, allowing developers to
+quickly and easily set and retrieve password and salt values.
 
-The `Hash` struct also implements the following traits:
+### Lightweight
 
-- `FromStr`: Allows the `Hash` struct to be converted from a string.
-- `std::fmt::Display`: Allows the `Hash` struct to be printed as a string.
-
-### Macros
-
-The library also provides several macros for common operations on the `Hash` struct:
-
-- `password_length`: Returns the length of the password for a given `Hash` struct instance.
-- `set_hash`: Sets a new hash value for a given `Hash` struct instance.
-- `set_password`: Sets a new password and salt value for a given `Hash` struct instance.
-- `set_salt`: Sets a new salt value for a given `Hash` struct instance.
-- `generate_hash`: Generates a new hash for a given password and salt.
-- `verify_password`: Verifies if the password matches the hash of a given `Hash` struct instance.
-- `new_hash`: Creates a new instance of the `Hash` struct with the given password and salt.
-- `display_hash`: Prints the hash of a given `Hash` struct instance to the console.
-- `to_string`: Converts a given `Hash` struct instance to a string.
-
-### Security and Performance
-
-It is important to note that the library uses the `argon2rs` crate for password hashing, which is a secure and quantum-resistant password hashing library.
+Hash (HSH) is a lightweight library that can easily integrate into any
+Rust project. The library has no external dependencies and is efficient.
+It means that developers can add secure password storage to their
+applications without having to worry about significant performance
+overheads.
 
 ## Changelog 📚
 
 -
 
-[0]: https://minifunctions.com
+[0]: https://minifunctions.com/hsh
 [2]: http://opensource.org/licenses/MIT
 [3]: https://github.com/sebastienrousseau/hsh/issues
-[4]: https://raw.githubusercontent.com/sebastienrousseau/hsh/main/CONTRIBUTING.md
+[4]: https://raw.githubusercontent.com/sebastienrousseau/hsh/main/.github/CONTRIBUTING.md
 [6]: https://github.com/sebastienrousseau/hsh/graphs/contributors
 [8]: https://crates.io/crates/hsh
 [9]: https://docs.rs/hsh
 [10]: https://lib.rs/crates/hsh
 [11]: https://codecov.io/github/sebastienrousseau/hsh
 
-[banner]: https://raw.githubusercontent.com/sebastienrousseau/vault/main/assets/hsh/banners/banner-hsh-1597x377.svg "HSH Banner"
-[codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/hsh?style=for-the-badge&token=X3ZP0K1SGI 'Codecov'
+[banner]: https://kura.pro/hsh/images/titles/title-hsh.svg "Hash (HSH) Banner"
+[codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/cmn?style=for-the-badge&token=DMNW4DN0LO 'Codecov'
 [crates-badge]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge 'Crates.io'
 [divider]: https://kura.pro/common/images/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/hsh.svg?style=for-the-badge 'Docs.rs'

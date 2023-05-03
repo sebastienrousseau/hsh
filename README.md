@@ -9,6 +9,8 @@ alt="Hash (HSH) logo" width="261" align="right" />
 Quantum-Resistant Cryptographic Hash Library for Password Hashing and
 Verification in Rust 🦀
 
+*Part of the [Mini Functions][0] family of libraries.*
+
 <!-- markdownlint-disable MD033 MD041 -->
 <center>
 <!-- markdownlint-enable MD033 MD041 -->
@@ -30,21 +32,50 @@ Verification in Rust 🦀
 
 ## Overview 📖
 
-Hash (HSH) is a Rust library that provides a secure and easy-to-use way
-to store and verify hashed passwords. It's based on the `argon2rs` crate
-and includes salt, password, and hash functions. The library is designed
-to provide robust security for passwords, using the latest advancements
-in quantum-resistant cryptography.
+The Hash (HSH) library is a cryptographic hash library for password
+hashing and verification in Rust, designed to provide robust security
+for passwords, utilizing the latest advancements in quantum-resistant
+cryptography.
+
+The library is designed to be easy to use, with a simple API that allows
+for the generation, retrieval, and verification of password hashes.
+
+It supports the following hash algorithms:
+
+- [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A memory-
+hard password hashing function designed to be secure against both
+brute-force attacks and rainbow table attacks.
+- [**Bcrypt**](<https://en.wikipedia.org/wiki/Bcrypt>): A password
+hashing function designed to be secure against brute-force attacks.
+It is a work-factor function, which means that it takes a certain
+amount of time to compute. This makes it difficult to attack with a
+brute-force algorithm.
+- [**Scrypt**](<https://en.wikipedia.org/wiki/Scrypt>): A password
+hashing function designed to be secure against both brute-force
+attacks and rainbow table attacks. It is a memory-hard and work-
+factor function, which means that it requires a lot of memory and
+time to compute. This makes it very difficult to attack with a GPU
+or other parallel computing device.
 
 ## Features ✨
+
+- Generates string representations of the hash
+- Includes methods for setting and verifying passwords against the hash
+- Provides functions for generating hashes and salts
+- Rust library for hashing and verifying passwords
+- Supports external crates such as argon2rs, base64, bcrypt, scrypt, and
+  vrd.
+- Supports multiple hash algorithms (argon2i, bcrypt, scrypt)
+- Written in Rust for speed and security
 
 ### Secure password storage
 
 Hash (HSH) provides a secure way to store and verify hashed passwords.
-Passwords are hashed using the argon2i algorithm, which is considered
-one of the most secure hashing algorithms available today. The library
-provides a simple interface for generating and verifying hashes, making
-it easy to implement secure password storage in any Rust application.
+Passwords are hashed using the argon2i, bcrypt, scrypt algorithms, which
+are considered one of the most secure hashing algorithms available
+today. The library provides a simple interface for generating and
+verifying hashes, making it easy to implement secure password storage
+in any Rust application.
 
 ### Easy to use
 
@@ -77,7 +108,44 @@ It takes just a few minutes to get up and running with `hsh`.
 
 ### Requirements
 
-`hsh` requires Rust **1.67.0** or later.
+The minimum supported Rust toolchain version is currently Rust
+**1.69.0** or later (stable). It is recommended that you install the
+latest stable version of Rust.
+
+### Platform support
+
+`Hash (HSH)` is supported and tested on the following platforms:
+
+### Tier 1 platforms 🏆
+
+| | Operating System | Target | Description |
+| --- | --- | --- | --- |
+| ✅ | Linux   | aarch64-unknown-linux-gnu | 64-bit Linux systems on ARM architecture |
+| ✅ | Linux   | i686-unknown-linux-gnu | 32-bit Linux (kernel 3.2+, glibc 2.17+) |
+| ✅ | Linux   | x86_64-unknown-linux-gnu | 64-bit Linux (kernel 2.6.32+, glibc 2.11+) |
+| ✅ | macOS   | x86_64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
+| ✅ | Windows | i686-pc-windows-gnu | 32-bit Windows (7 or later) |
+| ✅ | Windows | i686-pc-windows-msvc | 32-bit Windows (7 or later) |
+| ✅ | Windows | x86_64-pc-windows-gnu | 64-bit Windows (7 or later) |
+| ✅ | Windows | x86_64-pc-windows-msvc | 64-bit Windows (7 or later) |
+
+### Tier 2 platforms 🥈
+
+| | Operating System | Target | Description |
+| --- | --- | --- | --- |
+| ✅ | Linux   | aarch64-unknown-linux-musl | 64-bit Linux systems on ARM architecture |
+| ✅ | Linux   | arm-unknown-linux-gnueabi | ARMv6 Linux (kernel 3.2, glibc 2.17) |
+| ✅ | Linux   | arm-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
+| ✅ | Linux   | armv7-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
+| ✅ | Linux   | mips-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
+| ✅ | Linux   | mips64-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
+| ✅ | Linux   | mips64el-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
+| ✅ | Linux   | mipsel-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
+| ✅ | macOS   | aarch64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
+| ✅ | Windows | aarch64-pc-windows-msvc | 64-bit Windows (7 or later) |
+
+The [GitHub Actions][10] shows the platforms in which the
+`Hash (HSH)` library tests are run.
 
 ### Documentation
 
