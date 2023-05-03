@@ -1,5 +1,5 @@
 [package]
-authors = ["Sebastian Rousseau <sebastian.rousseau@gmail.com"]
+authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com"]
 categories = ["algorithms", "data-structures", "cryptography"]
 description = "Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust"
 edition = "2021"
@@ -11,8 +11,9 @@ repository = "https://github.com/sebastienrousseau/hsh/"
 rust-version = "1.69.0"
 version = "0.0.3"
 include = [
-    "../../LICENSE-APACHE",
-    "../../LICENSE-MIT",
+    "/CONTRIBUTING.md",
+    "/LICENSE-APACHE",
+    "/LICENSE-MIT",
     "/benches/**",
     "/build.rs",
     "/Cargo.toml",
@@ -20,7 +21,11 @@ include = [
     "/README.md",
     "/src/**",
     "/tests/**",
+    "/xtask/**",
 ]
+
+[workspace]
+members = ["xtask"]
 
 [[bench]]
 name = "benchmark"
@@ -60,7 +65,7 @@ incremental = true
 lto = false
 opt-level = 0
 overflow-checks = true
-panic = 'unwind'
+panic = "unwind"
 rpath = false
 strip = false
 
