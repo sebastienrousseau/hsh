@@ -56,11 +56,11 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: hsh-${{ matrix.target }}-v${{ env.VERSION }}
-          path: target/release/libhsh
+          path: target/release/
 
       # Tar the binary for the target
       - name: Tar files
-        run: tar -czvf hsh-${{ matrix.target }}-v${{ env.VERSION }}.tar.gz target/release/libhsh
+        run: tar -czvf hsh-${{ matrix.target }}-v${{ env.VERSION }}.tar.gz target/release/
 
       # Upload the tarball for the target
       - name: Upload Artifact
