@@ -475,6 +475,6 @@ jobs:
         shell: /bin/bash -e {0}
 
       # Publish the Rust library to Crate.io
-      - run: cargo publish --no-verify --allow-dirty --token ${CARGO_API_TOKEN}
+      - run: cargo publish --no-verify --allow-dirty --token $CRATES_TOKEN
         env:
           CRATES_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
