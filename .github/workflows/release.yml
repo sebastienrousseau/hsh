@@ -169,7 +169,7 @@ jobs:
         id: update-version
         run: |
           NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
         shell: /bin/bash -e {0}
 
       # Install the cross compilation toolchain
@@ -229,7 +229,7 @@ jobs:
       - name: Update version number
         run: |
           NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
         shell: /bin/bash -e {0}
 
       # Cache dependencies to speed up subsequent builds
@@ -324,7 +324,7 @@ jobs:
         id: update-version
         run: |
           NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
         shell: /bin/bash -e {0}
 
       # Log in to crates.io
