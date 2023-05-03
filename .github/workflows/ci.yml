@@ -474,7 +474,18 @@ jobs:
           echo "VERSION=$NEW_VERSION" >> $GITHUB_ENV
         shell: /bin/bash -e {0}
 
+      # Log in to crates.io
+      - name: Log in to crates.io
+        run: cargo login ${{ secrets.CARGO_API_TOKEN }}
+
       # Publish the Rust library to Crate.io
-      - run: cargo publish --no-verify --allow-dirty
+      - name: Publish Library to Crate.io
+        id: publish-library
+        uses: actions-rs/cargo@v1
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
+        with:
+          command: publish
+          args: "--no-verify --allow-dirty"
+          use-cross: false
+
