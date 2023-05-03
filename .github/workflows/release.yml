@@ -164,14 +164,6 @@ jobs:
         id: install-target
         run: rustup target add ${{ matrix.target }}
 
-      # Update the version number based on the Cargo.toml file
-      - name: Update version number
-        id: update-version
-        run: |
-          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
-        shell: /bin/bash -e {0}
-
       # Install the cross compilation toolchain
       - name: Install Cross
         id: install-cross
