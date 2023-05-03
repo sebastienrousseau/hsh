@@ -56,7 +56,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: hsh-${{ matrix.target }}-v${{ env.VERSION }}
-          path: target/release/hsh
+          path: target/release/libhsh
 
       # Tar the binary for the target
       - name: Tar files
