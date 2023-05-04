@@ -36,7 +36,7 @@ jobs:
         retention-days: 1
 
     - name: Write CNAME file
-      run: echo 'docs.hshlib.one' > ./target/doc/CNAME
+      run: echo 'doc.hshlib.one' > ./target/doc/CNAME
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
