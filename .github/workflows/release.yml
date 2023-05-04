@@ -195,7 +195,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.target }}.tar.gz
-          path: ${{ env[format('{0}.tar.gz', matrix.target)] }}
+          path: ${{ format('{0}.tar.gz', matrix.target) }}
 
   # Release the binary to GitHub Releases
   release:
