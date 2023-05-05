@@ -1083,11 +1083,12 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 
 [[package]]
 name = "vrd"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7386e9df422c7b5d5ee59938bc9a2d807a63fe95753aaf6fd16252a9f48ac306"
+checksum = "da9c918d49735849d5f7e7ea1111c505aa716476be9a064f31c4f384f2c2bb9b"
 dependencies = [
  "rand",
+ "serde",
 ]
 
 [[package]]

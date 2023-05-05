@@ -41,7 +41,7 @@ base64 = "0.21.0"
 bcrypt = "0.14.0"
 scrypt = "0.11.0"
 serde = { version = "1.0.162", features = ["derive"] }
-vrd = "0.0.1"
+vrd = "0.0.2"
 
 [dev-dependencies]
 criterion = "0.4.0"
