@@ -1,15 +1,23 @@
 [package]
-authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com"]
+authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>"]
+build = "build.rs"
 categories = ["algorithms", "data-structures", "cryptography"]
 description = "Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust"
+documentation = "https://docs.rs/hsh"
 edition = "2021"
+exclude = [
+    "/.git/*",
+    "/.github/*",
+    "/.gitignore",
+    "/.vscode/*"
+    ]
 homepage = "https://minifunctions.com/"
 keywords = ["argon2rs", "hash", "hashing-algorithm", "hsh", "post-quantum"]
 license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
 rust-version = "1.69.0"
-version = "0.0.3"
+version = "0.0.4"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -30,20 +38,26 @@ members = ["xtask"]
 [[bench]]
 name = "benchmark"
 harness = false
-path = "benches/hsh.rs"
+path = "benches/criterion.rs"
 
 [profile.bench]
 debug = true
+
+[[example]]
+name = "hsh"
+path = "examples/hsh.rs"
 
 [dependencies]
 argon2rs = "0.2.5"
 base64 = "0.21.0"
 bcrypt = "0.14.0"
 scrypt = "0.11.0"
-serde = { version = "1.0.162", features = ["derive"] }
-vrd = "0.0.1"
+serde = { version = "1.0.163", features = ["derive"] }
+serde_json = "1.0.96"
+vrd = "0.0.4"
 
 [dev-dependencies]
+assert_cmd = "2.0.11"
 criterion = "0.4.0"
 
 [lib]
@@ -65,7 +79,7 @@ incremental = true
 lto = false
 opt-level = 0
 overflow-checks = true
-panic = "unwind"
+panic = 'unwind'
 rpath = false
 strip = false
 
