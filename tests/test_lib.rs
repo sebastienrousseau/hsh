@@ -18,6 +18,27 @@ mod tests {
     }
 
     #[test]
+    fn test_new_with_unsupported_algo() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "unsupported_algo";
+
+        let hash = Hash::new(password, salt, algo);
+
+        match hash {
+            Ok(_) => {
+                panic!("Expected an error for unsupported hash algorithm, but got Ok");
+            }
+            Err(e) => {
+                assert_eq!(
+                    e,
+                    format!("Unsupported hash algorithm: {}", algo)
+                );
+            }
+        }
+    }
+
+    #[test]
     fn test_verify() {
         let password = "password123";
         let salt = "somesalt";
@@ -426,4 +447,47 @@ mod tests {
         // Try to parse the invalid JSON string
         assert!(Hash::parse(invalid_json).is_err());
     }
+
+    #[test]
+    fn test_parse_algorithm_argon2i() {
+        let hash_str = "$argon2i$somehashstring";
+        let algorithm = Hash::parse_algorithm(hash_str);
+
+        assert_eq!(algorithm.unwrap(), HashAlgorithm::Argon2i);
+    }
+
+    #[test]
+    fn test_parse_algorithm_bcrypt() {
+        let hash_str = "$bcrypt$somehashstring";
+        let algorithm = Hash::parse_algorithm(hash_str);
+
+        assert_eq!(algorithm.unwrap(), HashAlgorithm::Bcrypt);
+    }
+
+    #[test]
+    fn test_parse_algorithm_scrypt() {
+        let hash_str = "$scrypt$somehashstring";
+        let algorithm = Hash::parse_algorithm(hash_str);
+
+        assert_eq!(algorithm.unwrap(), HashAlgorithm::Scrypt);
+    }
+
+    #[test]
+    fn test_parse_algorithm_unsupported() {
+        let hash_str = "$unsupported$somehashstring";
+        let algorithm = Hash::parse_algorithm(hash_str);
+
+        assert!(algorithm.is_err());
+        assert_eq!(algorithm.err().unwrap(), "Unsupported hash algorithm: unsupported");
+    }
+
+    #[test]
+    fn test_parse_algorithm_invalid() {
+        let hash_str = "invalidhashstring";
+        let algorithm = Hash::parse_algorithm(hash_str);
+
+        assert!(algorithm.is_err());
+        assert_eq!(algorithm.err().unwrap(), "Invalid hash string");
+    }
+
 }
