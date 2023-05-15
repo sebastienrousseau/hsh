@@ -1,9 +1,7 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//!
-//! # Quantum-Resistant Cryptographic Hash Library for Password Hashing
-//! and Verification
+//! # Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification
 //!
 //! *Part of the [Mini Functions][0] family of libraries.*
 //!
@@ -21,7 +19,7 @@
 //!
 //! ## Overview 📖
 //!
-//! The `Hash (HSH)` library is a cryptographic hash library for
+//! The Hash (HSH) library is a cryptographic hash library for
 //! password hashing and verification in Rust, designed to provide
 //! robust security for passwords, utilizing the latest advancements in
 //! quantum-resistant cryptography.
@@ -32,77 +30,78 @@
 //!
 //! It supports the following hash algorithms:
 //!
-//! - [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A memory-
-//! hard password hashing function designed to be secure against both
-//! brute-force attacks and rainbow table attacks.
-//! - [**Bcrypt**](<https://en.wikipedia.org/wiki/Bcrypt>): A password
-//! hashing function designed to be secure against brute-force attacks.
-//! It is a work-factor function, which means that it takes a certain
-//! amount of time to compute. This makes it difficult to attack with a
-//! brute-force algorithm.
-//! - [**Scrypt**](<https://en.wikipedia.org/wiki/Scrypt>): A password
-//! hashing function designed to be secure against both brute-force
-//! attacks and rainbow table attacks. It is a memory-hard and work-
-//! factor function, which means that it requires a lot of memory and
-//! time to compute. This makes it very difficult to attack with a GPU
-//! or other parallel computing device.
+//! - **Argon2i**: A memory-hard password hashing function designed to resist GPU-based attacks and secure against both brute-force attacks and rainbow table attacks.
+//! - **Bcrypt**: A password hashing function designed to resist time-memory trade-off (TMTO) attacks, secure against brute-force attacks.
+//! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.
 //!
 //! ## Features ✨
 //!
 //! ### Hash Struct
 //!
-//! The `Hash` struct has four fields:
+//! The Hash struct has four fields:
 //!
-//! - `algorithm`: An enum that stores the algorithm used for password hashing. The enum has three variants: `Argon2i`, `Bcrypt`, and `Scrypt`.
-//! - `hash`: A vector of bytes that stores the hashed password.
-//! - `password`: A string that stores the plaintext password.
-//! - `salt`: A vector of bytes that stores the salt used for password hashing.
+//! - **algorithm**: An enum that stores the algorithm used for password hashing. The enum has three variants: Argon2i, Bcrypt, and Scrypt.
+//! - **hash**: A vector of bytes that stores the hashed password.
+//! - **salt**: A vector of bytes that stores the salt used for password hashing.
 //!
 //! ### Hash Algorithms
 //!
-//! The `HashAlgorithm` enum has three variants:
-//! - `Argon2i`: The Argon2i algorithm.
-//! - `Bcrypt`: The Bcrypt algorithm.
-//! - `Scrypt`: The Scrypt algorithm.
+//! The HashAlgorithm enum has three variants:
+//!
+//! - **Argon2i**: The Argon2i algorithm
+//! - **Bcrypt**: The Bcrypt algorithm.
+//! - **Scrypt**: The Scrypt algorithm.
 //!
 //! ### Hash Methods
 //!
-//! The `Hash` struct provides the following methods for password
+//! The Hash struct provides the following methods for password
 //! hashing and verification:
 //!
-//! - `from_hash`: A method that creates a `Hash` struct instance from a given hash.
-//! - `from_string`: A method that creates a `Hash` struct instance from a given string.
-//! - `generate_hash`: A static method that generates a hash from a plaintext password and salt.
-//! - `generate_salt`: A static method that generates a salt.
-//! - `hash_length`: A method that returns the length of the hash.
-//! - `hash`: A method that returns the hash as a slice of bytes.
-//! - `new`: A constructor method that creates a new `Hash` struct instance with the given plaintext password and salt.
-//! - `password_length`: A method that returns the length of the password.
-//! - `password`: A method that returns the password as a string.
-//! - `salt`: A method that returns the salt as a slice of bytes.
-//! - `set_hash`: A method that sets a new hash.
-//! - `set_password`: A method that sets a new password and generates a new hash.
-//! - `set_salt`: A method that sets a new salt.
-//! - `to_string_representation`: A method that returns the hash as a string.
-//! - `verify`: A method that verifies a plaintext password against the stored hash.
+//! - `algorithm`: A function that returns the hash algorithm used by the hash map.
+//! - `from_hash`: A function that creates a new hash object from a hash value and a hash algorithm.
+//! - `from_string`: A function that creates a new hash object from a hash string in the format algorithm$salt$hash.
+//! - `generate_hash`: A function that generates a hash value for a password using the specified hash algorithm.
+//! - `generate_random_string`: A function that generates a random string of the specified length.
+//! - `generate_salt`: A function that generates a random salt for a password using the specified hash algorithm.
+//! - `hash`: A function that returns the hash value of a hash object.
+//! - `hash_length`: A function that returns the length of the hash value of a hash object.
+//! - `new`: A function that creates a new hash object from a password, salt, and hash algorithm.
+//! - `parse`: A function that parses a JSON string into a hash object.
+//! - `parse_algorithm`: A function that parses a hash string into a hash algorithm.
+//! - `salt`: A function that returns the salt used to hash a password.
+//! - `set_hash`: A function that sets the hash value of a hash object.
+//! - `set_password`: A function that sets the password of a hash object.
+//! - `set_salt`: A function that sets the salt of a hash object.
+//! - `to_string_representation`: A function that converts a hash object to a string representation.
+//! - `verify`: A function that verifies a password against a hash object.
 //!
 //! ### Traits
 //!
-//! The `Hash` struct also implements the following traits:
+//! The Hash struct also implements the following traits:
 //!
-//! - `FromStr`: Allows the `Hash` struct to be converted from a string.
-//! - `std::fmt::Display`: Allows the `Hash` struct to be printed as a string.
+//! - `FromStr`: Allows the Hash struct to be converted from a string.
+//! - `std::fmt::Display`: Allows the Hash struct to be printed as a string.
 //!
 //! ### Security and Performance
 //!
-//! It is important to note that the library uses the `argon2rs` crate for password hashing, which is a secure and quantum-resistant password hashing library.
+//! The `Hash (HSH)` library uses the argon2rs crate for the Argon2i algorithm. This library is a secure and quantum-resistant password hashing library. The Bcrypt and Scrypt algorithms are implemented using the bcrypt and scrypt crates respectively. These algorithms are designed to be secure against brute-force attacks and are also considered quantum-resistant. Performance of these algorithms can be tuned by adjusting parameters such as the work factor or memory cost. Always ensure to use a unique salt for each password to prevent rainbow table attacks.
 //!
-//! ## Usage
+//! ### Recommendations
 //!
-//! - [`serde`][]: Enable serialization/deserialization via serde
+//! It is recommended to always use the latest version of this library to ensure you have the most up-to-date security features. When handling passwords, always ensure they are hashed before being stored and never log or display passwords in plaintext. Always use a secure and random salt when hashing passwords.
 //!
+//! ## Getting Started 🚀
 //!
-//! [`serde`]: https://github.com/serde-rs/serde
+//! To start using Hash (HSH), add it as a dependency in your Cargo.toml file and import it in your Rust file. You can then create a new Hash instance and call the appropriate methods for your needs.
+//!
+//! ## License 📝
+//!
+//! The project is licensed under the terms of both the MIT license and the
+//! Apache License (Version 2.0).
+//!
+//! - [Apache License, Version 2.0][1]
+//! - [MIT license][2]
+//!
 //! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.svg "The Hash (HSH) Banner"
 //! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006 "Crates.io"
 //! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github "GitHub"
@@ -111,7 +110,9 @@
 //! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust "Rust"
 //!
 //! [0]: https://minifunctions.com/ "MiniFunctions"
-//!
+//! [1]: http://www.apache.org/licenses/LICENSE-2.0
+//! [2]: http://opensource.org/licenses/MIT
+
 #![cfg_attr(feature = "bench", feature(test))]
 #![deny(dead_code)]
 #![deny(missing_debug_implementations)]
@@ -191,12 +192,12 @@ pub enum HashAlgorithm {
 }
 
 impl Hash {
-    /// Get the hash algorithm used by this hash
+    /// A function that returns the hash algorithm used by the hash map.
     pub fn algorithm(&self) -> HashAlgorithm {
         self.algorithm
     }
 
-    /// Gets the entropy of the hash in bits.
+    /// A function that creates a new hash object from a hash value and a hash algorithm.
     pub fn from_hash(hash: &[u8], algo: &str) -> Result<Self, String> {
         let algorithm = match algo {
             "argon2i" => Ok(HashAlgorithm::Argon2i),
@@ -212,7 +213,7 @@ impl Hash {
         })
     }
 
-    /// Parses a `Hash` object from a hash string in the format used by the `argon2` crate.
+    /// A function that creates a new hash object from a hash string in the format algorithm$salt$hash.
     pub fn from_string(hash_str: &str) -> Result<Self, String> {
         // Split the hash string into six parts, using the `$` character as the delimiter.
         let parts: Vec<&str> = hash_str.split('$').collect();
@@ -245,7 +246,7 @@ impl Hash {
         })
     }
 
-    /// A method that creates a `Hash` struct instance from a given hash.
+    /// A function that generates a hash value for a password using the specified hash algorithm.
     pub fn generate_hash(
         password: &str,
         salt: &str,
@@ -278,7 +279,7 @@ impl Hash {
         }
     }
 
-    /// Generates a random string of the specified length.
+    /// A function that generates a random string of the specified length.
     pub fn generate_random_string(len: usize) -> String {
         let mut rng = Random::default();
         let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -293,7 +294,7 @@ impl Hash {
             .collect()
     }
 
-    /// Generates a salt string for password hashing using the specified hash algorithm.
+    /// A function that generates a random salt for a password using the specified hash algorithm.
     pub fn generate_salt(algo: &str) -> Result<String, String> {
         let mut rng = Random::default();
         match algo {
@@ -318,17 +319,17 @@ impl Hash {
         }
     }
 
-    /// Returns the hash.
+    /// A function that returns the hash value of a hash object.
     pub fn hash(&self) -> &[u8] {
         &self.hash
     }
 
-    /// Returns the length of the hash.
+    /// A function that returns the length of the hash value of a hash object.
     pub fn hash_length(&self) -> usize {
         self.hash.len()
     }
 
-    /// Creates a `Hash` struct instance from a given password.
+    /// A function that creates a new hash object from a password, salt, and hash algorithm.
     pub fn new(
         password: &str,
         salt: &str,
@@ -354,8 +355,7 @@ impl Hash {
         })
     }
 
-    /// Parses a string of JSON data and returns a new instance of the
-    /// `Hash` structure.
+    /// A function that parses a JSON string into a hash object.
     pub fn parse(
         input: &str,
     ) -> Result<Self, Box<dyn std::error::Error>> {
@@ -363,7 +363,7 @@ impl Hash {
         Ok(hash)
     }
 
-    /// Parses a hash string and returns the corresponding hash algorithm.
+    /// A function that parses a hash string into a hash algorithm.
     pub fn parse_algorithm(
         hash_str: &str,
     ) -> Result<HashAlgorithm, String> {
@@ -381,17 +381,17 @@ impl Hash {
         }
     }
 
-    /// Returns the salt.
+    /// A function that returns the salt used to hash a password.
     pub fn salt(&self) -> &[u8] {
         &self.salt
     }
 
-    /// Sets the hash.
+    /// A function that sets the hash value of a hash object.
     pub fn set_hash(&mut self, hash: &[u8]) {
         self.hash = hash.to_vec();
     }
 
-    /// Sets the password and generates a new hash.
+    /// A function that sets the password of a hash object.
     pub fn set_password(
         &mut self,
         password: &str,
@@ -402,12 +402,12 @@ impl Hash {
         Ok(())
     }
 
-    /// Sets the salt.
+    /// A function that sets the salt of a hash object.
     pub fn set_salt(&mut self, salt: &[u8]) {
         self.salt = salt.to_vec();
     }
 
-    /// Returns the hash as a string.
+    /// A function that converts a hash object to a string representation.
     pub fn to_string_representation(&self) -> String {
         let hash_str = self
             .hash
@@ -419,7 +419,7 @@ impl Hash {
         format!("{}:{}", String::from_utf8_lossy(&self.salt), hash_str)
     }
 
-    /// Verifies the input password against the stored hash using the stored hash algorithm.
+    /// A function that verifies a password against a hash object.
     pub fn verify(&self, password: &str) -> Result<bool, &'static str> {
         let salt = std::str::from_utf8(&self.salt)
             .map_err(|_| "Failed to convert salt to string")?;
