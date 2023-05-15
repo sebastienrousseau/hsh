@@ -128,4 +128,214 @@ mod tests {
 
         assert!(hash.is_err());
     }
+
+    #[test]
+    fn test_algorithm() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        let hash = Hash::new(password, salt, algo).unwrap();
+
+        assert_eq!(HashAlgorithm::Bcrypt, hash.algorithm());
+    }
+
+    #[test]
+    fn test_from_hash() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "scrypt";
+
+        // Generate a hash from the password
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Get the hashed password bytes
+        let hashed_password = original_hash.hash;
+
+        // Now try to create a new Hash struct from the hashed password bytes
+        let from_hash = Hash::from_hash(&hashed_password, algo);
+
+        // Check that from_hash is Ok
+        assert!(from_hash.is_ok());
+
+        // Unwrap the Result and get the Hash struct
+        let from_hash = from_hash.unwrap();
+
+        // Check that the algorithm is correct
+        assert_eq!(from_hash.algorithm(), HashAlgorithm::Scrypt);
+
+        // Check that the hash is correct
+        assert_eq!(from_hash.hash, hashed_password);
+
+        // Check that the salt is empty (since from_hash doesn't set the salt)
+        assert_eq!(from_hash.salt, Vec::<u8>::new());
+    }
+
+    #[test]
+    fn test_hash() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Get the hashed password bytes
+        let hashed_password = original_hash.hash.clone();
+
+        // Test the `hash` method
+        assert_eq!(original_hash.hash(), &hashed_password);
+    }
+
+    #[test]
+    fn test_salt() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Convert the salt to bytes for comparison
+        let salt_bytes = salt.as_bytes();
+
+        // Test the `salt` method
+        assert_eq!(original_hash.salt(), salt_bytes);
+    }
+
+    #[test]
+    fn test_set_hash() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let mut original_hash =
+            Hash::new(password, salt, algo).unwrap();
+
+        // Create a new hash value
+        let new_hash = vec![1, 2, 3, 4, 5];
+
+        // Set the hash of the Hash struct to the new value
+        original_hash.set_hash(&new_hash);
+
+        // Test that the `hash` method returns the new hash value
+        assert_eq!(original_hash.hash(), &new_hash);
+    }
+
+    #[test]
+    fn test_set_salt() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let mut original_hash =
+            Hash::new(password, salt, algo).unwrap();
+
+        // Create a new salt value
+        let new_salt = vec![1, 2, 3, 4, 5];
+
+        // Set the salt of the Hash struct to the new value
+        original_hash.set_salt(&new_salt);
+
+        // Test that the `salt` method returns the new salt value
+        assert_eq!(original_hash.salt(), &new_salt);
+    }
+    #[test]
+    fn test_to_string_representation() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Get the string representation
+        let string_repr = original_hash.to_string_representation();
+
+        // Get the expected string representation
+        let expected_repr = format!(
+            "{}:{}",
+            salt,
+            original_hash
+                .hash()
+                .iter()
+                .map(|b| format!("{:02x}", b))
+                .collect::<Vec<String>>()
+                .join("")
+        );
+
+        assert_eq!(string_repr, expected_repr);
+    }
+    #[test]
+    fn test_hash_display() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Test the Display implementation for Hash
+        assert_eq!(
+            format!("{}", original_hash),
+            format!("Hash {{ hash: {:?} }}", original_hash.hash())
+        );
+    }
+
+    #[test]
+    fn test_hash_algorithm_display() {
+        let algo = HashAlgorithm::Bcrypt;
+
+        // Test the Display implementation for HashAlgorithm
+        assert_eq!(format!("{}", algo), format!("{:?}", algo));
+    }
+
+    #[test]
+    fn test_hash_algorithm_from_str() {
+        let algo_str = "bcrypt";
+        let expected_algo = HashAlgorithm::Bcrypt;
+
+        // Test the FromStr implementation for HashAlgorithm
+        assert_eq!(
+            algo_str.parse::<HashAlgorithm>().unwrap(),
+            expected_algo
+        );
+    }
+
+    #[test]
+    fn test_hash_algorithm_from_str_invalid() {
+        let invalid_algo_str = "invalid";
+
+        // Test the FromStr implementation for HashAlgorithm with an invalid string
+        assert!(invalid_algo_str.parse::<HashAlgorithm>().is_err());
+    }
+
+    #[test]
+    fn test_parse() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "bcrypt";
+
+        // Create a new Hash
+        let original_hash = Hash::new(password, salt, algo).unwrap();
+
+        // Convert the Hash to a JSON string
+        let hash_json = serde_json::to_string(&original_hash).unwrap();
+
+        // Parse the JSON string back into a Hash
+        let parsed_hash = Hash::parse(&hash_json).unwrap();
+
+        // Check that the parsed Hash is equal to the original
+        assert_eq!(original_hash, parsed_hash);
+    }
+
+    #[test]
+    fn test_parse_invalid() {
+        let invalid_json = "invalid";
+
+        // Try to parse the invalid JSON string
+        assert!(Hash::parse(invalid_json).is_err());
+    }
 }
