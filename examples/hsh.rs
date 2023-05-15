@@ -1,3 +1,7 @@
+// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+//! Using the Hash (HSH) library
 use hsh::{new_hash, Hash, HashAlgorithm};
 use std::str::FromStr;
 

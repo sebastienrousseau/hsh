@@ -139,7 +139,6 @@ use base64::{engine::general_purpose, Engine as _};
 
 use scrypt::scrypt;
 use serde::{Deserialize, Serialize};
-use serde_json;
 use std::{fmt, str::FromStr};
 use vrd::Random;
 

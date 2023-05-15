@@ -1,6 +1,7 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+//! Benchmarking the Hash (HSH) library using Criterion.rs
 extern crate argon2rs;
 extern crate criterion;
 
@@ -60,11 +61,18 @@ fn verify_benchmark(c: &mut Criterion) {
     });
 }
 
+// Run the benchmarks in a group
 criterion_group!(
+    // Run `benches`
     benches,
+    // Run `generate_hash_benchmark`
     generate_hash_benchmark,
+    // Run `new_hash_benchmark`
     new_hash_benchmark,
+    // Run `set_password_benchmark`
     set_password_benchmark,
+    // Run `verify_benchmark`
     verify_benchmark
 );
+
 criterion_main!(benches);
