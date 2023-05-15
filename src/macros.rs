@@ -187,9 +187,10 @@ macro_rules! random_string {
         let mut rng = vrd::Random::default();
         (0..$len as usize)
             .map(|_| {
+                let index = vrd::rand_int!(rng, 0, (chars.len() - 1) as i32) as usize;
                 chars
                     .chars()
-                    .nth(vrd::rand_int!(rng, 0, chars.len() as i32) as usize)
+                    .nth(index)
                     .unwrap()
             })
             .collect::<String>()
