@@ -247,6 +247,13 @@ impl Hash {
     }
 
     /// A function that generates a hash value for a password using the specified hash algorithm.
+    /// The function takes three arguments:
+    ///
+    /// - password: The password to be hashed.
+    /// - salt: A random string used to make the hash value unique.
+    /// - algo: The name of the hash algorithm to use.
+    ///
+    /// The function returns a `Result` object containing the hash value if successful, or an error message if unsuccessful.
     pub fn generate_hash(
         password: &str,
         salt: &str,

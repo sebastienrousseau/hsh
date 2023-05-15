@@ -43,16 +43,10 @@
 /// value. The parsed value is returned wrapped in
 /// `hsh::Common::parse()` function call.
 ///
-/// # Example
-///
-/// ```
-/// let value = hsh!(1, 2, 3);
-/// ```
-///
 #[macro_export]
 macro_rules! hsh {
     ($($tt:tt)*) => {
-        hsh::Common::parse($($tt)*)
+        hsh::Hash::parse($($tt)*)
     };
 }
 
@@ -63,6 +57,9 @@ macro_rules! hsh {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_assert };
+///
 /// hsh_assert!(1 == 1);  // This will not panic
 /// hsh_assert!(1 == 2);  // This will panic
 /// ```
@@ -81,6 +78,9 @@ macro_rules! hsh_assert {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_contains };
+///
 /// let contains = hsh_contains!("Hello world", "world");
 /// ```
 ///
@@ -97,6 +97,9 @@ macro_rules! hsh_contains {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_in_range };
+///
 /// let in_range = hsh_in_range!(5, 1, 10);  // `in_range` will be true
 /// ```
 ///
@@ -117,6 +120,9 @@ macro_rules! hsh_in_range {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_join };
+///
 /// let joined = hsh_join!(", ", "Hello", "world");
 /// ```
 ///
@@ -133,6 +139,9 @@ macro_rules! hsh_join {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_max };
+///
 /// let max = hsh_max!(1, 2, 3);  // `max` will be 3
 /// ```
 #[macro_export]
@@ -151,6 +160,9 @@ macro_rules! hsh_max {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_min };
+///
 /// let min = hsh_min!(1, 2, 3);  // `min` will be 1
 /// ```
 ///
@@ -170,6 +182,9 @@ macro_rules! hsh_min {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_print };
+///
 /// hsh_print!("Hello {}", "world");  // This will print "Hello world"
 /// ```
 #[macro_export]
@@ -185,6 +200,9 @@ macro_rules! hsh_print {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_print_vec };
+///
 /// let vec = vec![1, 2, 3];
 /// hsh_print_vec!(vec);  // This will print 1, 2, 3 on separate lines
 /// ```
@@ -204,6 +222,9 @@ macro_rules! hsh_print_vec {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_split };
+///
 /// let split = hsh_split!("Hello world");
 /// ```
 ///
@@ -221,6 +242,9 @@ macro_rules! hsh_split {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_vec };
+///
 /// let vec = hsh_vec!(1, 2, 3);  // `vec` will be [1, 2, 3]
 /// ```
 ///
@@ -240,6 +264,9 @@ macro_rules! hsh_vec {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ hsh_parse };
+///
 /// let parsed = hsh_parse!("123");  // `parsed` will be Ok(123)
 /// ```
 #[macro_export]
@@ -258,7 +285,16 @@ macro_rules! hsh_parse {
 /// # Example
 ///
 /// ```
-/// let string = to_str_error!(some_expression);
+/// extern crate hsh;
+/// use hsh::{ to_str_error };
+///
+/// let result: Result<(), String> = Ok(());
+/// let error: Result<(), String> =
+/// Err("Error message".to_string());
+///
+/// let result_str = to_str_error!(result);
+/// assert_eq!(result_str, Ok(()));
+///
 /// ```
 #[macro_export]
 macro_rules! to_str_error {
@@ -273,6 +309,9 @@ macro_rules! to_str_error {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ random_string };
+///
 /// let random = random_string!(10);
 /// ```
 ///
@@ -299,6 +338,9 @@ macro_rules! random_string {
 /// # Example
 ///
 /// ```
+/// extern crate hsh;
+/// use hsh::{ match_algo, HashAlgorithm };
+///
 /// let algo = match_algo!("bcrypt");
 /// ```
 ///
@@ -323,7 +365,16 @@ macro_rules! match_algo {
 /// # Example
 ///
 /// ```
-/// let hash = generate_hash!("password", "salt", HashAlgorithm::Bcrypt);  // `hash` will be a new hash generated from the password, salt, and algorithm
+/// extern crate hsh;
+/// use hsh::Hash;
+/// use hsh::{ generate_hash, HashAlgorithm };
+///
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
+/// let hash_bytes = generate_hash!(password, salt, algo);
+///
+/// assert!(hash_bytes.is_ok());
 /// ```
 ///
 #[macro_export]
@@ -339,7 +390,16 @@ macro_rules! generate_hash {
 /// # Example
 ///
 /// ```
-/// let hash = new_hash!("password", "salt", HashAlgorithm::Bcrypt);  // `hash` will be a new instance of the `Hash` struct
+/// extern crate hsh;
+/// use hsh::Hash;
+/// use hsh::{ new_hash, HashAlgorithm };
+///
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
+/// let hash = new_hash!(password, salt, algo);
+///
+/// assert!(hash.is_ok());
 /// ```
 #[macro_export]
 macro_rules! new_hash {
@@ -354,7 +414,21 @@ macro_rules! new_hash {
 /// # Example
 ///
 /// ```
-/// let length = hash_length!(hash);  // `length` will be the length of the password in the `hash` instance
+/// extern crate hsh;
+/// use hsh::Hash;
+/// use hsh::{ hash_length };
+/// use hsh::{ new_hash, HashAlgorithm };
+///
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
+///
+/// let hash = new_hash!(password, salt, algo);
+/// assert!(hash.is_ok());
+/// let hash = hash.unwrap();
+///
+/// let password_length = hash_length!(hash);
+/// assert_eq!(password_length, 60);
 /// ```
 ///
 #[macro_export]
