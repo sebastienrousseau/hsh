@@ -48,6 +48,25 @@ mod tests {
     }
 
     #[test]
+    fn test_from_string_invalid_hash_string() {
+        // Provide an invalid hash string
+        let invalid_hash_string = "invalid$hash$string";
+
+        let hash = Hash::from_string(invalid_hash_string);
+
+        // Expect an error to be returned
+        assert!(hash.is_err());
+
+        // Check the error message
+        match hash {
+            Err(e) => {
+                assert_eq!(e, String::from("Invalid hash string"))
+            }
+            _ => panic!("Expected Err, got Ok"),
+        }
+    }
+
+    #[test]
     fn test_generate_salt() {
         let algo = "argon2i";
 
@@ -56,6 +75,46 @@ mod tests {
         // Assert that the salt is of the correct length and format
         assert_eq!(salt.len(), 16);
     }
+
+    #[test]
+    fn test_generate_salt_invalid_algorithm() {
+        let invalid_algo = "unsupported_algo";
+
+        let salt = Hash::generate_salt(invalid_algo);
+
+        // Expect an error to be returned
+        assert!(salt.is_err());
+
+        // Check the error message
+        match salt {
+            Err(e) => assert_eq!(
+                e,
+                format!("Unsupported hash algorithm: {}", invalid_algo)
+            ),
+            _ => panic!("Expected Err, got Ok"),
+        }
+    }
+
+    #[test]
+    fn test_generate_salt_bcrypt() {
+        let algo = "bcrypt";
+
+        let salt = Hash::generate_salt(algo).unwrap();
+
+        // Assert that the salt is of the correct length and format
+        assert_eq!(salt.len(), 24); // bcrypt salt will be longer due to base64 encoding
+    }
+
+    #[test]
+    fn test_generate_salt_scrypt() {
+        let algo = "scrypt";
+
+        let salt = Hash::generate_salt(algo).unwrap();
+
+        // Assert that the salt is of the correct length and format
+        assert_eq!(salt.len(), 44); // scrypt salt will be longer due to base64 encoding
+    }
+
     #[test]
     fn test_argon2i_hashing() {
         let password = "password123";
@@ -169,6 +228,35 @@ mod tests {
 
         // Check that the salt is empty (since from_hash doesn't set the salt)
         assert_eq!(from_hash.salt, Vec::<u8>::new());
+    }
+
+    #[test]
+    fn test_from_hash_invalid_algorithm() {
+        let password = "password123";
+        let salt = "somesalt";
+        let algo = "unsupported_algo";
+
+        // Generate a hash from the password
+        let original_hash =
+            Hash::new(password, salt, "bcrypt").unwrap();
+
+        // Get the hashed password bytes
+        let hashed_password = original_hash.hash;
+
+        // Now try to create a new Hash struct from the hashed password bytes
+        let from_hash = Hash::from_hash(&hashed_password, algo);
+
+        // Check that from_hash is Err
+        assert!(from_hash.is_err());
+
+        // Check the error message
+        match from_hash {
+            Err(e) => assert_eq!(
+                e,
+                format!("Unsupported hash algorithm: {}", algo)
+            ),
+            _ => panic!("Expected Err, got Ok"),
+        }
     }
 
     #[test]
