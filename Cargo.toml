@@ -1,13 +1,19 @@
 [package]
 authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>"]
 build = "build.rs"
-categories = ["algorithms", "data-structures", "cryptography"]
+categories = [
+    "algorithms",
+    "authentication",
+    "cryptography",
+    "data-structures",
+    "encoding",
+]
 description = "Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification in Rust"
 documentation = "https://docs.rs/hsh"
 edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
 homepage = "https://minifunctions.com/"
-keywords = ["argon2rs", "hash", "hashing-algorithm", "hsh", "post-quantum"]
+keywords = ["argon2", "argon2i", "hash", "password", "security"]
 license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
