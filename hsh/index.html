@@ -1,88 +1,132 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust"><title>hsh - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-f3501f0f5ae15dfb.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hsh" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (74c482104 2023-05-04)" data-search-js="search-4926e5fc22a5646a.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="icon" href="https://kura.pro/hsh/images/favicon.ico"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../hsh/index.html"><img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../hsh/index.html"><img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="logo"></a><h2 class="location"><a href="#">Crate hsh</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.0.3</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#types">Type Definitions</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">hsh</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/hsh/lib.rs.html#4-609">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="quantum-resistant-cryptographic-hash-library-for-password-hashing-and-verification-in-rust"><a href="#quantum-resistant-cryptographic-hash-library-for-password-hashing-and-verification-in-rust">Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification in Rust</a></h2><center>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification"><title>hsh - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-f3501f0f5ae15dfb.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hsh" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (ce5919fce 2023-05-15)" data-search-js="search-4926e5fc22a5646a.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-6f6ffb5395b17c6e.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="icon" href="https://kura.pro/hsh/images/favicon.ico"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../hsh/index.html"><img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../hsh/index.html"><img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="logo"></a><h2 class="location"><a href="#">Crate hsh</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.0.4</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#modules">Modules</a></li><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li><li><a href="#types">Type Definitions</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">hsh</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/hsh/lib.rs.html#4-554">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="quantum-resistant-cryptographic-hash-library-for-password-encryption-and-verification"><a href="#quantum-resistant-cryptographic-hash-library-for-password-encryption-and-verification">Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification</a></h2>
+<p><em>Part of the <a href="https://minifunctions.com/" title="MiniFunctions">Mini Functions</a> family of libraries.</em></p>
+<center>
 <p><img src="https://kura.pro/hsh/images/banners/banner-hsh.svg" alt="Hash (HSH) Banner" title="The Hash (HSH) Banner" /></p>
 <p><a href="https://crates.io/crates/hsh"><img src="https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&amp;color=success&amp;labelColor=27A006" alt="Crates.io" title="Crates.io" /></a>
 <a href="https://github.com/sebastienrousseau/hsh"><img src="https://img.shields.io/badge/github-555555?style=for-the-badge&amp;labelColor=000000&amp;logo=github" alt="GitHub" title="GitHub" /></a>
-<a href="https://lib.rs/hsh"><img src="https://img.shields.io/badge/lib.rs-v0.0.3-success.svg?style=for-the-badge&amp;color=8A48FF&amp;labelColor=6F36E4" alt="Lib.rs" title="Lib.rs" /></a>
+<a href="https://lib.rs/hsh"><img src="https://img.shields.io/badge/lib.rs-v0.0.4-success.svg?style=for-the-badge&amp;color=8A48FF&amp;labelColor=6F36E4" alt="Lib.rs" title="Lib.rs" /></a>
 <a href="http://opensource.org/licenses/MIT"><img src="https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&amp;color=007EC6&amp;labelColor=03589B" alt="License" title="License" /></a>
 <a href="https://www.rust-lang.org"><img src="https://img.shields.io/badge/rust-f04041?style=for-the-badge&amp;labelColor=c0282d&amp;logo=rust" alt="Rust" title="Rust" /></a></p>
 </center>
-<h3 id="overview"><a href="#overview">Overview</a></h3>
-<p>The Hash (HSH) library is a cryptographic hash library for password
-hashing and verification in Rust, designed to provide robust
-security for passwords, utilizing the latest advancements in
-quantum-resistant cryptography.</p>
-<p>The library is designed to be easy to use, with a simple API that
-allows for the generation, retrieval, and verification of password
-hashes.</p>
-<p>It supports the following hash algorithms:</p>
+<h3 id="overview-"><a href="#overview-">Overview 📖</a></h3>
+<p>The <code>Hash (HSH)</code> Rust library provides an interface for implementing
+secure hash and digest algorithms, specifically designed for
+password encryption and verification.</p>
+<p>The library provides a simple API that makes it easy to store and
+verify hashed passwords. It enables robust security for passwords,
+using the latest advancements in <code>Quantum-resistant cryptography</code>.
+Quantum-resistant cryptography refers to cryptographic algorithms,
+usually public-key algorithms, that are thought to be secure against
+an attack by a quantum computer. As quantum computing continues to
+advance, this feature of the library assures that the passwords
+managed through this system remain secure even against cutting-edge
+computational capabilities.</p>
+<p>The library supports the following Password Hashing Schemes
+(Password Based Key Derivation Functions):</p>
 <ul>
-<li><a href="https://en.wikipedia.org/wiki/Argon2"><strong>Argon2i</strong></a>: A memory-
-hard password hashing function designed to be secure against both
-brute-force attacks and rainbow table attacks.</li>
-<li><a href="https://en.wikipedia.org/wiki/Bcrypt"><strong>Bcrypt</strong></a>: A password
-hashing function designed to be secure against brute-force attacks.
-It is a work-factor function, which means that it takes a certain
-amount of time to compute. This makes it difficult to attack with a
-brute-force algorithm.</li>
-<li><a href="https://en.wikipedia.org/wiki/Scrypt"><strong>Scrypt</strong></a>: A password
-hashing function designed to be secure against both brute-force
-attacks and rainbow table attacks. It is a memory-hard and work-
-factor function, which means that it requires a lot of memory and
-time to compute. This makes it very difficult to attack with a GPU
-or other parallel computing device.</li>
+<li><strong>Argon2i</strong>: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. (Recommended)</li>
+<li><strong>Bcrypt</strong>: A password hashing function designed to resist time-memory trade-off (TMTO) attacks, secure against brute-force attacks.</li>
+<li><strong>Scrypt</strong>: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.</li>
 </ul>
-<h3 id="features"><a href="#features">Features</a></h3><h4 id="hash-struct"><a href="#hash-struct">Hash Struct</a></h4>
-<p>The <code>Hash</code> struct has three fields:</p>
+<p>The library is a valuable tool for developers who need to store and verify passwords in a secure manner. It is easy to use and can be integrated into a variety of applications.</p>
+<h3 id="features-"><a href="#features-">Features ✨</a></h3>
 <ul>
-<li><code>password</code>: A string that stores the plaintext password.</li>
-<li><code>hash</code>: A vector of bytes that stores the hashed password.</li>
-<li><code>salt</code>: A vector of bytes that stores the salt used for password
-hashing.</li>
-<li><code>algorithm</code>: An enum that stores the algorithm used for password
-hashing. The enum has three variants: <code>Argon2i</code>, <code>Bcrypt</code>, and
-<code>Scrypt</code>.</li>
+<li><strong>Compliant with multiple Password Hashing Schemes (Password Based Key Derivation Functions) such as Argon2i, Bcrypt and Scrypt.</strong> This makes the library more versatile and can be used in a variety of applications.</li>
+<li><strong>Quantum-resistant, making it secure against future attacks using quantum computers.</strong> This is an important feature as quantum computers become more powerful.</li>
+<li><strong>Easy to use.</strong> The library provides a simple API that makes it easy to store and verify hashed passwords.</li>
+<li><strong>Can be integrated into a variety of applications.</strong> The library is written in Rust, which makes it easy to integrate into any Rust project and is fast, efficient, and secure.</li>
+</ul>
+<h4 id="hash-struct"><a href="#hash-struct">Hash Struct</a></h4>
+<p>The <code>Hash</code> struct is a data structure that stores the following information about a hashed password:</p>
+<ul>
+<li><strong>algorithm</strong>: An enum that stores the algorithm used for password hashing. The enum has three variants: Argon2i, Bcrypt, and Scrypt.</li>
+<li><strong>hash</strong>: A vector of bytes that stores the hashed password.</li>
+<li><strong>salt</strong>: A vector of bytes that stores the salt used for password hashing.</li>
 </ul>
 <h4 id="hash-algorithms"><a href="#hash-algorithms">Hash Algorithms</a></h4>
-<p>The <code>HashAlgorithm</code> enum has three variants:</p>
+<p>The <code>HashAlgorithm</code> enum provides support for the following Password Hashing Schemes (Password Based Key Derivation Functions):</p>
 <ul>
-<li><code>Argon2i</code>: The Argon2i algorithm.</li>
-<li><code>Bcrypt</code>: The Bcrypt algorithm.</li>
-<li><code>Scrypt</code>: The Scrypt algorithm.</li>
+<li><strong>Argon2i</strong>: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. It is recommended for its strong security.</li>
+<li><strong>Bcrypt</strong>: A password hashing function designed to resist time-memory trade-off (TMTO) attacks and provide security against brute-force attacks.</li>
+<li><strong>Scrypt</strong>: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.</li>
 </ul>
 <h4 id="hash-methods"><a href="#hash-methods">Hash Methods</a></h4>
-<p>The <code>Hash</code> struct provides the following methods for password
-hashing and verification:</p>
+<p>The <code>Hash</code> struct provides the following methods for working with hashed passwords:</p>
 <ul>
-<li><code>from_hash</code>: A method that creates a <code>Hash</code> struct instance from a given hash.</li>
-<li><code>from_string</code>: A method that creates a <code>Hash</code> struct instance from a given string.</li>
-<li><code>generate_hash</code>: A static method that generates a hash from a plaintext password and salt.</li>
-<li><code>generate_salt</code>: A static method that generates a salt.</li>
-<li><code>hash_length</code>: A method that returns the length of the hash.</li>
-<li><code>hash</code>: A method that returns the hash as a slice of bytes.</li>
-<li><code>new</code>: A constructor method that creates a new <code>Hash</code> struct instance with the given plaintext password and salt.</li>
-<li><code>password_length</code>: A method that returns the length of the password.</li>
-<li><code>password</code>: A method that returns the password as a string.</li>
-<li><code>salt</code>: A method that returns the salt as a slice of bytes.</li>
-<li><code>set_hash</code>: A method that sets a new hash.</li>
-<li><code>set_password</code>: A method that sets a new password and generates a new hash.</li>
-<li><code>set_salt</code>: A method that sets a new salt.</li>
-<li><code>to_string_representation</code>: A method that returns the hash as a string.</li>
-<li><code>verify</code>: A method that verifies a plaintext password against the stored hash.</li>
+<li><code>algorithm</code>: A function that returns the hash algorithm used by the hash map.</li>
+<li><code>from_hash</code>: A function that creates a new hash object from a hash value and a hash algorithm.</li>
+<li><code>from_string</code>: A function that creates a new hash object from a hash string in the format algorithm$salt$hash.</li>
+<li><code>generate_hash</code>: A function that generates a hash value for a password using the specified hash algorithm.</li>
+<li><code>generate_random_string</code>: A function that generates a random string of the specified length.</li>
+<li><code>generate_salt</code>: A function that generates a random salt for a password using the specified hash algorithm.</li>
+<li><code>hash</code>: A function that returns the hash value of a hash object.</li>
+<li><code>hash_length</code>: A function that returns the length of the hash value of a hash object.</li>
+<li><code>new</code>: A function that creates a new hash object from a password, salt, and hash algorithm.</li>
+<li><code>parse</code>: A function that parses a JSON string into a hash object.</li>
+<li><code>parse_algorithm</code>: A function that parses a hash string into a hash algorithm.</li>
+<li><code>salt</code>: A function that returns the salt used to hash a password.</li>
+<li><code>set_hash</code>: A function that sets the hash value of a hash object.</li>
+<li><code>set_password</code>: A function that sets the password of a hash object.</li>
+<li><code>set_salt</code>: A function that sets the salt of a hash object.</li>
+<li><code>to_string_representation</code>: A function that converts a hash object to a string representation.</li>
+<li><code>verify</code>: A function that verifies a password against a hash object.</li>
 </ul>
 <h4 id="traits"><a href="#traits">Traits</a></h4>
-<p>The <code>Hash</code> struct also implements the following traits:</p>
+<p>The Hash struct also implements the following traits:</p>
 <ul>
-<li><code>FromStr</code>: Allows the <code>Hash</code> struct to be converted from a string.</li>
-<li><code>std::fmt::Display</code>: Allows the <code>Hash</code> struct to be printed as a string.</li>
+<li><code>FromStr</code>: Allows the Hash struct to be converted from a string.</li>
+<li><code>std::fmt::Display</code>: Allows the Hash struct to be printed as a string.</li>
 </ul>
-<h4 id="security-and-performance"><a href="#security-and-performance">Security and Performance</a></h4>
-<p>It is important to note that the library uses the <code>argon2rs</code> crate for password hashing, which is a secure and quantum-resistant password hashing library.</p>
-<h3 id="usage"><a href="#usage">Usage</a></h3>
+<h3 id="getting-started-"><a href="#getting-started-">Getting Started 🚀</a></h3>
+<p>To start using Hash (HSH), add it as a dependency in your Cargo.toml file and import it in your Rust file. You can then create a new Hash instance and call the appropriate methods for your needs.</p>
+<h4 id="example"><a href="#example">Example</a></h4>
+<p>This example demonstrates how to create a Hash object, retrieve the hashed password bytes, and test the hash() method for verifying the correctness of the hash.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="comment">// Import the Hash struct
+</span><span class="kw">extern crate </span>hsh;
+<span class="kw">use </span>hsh::Hash;
+
+<span class="comment">// Main function
+</span><span class="kw">fn </span>main() {
+
+   <span class="comment">// Define the password, salt, and algorithm
+   </span><span class="kw">let </span>password = <span class="string">&quot;password123&quot;</span>;  <span class="comment">// Must be at least 8 characters.
+   </span><span class="kw">let </span>salt = <span class="string">&quot;somesalt&quot;</span>;         <span class="comment">// Must be at least 8 characters.
+   </span><span class="kw">let </span>algo = <span class="string">&quot;argon2i&quot;</span>;          <span class="comment">// Must be either &quot;argon2i&quot;,  &quot;bcrypt&quot;, or &quot;scrypt&quot;.
+
+   // Create a new Hash object
+   </span><span class="kw">let </span>original_hash = Hash::new(password, salt, algo).unwrap(); <span class="comment">// Unwrap the Result
+
+   // Get the hashed password bytes from the Hash object
+   </span><span class="kw">let </span>hashed_password = original_hash.hash.clone(); <span class="comment">// Clone the hash vector
+
+   // Test the `hash` method for verifying the correctness of the hash
+   </span><span class="macro">assert_eq!</span>(original_hash.hash(), <span class="kw-2">&amp;</span>hashed_password); <span class="comment">// Verify the hash
+
+</span>}</code></pre></div>
+<h3 id="license-"><a href="#license-">License 📝</a></h3>
+<p>The project is licensed under the terms of both the MIT license and the
+Apache License (Version 2.0).</p>
 <ul>
-<li><a href="https://github.com/serde-rs/serde"><code>serde</code></a>: Enable serialization/deserialization via serde</li>
+<li><a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License, Version 2.0</a></li>
+<li><a href="http://opensource.org/licenses/MIT">MIT license</a></li>
 </ul>
-</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="macros/index.html" title="mod hsh::macros">macros</a></div><div class="desc docblock-short">The <code>macros</code> module contains functions for generating macros.</div></li></ul><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.display_hash.html" title="macro hsh::display_hash">display_hash</a></div><div class="desc docblock-short">This macro prints the hash of a given <code>Hash</code> struct instance to the
-console.</div></li><li><div class="item-name"><a class="macro" href="macro.generate_hash.html" title="macro hsh::generate_hash">generate_hash</a></div><div class="desc docblock-short">This macro generates a new hash for a given password, salt, and algorithm.</div></li><li><div class="item-name"><a class="macro" href="macro.new_hash.html" title="macro hsh::new_hash">new_hash</a></div><div class="desc docblock-short">This macro creates a new instance of the <code>Hash</code> struct with the
-given password, salt, and algorithm.</div></li><li><div class="item-name"><a class="macro" href="macro.password_length.html" title="macro hsh::password_length">password_length</a></div><div class="desc docblock-short">This macro returns the length of the password for a given <code>Hash</code>
-struct instance.</div></li><li><div class="item-name"><a class="macro" href="macro.set_hash.html" title="macro hsh::set_hash">set_hash</a></div><div class="desc docblock-short">This macro sets a new hash value for a given <code>Hash</code> struct instance.</div></li><li><div class="item-name"><a class="macro" href="macro.set_password.html" title="macro hsh::set_password">set_password</a></div><div class="desc docblock-short">This macro sets a new password, salt, and algorithm value for a
-given <code>Hash</code> struct instance.</div></li><li><div class="item-name"><a class="macro" href="macro.set_salt.html" title="macro hsh::set_salt">set_salt</a></div><div class="desc docblock-short">This macro sets a new salt value for a given <code>Hash</code> struct instance.</div></li><li><div class="item-name"><a class="macro" href="macro.to_string.html" title="macro hsh::to_string">to_string</a></div><div class="desc docblock-short">This macro converts a given <code>Hash</code> struct instance to a string.</div></li><li><div class="item-name"><a class="macro" href="macro.verify_password.html" title="macro hsh::verify_password">verify_password</a></div><div class="desc docblock-short">This macro verifies a given password against a given <code>Hash</code> struct instance.</div></li></ul><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Hash.html" title="struct hsh::Hash">Hash</a></div><div class="desc docblock-short">A struct for storing and verifying hashed passwords based on the argon2rs crate</div></li></ul><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.HashAlgorithm.html" title="enum hsh::HashAlgorithm">HashAlgorithm</a></div><div class="desc docblock-short">The supported hash algorithms</div></li></ul><h2 id="types" class="small-section-header"><a href="#types">Type Definitions</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.Salt.html" title="type hsh::Salt">Salt</a></div><div class="desc docblock-short">A type alias for a salt.</div></li></ul></section></div></main></body></html>
+</div></details><h2 id="modules" class="small-section-header"><a href="#modules">Modules</a></h2><ul class="item-table"><li><div class="item-name"><a class="mod" href="macros/index.html" title="mod hsh::macros">macros</a></div><div class="desc docblock-short">The <code>macros</code> module contains functions for generating macros.</div></li></ul><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.generate_hash.html" title="macro hsh::generate_hash">generate_hash</a></div><div class="desc docblock-short">This macro generates a new hash for a given password, salt, and
+algorithm.</div></li><li><div class="item-name"><a class="macro" href="macro.hash_length.html" title="macro hsh::hash_length">hash_length</a></div><div class="desc docblock-short">This macro returns the length of the password for a given <code>Hash</code>
+struct instance.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh.html" title="macro hsh::hsh">hsh</a></div><div class="desc docblock-short">This macro takes any number of arguments and parses them into a Rust
+value. The parsed value is returned wrapped in
+<code>hsh::Common::parse()</code> function call.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_assert.html" title="macro hsh::hsh_assert">hsh_assert</a></div><div class="desc docblock-short">This macro asserts that the given condition is true. If the
+condition is false, the macro panics with the message “Assertion
+failed!”.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_contains.html" title="macro hsh::hsh_contains">hsh_contains</a></div><div class="desc docblock-short">This macro checks if the given string contains the given substring.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_in_range.html" title="macro hsh::hsh_in_range">hsh_in_range</a></div><div class="desc docblock-short">This macro checks if the given value is within the given range. The
+range is inclusive of both endpoints.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_join.html" title="macro hsh::hsh_join">hsh_join</a></div><div class="desc docblock-short">This macro joins the given strings together with the given
+separator.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_max.html" title="macro hsh::hsh_max">hsh_max</a></div><div class="desc docblock-short">This macro finds the maximum value of the given values.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_min.html" title="macro hsh::hsh_min">hsh_min</a></div><div class="desc docblock-short">This macro finds the minimum value of the given values.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_parse.html" title="macro hsh::hsh_parse">hsh_parse</a></div><div class="desc docblock-short">This macro attempts to parse the given input into a u64 value. If
+parsing fails, an error is returned with a message indicating the
+failure.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_print.html" title="macro hsh::hsh_print">hsh_print</a></div><div class="desc docblock-short">This macro prints the given arguments to the console.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_print_vec.html" title="macro hsh::hsh_print_vec">hsh_print_vec</a></div><div class="desc docblock-short">This macro prints the given vector of values to the console. Each
+value is printed on a new line.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_split.html" title="macro hsh::hsh_split">hsh_split</a></div><div class="desc docblock-short">This macro splits the given string into a vector of strings. The
+string is split on whitespace characters.</div></li><li><div class="item-name"><a class="macro" href="macro.hsh_vec.html" title="macro hsh::hsh_vec">hsh_vec</a></div><div class="desc docblock-short">This macro creates a new vector with the given elements.</div></li><li><div class="item-name"><a class="macro" href="macro.match_algo.html" title="macro hsh::match_algo">match_algo</a></div><div class="desc docblock-short">This macro matches the hash algorithm strings to their corresponding
+enum variants.</div></li><li><div class="item-name"><a class="macro" href="macro.new_hash.html" title="macro hsh::new_hash">new_hash</a></div><div class="desc docblock-short">This macro creates a new instance of the <code>Hash</code> struct with the
+given password, salt, and algorithm.</div></li><li><div class="item-name"><a class="macro" href="macro.random_string.html" title="macro hsh::random_string">random_string</a></div><div class="desc docblock-short">This macro generates a random string of the given length. The string
+consists of alphanumeric characters (both upper and lower case).</div></li><li><div class="item-name"><a class="macro" href="macro.to_str_error.html" title="macro hsh::to_str_error">to_str_error</a></div><div class="desc docblock-short">This macro abstracts away the error handling for the <code>to_string</code>
+method. If the method fails, an error is returned with the failure
+message.</div></li></ul><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Hash.html" title="struct hsh::Hash">Hash</a></div><div class="desc docblock-short">A struct for storing and verifying hashed passwords based on the argon2rs crate</div></li></ul><h2 id="enums" class="small-section-header"><a href="#enums">Enums</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.HashAlgorithm.html" title="enum hsh::HashAlgorithm">HashAlgorithm</a></div><div class="desc docblock-short">The supported hash algorithms
+Enum representing different hash algorithms for password hashing.</div></li></ul><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.run.html" title="fn hsh::run">run</a></div><div class="desc docblock-short">This is the main entry point for the <code>Hash (HSH)</code> library.</div></li></ul><h2 id="types" class="small-section-header"><a href="#types">Type Definitions</a></h2><ul class="item-table"><li><div class="item-name"><a class="type" href="type.Salt.html" title="type hsh::Salt">Salt</a></div><div class="desc docblock-short">A type alias for a salt.</div></li></ul></section></div></main></body></html>
