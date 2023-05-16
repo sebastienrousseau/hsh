@@ -1,7 +1,7 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! # Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification
+//! # Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification
 //!
 //! *Part of the [Mini Functions][0] family of libraries.*
 //!
@@ -19,26 +19,40 @@
 //!
 //! ## Overview 📖
 //!
-//! The Hash (HSH) library is a cryptographic hash library for
-//! password hashing and verification in Rust, designed to provide
-//! robust security for passwords, utilizing the latest advancements in
-//! quantum-resistant cryptography.
+//! The `Hash (HSH)` Rust library provides an interface for implementing
+//! secure hash and digest algorithms, specifically designed for
+//! password encryption and verification.
 //!
-//! The library is designed to be easy to use, with a simple API that
-//! allows for the generation, retrieval, and verification of password
-//! hashes.
+//! The library provides a simple API that makes it easy to store and
+//! verify hashed passwords. It enables robust security for passwords,
+//! using the latest advancements in `Quantum-resistant cryptography`.
+//! Quantum-resistant cryptography refers to cryptographic algorithms,
+//! usually public-key algorithms, that are thought to be secure against
+//! an attack by a quantum computer. As quantum computing continues to
+//! advance, this feature of the library assures that the passwords
+//! managed through this system remain secure even against cutting-edge
+//! computational capabilities.
 //!
-//! It supports the following hash algorithms:
+//! The library supports the following Password Hashing Schemes
+//! (Password Based Key Derivation Functions):
 //!
-//! - **Argon2i**: A memory-hard password hashing function designed to resist GPU-based attacks and secure against both brute-force attacks and rainbow table attacks.
+//! - **Argon2i**: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. (Recommended)
 //! - **Bcrypt**: A password hashing function designed to resist time-memory trade-off (TMTO) attacks, secure against brute-force attacks.
 //! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.
 //!
+//! The library is a valuable tool for developers who need to store and verify passwords in a secure manner. It is easy to use and can be integrated into a variety of applications.
+//!
 //! ## Features ✨
+//!
+//! - **Compliant with multiple Password Hashing Schemes (Password Based Key Derivation Functions) such as Argon2i, Bcrypt and Scrypt.** This makes the library more versatile and can be used in a variety of applications.
+//! - **Quantum-resistant, making it secure against future attacks using quantum computers.** This is an important feature as quantum computers become more powerful.
+//! - **Easy to use.** The library provides a simple API that makes it easy to store and verify hashed passwords.
+//! - **Can be integrated into a variety of applications.** The library is written in Rust, which makes it easy to integrate into any Rust project and is fast, efficient, and secure.
+//!
 //!
 //! ### Hash Struct
 //!
-//! The Hash struct has four fields:
+//! The `Hash` struct is a data structure that stores the following information about a hashed password:
 //!
 //! - **algorithm**: An enum that stores the algorithm used for password hashing. The enum has three variants: Argon2i, Bcrypt, and Scrypt.
 //! - **hash**: A vector of bytes that stores the hashed password.
@@ -46,16 +60,15 @@
 //!
 //! ### Hash Algorithms
 //!
-//! The HashAlgorithm enum has three variants:
+//! The `HashAlgorithm` enum provides support for the following Password Hashing Schemes (Password Based Key Derivation Functions):
 //!
-//! - **Argon2i**: The Argon2i algorithm
-//! - **Bcrypt**: The Bcrypt algorithm.
-//! - **Scrypt**: The Scrypt algorithm.
+//! - **Argon2i**: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. It is recommended for its strong security.
+//! - **Bcrypt**: A password hashing function designed to resist time-memory trade-off (TMTO) attacks and provide security against brute-force attacks.
+//! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.
 //!
 //! ### Hash Methods
 //!
-//! The Hash struct provides the following methods for password
-//! hashing and verification:
+//! The `Hash` struct provides the following methods for working with hashed passwords:
 //!
 //! - `algorithm`: A function that returns the hash algorithm used by the hash map.
 //! - `from_hash`: A function that creates a new hash object from a hash value and a hash algorithm.
@@ -82,17 +95,38 @@
 //! - `FromStr`: Allows the Hash struct to be converted from a string.
 //! - `std::fmt::Display`: Allows the Hash struct to be printed as a string.
 //!
-//! ### Security and Performance
-//!
-//! The `Hash (HSH)` library uses the argon2rs crate for the Argon2i algorithm. This library is a secure and quantum-resistant password hashing library. The Bcrypt and Scrypt algorithms are implemented using the bcrypt and scrypt crates respectively. These algorithms are designed to be secure against brute-force attacks and are also considered quantum-resistant. Performance of these algorithms can be tuned by adjusting parameters such as the work factor or memory cost. Always ensure to use a unique salt for each password to prevent rainbow table attacks.
-//!
-//! ### Recommendations
-//!
-//! It is recommended to always use the latest version of this library to ensure you have the most up-to-date security features. When handling passwords, always ensure they are hashed before being stored and never log or display passwords in plaintext. Always use a secure and random salt when hashing passwords.
-//!
 //! ## Getting Started 🚀
 //!
 //! To start using Hash (HSH), add it as a dependency in your Cargo.toml file and import it in your Rust file. You can then create a new Hash instance and call the appropriate methods for your needs.
+//!
+//! ### Example
+//!
+//! This example demonstrates how to create a Hash object, retrieve the hashed password bytes, and test the hash() method for verifying the correctness of the hash.
+//!
+//! ```rust
+//! // Import the Hash struct
+//! extern crate hsh;
+//! use hsh::Hash;
+//!
+//! // Main function
+//! fn main() {
+//!
+//!    // Define the password, salt, and algorithm
+//!    let password = "password123";  // Must be at least 8 characters.
+//!    let salt = "somesalt";         // Must be at least 8 characters.
+//!    let algo = "argon2i";          // Must be either "argon2i",  "bcrypt", or "scrypt".
+//!
+//!    // Create a new Hash object
+//!    let original_hash = Hash::new(password, salt, algo).unwrap(); // Unwrap the Result
+//!
+//!    // Get the hashed password bytes from the Hash object
+//!    let hashed_password = original_hash.hash.clone(); // Clone the hash vector
+//!
+//!    // Test the `hash` method for verifying the correctness of the hash
+//!    assert_eq!(original_hash.hash(), &hashed_password); // Verify the hash
+//!
+//! }
+//! ```
 //!
 //! ## License 📝
 //!
@@ -182,12 +216,31 @@ pub struct Hash {
     Serialize,
     Deserialize,
 )]
+
+/// Enum representing different hash algorithms for password hashing.
 pub enum HashAlgorithm {
-    /// Argon2i
+    /// Argon2i: A memory-hard password hashing algorithm.
+    ///
+    /// Argon2i is designed to be resistant against various types of attacks,
+    /// including GPU-based attacks and side-channel attacks. It incorporates
+    /// multiple parameters, such as memory usage, parallelism, and time cost,
+    /// to make it difficult for attackers to crack hashed passwords efficiently.
     Argon2i,
-    /// Bcrypt
+
+    /// Bcrypt: A widely used password hashing algorithm.
+    ///
+    /// Bcrypt is based on the Blowfish encryption cipher and is designed to be
+    /// slow and computationally expensive. It uses a technique called key
+    /// stretching, where the password is repeatedly hashed with a random salt
+    /// and a specified number of iterations. This approach makes it time-consuming
+    /// and resource-intensive for attackers to perform password cracking.
     Bcrypt,
-    /// Scrypt
+
+    /// Scrypt: A memory-hard password hashing algorithm.
+    ///
+    /// Scrypt is designed to be memory-hard and resistant to brute-force attacks.
+    /// It uses a large amount of memory, making it more difficult and costly for
+    /// attackers to perform parallelized attacks using specialized hardware.
     Scrypt,
 }
 
@@ -495,7 +548,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let name = "hsh";
     println!("Welcome to `{}` 👋!", { name }.to_uppercase());
     println!(
-        "Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification."
+        "Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification."
     );
     Ok(())
 }

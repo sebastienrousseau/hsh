@@ -54,5 +54,4 @@ If you've identified a bug or have a specific code improvement in mind, we welco
 
 We hope that this guide has been helpful in explaining how you can contribute to Hash (HSH). Thank you for your interest and involvement in our project!
 
-[1]: https://github.com/sebastienrousseau/dtt
 [2]: https://github.com/sebastienrousseau/dtt/issues/new

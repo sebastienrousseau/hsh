@@ -35,7 +35,7 @@ mod tests {
         // Assert that the welcome messages were printed to stdout
         let stdout = String::from_utf8(output.stdout).unwrap();
         assert!(stdout.contains("Welcome to `HSH` 👋!"));
-        assert!(stdout.contains("Quantum-Resistant Cryptographic Hash Library for Password Hashing and Verification."));
+        assert!(stdout.contains("Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification."));
     }
 
     fn run_test_scenario() -> Result<(), Box<dyn std::error::Error>> {

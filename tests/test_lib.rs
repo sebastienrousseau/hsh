@@ -478,7 +478,10 @@ mod tests {
         let algorithm = Hash::parse_algorithm(hash_str);
 
         assert!(algorithm.is_err());
-        assert_eq!(algorithm.err().unwrap(), "Unsupported hash algorithm: unsupported");
+        assert_eq!(
+            algorithm.err().unwrap(),
+            "Unsupported hash algorithm: unsupported"
+        );
     }
 
     #[test]
@@ -489,5 +492,4 @@ mod tests {
         assert!(algorithm.is_err());
         assert_eq!(algorithm.err().unwrap(), "Invalid hash string");
     }
-
 }

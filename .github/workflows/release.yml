@@ -3,7 +3,6 @@ name: 🧪 Release
 on: [push, pull_request]
 
 jobs:
-
   # Build the project for all the targets and generate artifacts.
   build:
     # This job builds the project for all the targets and generates a

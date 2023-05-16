@@ -32,41 +32,49 @@ Verification
 
 ## Overview 📖
 
-The Hash (HSH) library is a cryptographic hash library for password
-hashing and verification in Rust, designed to provide robust security
-for passwords, utilizing the latest advancements in quantum-resistant
-cryptography.
+The `Hash (HSH)` Rust library provides an interface for implementing
+secure hash and digest algorithms, specifically designed for password
+encryption and verification.
 
-The library is designed to be easy to use, with a simple API that allows
-for the generation, retrieval, and verification of password hashes.
+The library provides a simple API that makes it easy to store and verify
+hashed passwords. It enables robust security for passwords, using the
+latest advancements in `Quantum-resistant cryptography`. Quantum-
+resistant cryptography refers to cryptographic algorithms, usually
+public-key algorithms, that are thought to be secure against an attack
+by a quantum computer. As quantum computing continues to advance, this
+feature of the library assures that the passwords managed through this
+system remain secure even against cutting-edge computational
+capabilities.
 
-It supports the following hash algorithms:
+The library supports the following Password Hashing Schemes (Password
+Based Key Derivation Functions):
 
-- [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A memory-
-hard password hashing function designed to be secure against both
-brute-force attacks and rainbow table attacks.
+- [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A cutting-edge
+  and highly secure key derivation function designed to protect against
+  both traditional brute-force attacks and rainbow table attacks.
+  (Recommended)
 - [**Bcrypt**](<https://en.wikipedia.org/wiki/Bcrypt>): A password
-hashing function designed to be secure against brute-force attacks.
-It is a work-factor function, which means that it takes a certain
-amount of time to compute. This makes it difficult to attack with a
-brute-force algorithm.
+  hashing function designed to be secure against brute-force attacks.
+  It is a work-factor function, which means that it takes a certain
+  amount of time to compute. This makes it difficult to attack with a
+  brute-force algorithm.
 - [**Scrypt**](<https://en.wikipedia.org/wiki/Scrypt>): A password
-hashing function designed to be secure against both brute-force
-attacks and rainbow table attacks. It is a memory-hard and work-
-factor function, which means that it requires a lot of memory and
-time to compute. This makes it very difficult to attack with a GPU
-or other parallel computing device.
+  hashing function designed to be secure against both brute-force
+  attacks and rainbow table attacks. It is a memory-hard and work-
+  factor function, which means that it requires a lot of memory and
+  time to compute. This makes it very difficult to attack with a GPU
+  or other parallel computing device.
+
+The library is a valuable tool for developers who need to store and
+verify passwords in a secure manner. It is easy to use and can be
+integrated into a variety of applications.
 
 ## Features ✨
 
-- Generates string representations of the hash
-- Includes methods for setting and verifying passwords against the hash
-- Provides functions for generating hashes and salts
-- Rust library for hashing and verifying passwords
-- Supports external crates such as argon2rs, base64, bcrypt, scrypt, and
-  vrd.
-- Supports multiple hash algorithms (argon2i, bcrypt, scrypt)
-- Written in Rust for speed and security
+- **Compliant with multiple Password Hashing Schemes (Password Based Key Derivation Functions) such as Argon2i, Bcrypt and Scrypt.** This makes the library more versatile and can be used in a variety of applications.
+- **Quantum-resistant, making it secure against future attacks using quantum computers.** This is an important feature as quantum computers become more powerful.
+- **Easy to use.** The library provides a simple API that makes it easy to store and verify hashed passwords.
+- **Can be integrated into a variety of applications.** The library is written in Rust, which makes it easy to integrate into any Rust project and is fast, efficient, and secure.
 
 ### Secure password storage
 
