@@ -81,9 +81,13 @@ mod tests {
 
     #[test]
     fn macro_hsh_in_range() {
-        // Test that hsh_in_range! macro correctly checks if a number is within a range
-        assert!(hsh_in_range!(10, 0, 100));
-        assert!(!hsh_in_range!(-10, 0, 100));
+        let lower_bound = 0;
+        let upper_bound = 100;
+        let test_val1 = 10;
+        let test_val2 = -10;
+
+        assert!(hsh_in_range!(test_val1, lower_bound, upper_bound));
+        assert!(!hsh_in_range!(test_val2, lower_bound, upper_bound));
     }
 
     #[test]
