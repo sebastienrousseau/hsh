@@ -18,7 +18,7 @@ license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
 rust-version = "1.69.0"
-version = "0.0.4"
+version = "0.0.5"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -55,7 +55,7 @@ bcrypt = "0.14.0"
 scrypt = "0.11.0"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
-vrd = "0.0.4"
+vrd = "0.0.5"
 
 [dev-dependencies]
 assert_cmd = "2.0.11"
