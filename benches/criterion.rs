@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Benchmarking the Hash (HSH) library using Criterion.rs
+
+#![allow(missing_docs)]
 extern crate argon2rs;
 extern crate criterion;
 
