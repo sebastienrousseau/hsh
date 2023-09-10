@@ -1,4 +1,5 @@
-
+// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
 
 #[cfg(test)]
 mod tests {
