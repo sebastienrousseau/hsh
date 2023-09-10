@@ -112,15 +112,11 @@ pub mod algorithms;
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
 
-// The `modules` module contains the library modules.
-// pub mod modules;
-
 /// The `models` module contains the data models for the library.
 pub mod models;
 
 /// This is the main entry point for the `Hash (HSH)` library.
 pub fn run() -> Result<(), Box<dyn std::error::Error>> {
-    // Example of conditional logic for test mode, if necessary.
     if std::env::var("HSH_TEST_MODE").unwrap_or_default() == "1" {
         return Err("Simulated error".into());
     }
