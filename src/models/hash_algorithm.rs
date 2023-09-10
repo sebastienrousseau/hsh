@@ -37,3 +37,31 @@ pub enum HashAlgorithm {
     /// - Makes parallelized attacks difficult and costly
     Scrypt,
 }
+
+/// Represents a generic hashing algorithm.
+///
+/// The `HashingAlgorithm` trait defines a common interface for hashing algorithms.
+/// Implementing this trait for different hashing algorithms ensures that they can be used
+/// interchangeably for hashing passwords.
+///
+/// The primary consumer of this trait is the `Hash` struct, which uses it to handle the hashing
+/// logic in a decoupled and extendable manner.
+pub trait HashingAlgorithm {
+    /// Hashes a given password using a specific salt.
+    ///
+    /// Given a plaintext `password` and a `salt`, this method returns a hashed representation
+    /// of the password. The hashing algorithm used is determined by the implementing type.
+    ///
+    /// # Parameters
+    ///
+    /// - `password`: The plaintext password to be hashed.
+    /// - `salt`: A cryptographic salt to prevent rainbow table attacks.
+    ///
+    /// # Returns
+    ///
+    /// Returns a `Result` containing the hashed password as a vector of bytes.
+    /// If hashing fails, returns a `String` detailing the error.
+    fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>, String>;
+}
+
+

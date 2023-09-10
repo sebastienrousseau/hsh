@@ -161,6 +161,10 @@
 #![crate_name = "hsh"]
 #![crate_type = "lib"]
 
+
+/// The `algorithms` module contains the password hashing algorithms.
+pub mod algorithms;
+
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
 
@@ -172,13 +176,14 @@ extern crate base64;
 extern crate bcrypt;
 extern crate scrypt;
 extern crate vrd;
-use crate::models::{hash::*, hash_algorithm::*};
+
+use algorithms::{argon2i::Argon2i, bcrypt::Bcrypt, scrypt::Scrypt};
 use argon2rs::argon2i_simple;
 use base64::{engine::general_purpose, Engine as _};
+use models::{hash::*, hash_algorithm::*};
 use scrypt::scrypt;
 use std::{fmt, str::FromStr};
 use vrd::Random;
-
 
 impl Hash {
     /// A function that returns the hash algorithm used by the hash map.
@@ -249,28 +254,9 @@ impl Hash {
         algo: &str,
     ) -> Result<Vec<u8>, String> {
         match algo {
-            "argon2i" => {
-                Ok(argon2i_simple(password, salt).into_iter().collect())
-            }
-            "bcrypt" => {
-                let bcrypt_cost = 12;
-                bcrypt::hash(password, bcrypt_cost)
-                    .map_err(|e| e.to_string())
-                    .map(|hash_parts| hash_parts.into_bytes())
-            }
-            "scrypt" => {
-                let scrypt_params = scrypt::Params::new(14, 8, 1, 64)
-                    .map_err(|e| e.to_string())?;
-                let mut output = [0u8; 64];
-                scrypt(
-                    password.as_bytes(),
-                    salt.as_bytes(),
-                    &scrypt_params,
-                    &mut output,
-                )
-                .map_err(|e| e.to_string())
-                .map(|_| output.to_vec())
-            }
+            "argon2i" => Argon2i::hash_password(password, salt),
+            "bcrypt" => Bcrypt::hash_password(password, salt),
+            "scrypt" => Scrypt::hash_password(password, salt),
             _ => Err(format!("Unsupported hash algorithm: {}", algo)),
         }
     }
@@ -419,22 +405,40 @@ impl Hash {
     pub fn verify(&self, password: &str) -> Result<bool, &'static str> {
         let salt = std::str::from_utf8(&self.salt)
             .map_err(|_| "Failed to convert salt to string")?;
+
         match self.algorithm {
             HashAlgorithm::Argon2i => {
-                let hash = argon2i_simple(password, salt);
-                Ok(hash.to_vec() == self.hash)
+                // Hash the password once
+                let calculated_hash = argon2i_simple(password, salt).to_vec();
+
+                // Debugging information
+                println!("Algorithm: Argon2i");
+                println!("Provided password for verification: {}", password);
+                println!("Salt used for verification: {}", salt);
+                println!("Calculated Hash: {:?}", calculated_hash);
+                println!("Stored Hash: {:?}", self.hash);
+
+                // Perform the verification
+                Ok(calculated_hash == self.hash)
             }
             HashAlgorithm::Bcrypt => {
+                // Debugging information
+                println!("Algorithm: Bcrypt");
+                println!("Provided password for verification: {}", password);
+
                 let hash_str = std::str::from_utf8(&self.hash)
                     .map_err(|_| "Failed to convert hash to string")?;
                 bcrypt::verify(password, hash_str)
                     .map_err(|_| "Failed to verify Bcrypt password")
             }
             HashAlgorithm::Scrypt => {
+                // Debugging information
+                println!("Algorithm: Scrypt");
+                println!("Provided password for verification: {}", password);
+                println!("Salt used for verification: {}", salt);
+
                 let scrypt_params = scrypt::Params::new(14, 8, 1, 64)
-                    .map_err(|_| {
-                    "Failed to create Scrypt params"
-                })?;
+                    .map_err(|_| "Failed to create Scrypt params")?;
                 let mut output = [0u8; 64];
                 match scrypt(
                     password.as_bytes(),
@@ -442,12 +446,17 @@ impl Hash {
                     &scrypt_params,
                     &mut output,
                 ) {
-                    Ok(_) => Ok(output.to_vec() == self.hash),
+                    Ok(_) => {
+                        println!("Calculated Hash: {:?}", output.to_vec());
+                        println!("Stored Hash: {:?}", self.hash);
+                        Ok(output.to_vec() == self.hash)
+                    }
                     Err(_) => Err("Scrypt hashing failed"),
                 }
             }
         }
     }
+
 }
 
 impl fmt::Display for Hash {

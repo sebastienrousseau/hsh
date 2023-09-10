@@ -4,56 +4,82 @@
 //! Using the Hash (HSH) library
 
 use std::str::FromStr;
-use hsh::{models::{hash_algorithm::HashAlgorithm, hash::Hash}, new_hash};
+use hsh::{models::{hash::Hash, hash_algorithm::HashAlgorithm}, new_hash};
 
-// Creating and verifying hashes
+fn create_new_hash(password: &str, salt: &str, algorithm: &str) -> Result<Hash, String> {
+    let hash = Hash::new(password, salt, algorithm)?;
+    println!("Debug: Salt used for new hash: {:?}", String::from_utf8_lossy(hash.salt()));
+    Ok(hash)
+}
+
 fn create_and_verify_hash() {
-    // Creates a hash with a password and salt using `Hash::new`.
-    let mut hash =
-        Hash::new("password", "salt1234", "argon2i").unwrap();
+    let hash_argon2i = create_new_hash("password", "salt1234", "argon2i").unwrap();
+    let hash_bcrypt = create_new_hash("password", "salt1234", "bcrypt").unwrap();
+    let hash_scrypt = create_new_hash("password", "salt1234", "scrypt").unwrap();
 
-    // Sets a new password, salt, and algorithm for the hash using `Hash::set_password`.
-    hash.set_password("new_password", "new_salt1234", "argon2i")
-        .unwrap();
+    // Verify the newly created hashes
+    verify_password(&hash_argon2i, "password", "Argon2i");
+    verify_password(&hash_bcrypt, "password", "BCrypt");
+    verify_password(&hash_scrypt, "password", "Scrypt");
 
-    // Verifies a password against the stored hash using `Hash::verify`.
-    let is_valid = hash.verify("new_password");
+    let mut new_hash_argon2i = hash_argon2i.clone();
+    new_hash_argon2i.set_password("new_password", "salt1234", "argon2i").unwrap();
+
+    let mut new_hash_bcrypt = hash_bcrypt.clone();
+    new_hash_bcrypt.set_password("new_password", "salt1234", "bcrypt").unwrap();
+
+    let mut new_hash_scrypt = hash_scrypt.clone();
+    new_hash_scrypt.set_password("new_password", "salt1234", "scrypt").unwrap();
+
+    // Verify the updated hashes
+    verify_password(&new_hash_argon2i, "new_password", "Argon2i");
+    verify_password(&new_hash_bcrypt, "new_password", "BCrypt");
+    verify_password(&new_hash_scrypt, "new_password", "Scrypt");
+}
+
+fn verify_password(hash: &Hash, password: &str, algorithm: &str) {
+    let is_valid = hash.verify(password);
     match is_valid {
         Ok(valid) => {
-            println!("🦀 Password verification result: ✅ {:>5}", valid)
-        }
+            println!("🦀 Password verification result for {}: ✅ {:?}", algorithm, valid);
+        },
         Err(e) => {
-            eprintln!("🦀 Error during password verification: ❌ {}", e)
+            eprintln!("🦀 Error during password verification for {}: ❌ {}", algorithm, e);
         }
     }
 }
 
-// Parsing and displaying hashes
 fn parse_and_display_hash() {
-    // Parses a hash algorithm from a string using `HashAlgorithm::from_str`.
-    let parsed_hash_algorithm =
-        HashAlgorithm::from_str("argon2i").unwrap();
-    println!(
-        "🦀 Parsed hash algorithm:        ✅ {}",
-        parsed_hash_algorithm
-    );
+    let parsed_argon2i = HashAlgorithm::from_str("argon2i").unwrap();
+    let parsed_bcrypt = HashAlgorithm::from_str("bcrypt").unwrap();
+    let parsed_scrypt = HashAlgorithm::from_str("scrypt").unwrap();
 
-    // Creates a new hash using the `new_hash!` macro.
-    let hash = new_hash!("password", "salt12345", "argon2i");
+    println!("🦀 Parsed Argon2i hash algorithm: {}", parsed_argon2i);
+    println!("🦀 Parsed Bcrypt hash algorithm: {}", parsed_bcrypt);
+    println!("🦀 Parsed Scrypt hash algorithm: {}", parsed_scrypt);
 
-    // Converts the hash to a string manually.
-    let hash_string = match hash {
-        Ok(hash) => format!(
-            "🦀 Hash to a string:             ✅ {}",
-            hash.to_string_representation()
-        ),
-        Err(err) => format!(
-            "🦀 Hash to a string:             ❌ Error: {}",
-            err
-        ),
+    let argon2i_hash = new_hash!("password", "salt12345", "argon2i");
+    let bcrypt_hash = new_hash!("password", "salt12345", "bcrypt");
+    let scrypt_hash = new_hash!("password", "salt12345", "scrypt");
+
+    let argon2i_hash_string = match argon2i_hash {
+        Ok(hash) => hash.to_string_representation(),
+        Err(e) => format!("Error: {}", e),
     };
-    println!("{}", hash_string);
+    let bcrypt_hash_string = match bcrypt_hash {
+        Ok(hash) => hash.to_string_representation(),
+        Err(e) => format!("Error: {}", e),
+    };
+    let scrypt_hash_string = match scrypt_hash {
+        Ok(hash) => hash.to_string_representation(),
+        Err(e) => format!("Error: {}", e),
+    };
+
+    println!("🦀 Argon2i Hash to a string: {}", argon2i_hash_string);
+    println!("🦀 Bcrypt Hash to a string: {}", bcrypt_hash_string);
+    println!("🦀 Scrypt Hash to a string: {}", scrypt_hash_string);
 }
+
 
 fn main() {
     create_and_verify_hash();
