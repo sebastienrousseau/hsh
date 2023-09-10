@@ -112,8 +112,8 @@ pub mod algorithms;
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
 
-/// The `modules` module contains the library modules.
-pub mod modules;
+// The `modules` module contains the library modules.
+// pub mod modules;
 
 /// The `models` module contains the data models for the library.
 pub mod models;
