@@ -6,12 +6,13 @@ mod tests {
 
     // Importing hsh crate and all of its macros
     extern crate hsh;
-    use hsh::{generate_hash, hash_length, new_hash, Hash};
+    use hsh::{generate_hash, hash_length, new_hash};
+    use hsh::models::hash::*;
+    use hsh::models::hash_algorithm::HashAlgorithm;
     use hsh::{
         hsh_assert, hsh_contains, hsh_in_range, hsh_join, hsh_max,
         hsh_min, hsh_parse, hsh_print, hsh_print_vec, hsh_split,
         hsh_vec, match_algo, random_string, to_str_error,
-        HashAlgorithm,
     };
 
     #[test]
@@ -79,12 +80,18 @@ mod tests {
         assert!(!hsh_contains!("Hello", "x"));
     }
 
+
     #[test]
     fn macro_hsh_in_range() {
-        // Test that hsh_in_range! macro correctly checks if a number is within a range
-        assert!(hsh_in_range!(10, 0, 100));
-        assert!(!hsh_in_range!(-10, 0, 100));
+        let lower_bound = 0;
+        let upper_bound = 100;
+        let test_val1 = 10;
+        let test_val2 = -10;
+
+        assert!(hsh_in_range!(test_val1, lower_bound, upper_bound));
+        assert!(!hsh_in_range!(test_val2, lower_bound, upper_bound));
     }
+
 
     #[test]
     fn macro_hsh_parse() {

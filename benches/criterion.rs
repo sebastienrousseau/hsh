@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Benchmarking the Hash (HSH) library using Criterion.rs
+
+#![allow(missing_docs)]
 extern crate argon2rs;
 extern crate criterion;
 
@@ -10,7 +12,7 @@ use criterion::{
 };
 
 extern crate hsh;
-use self::hsh::Hash;
+use hsh::models::hash::Hash;
 
 fn generate_hash_benchmark(c: &mut Criterion) {
     c.bench_function("generate_hash", |b| {

@@ -14,7 +14,7 @@
 //!
 //! | Macro | Description |
 //! |--------|------------|
-//! | `hsh` | Calls the parse method on the Common struct from the hsh crate. |
+//! | `hsh` | Calls the `parse` method on the `Hash` struct from the hsh crate. |
 //! | `hsh_assert` | Asserts that a given condition is true. If the condition is false, the macro will cause the program to panic with the message "Assertion failed!". |
 //! | `hsh_contains` | Checks if a given string contains a specified substring. |
 //! | `hsh_in_range` | Checks if a given value is within a specified range (inclusive). |
@@ -41,12 +41,12 @@
 
 /// This macro takes any number of arguments and parses them into a Rust
 /// value. The parsed value is returned wrapped in
-/// `hsh::Common::parse()` function call.
+/// `hsh::Hash::parse()` function call.
 ///
 #[macro_export]
 macro_rules! hsh {
-    ($($tt:tt)*) => {
-        hsh::Hash::parse($($tt)*)
+    ($($token:tt)*) => {
+        hsh::Hash::parse($($token)*)
     };
 }
 
@@ -106,11 +106,7 @@ macro_rules! hsh_contains {
 #[macro_export]
 macro_rules! hsh_in_range {
     ($value:expr, $min:expr, $max:expr) => {
-        if $value >= $min && $value <= $max {
-            true
-        } else {
-            false
-        }
+        $value >= $min && $value <= $max
     };
 }
 
@@ -339,7 +335,7 @@ macro_rules! random_string {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::{ match_algo, HashAlgorithm };
+/// use hsh::{ match_algo, models::hash_algorithm::HashAlgorithm };
 ///
 /// let algo = match_algo!("bcrypt");
 /// ```
@@ -366,8 +362,8 @@ macro_rules! match_algo {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ generate_hash, HashAlgorithm };
+/// use hsh::models::hash::Hash;
+/// use hsh::{generate_hash, models::hash_algorithm::{HashAlgorithm}};
 ///
 /// let password = "password";
 /// let salt = "salt";
@@ -391,8 +387,8 @@ macro_rules! generate_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::{new_hash, models::{hash::Hash, hash_algorithm::{HashAlgorithm}}};
+///
 ///
 /// let password = "password";
 /// let salt = "salt";
@@ -415,9 +411,9 @@ macro_rules! new_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ hash_length };
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::models::{hash::Hash, hash_algorithm::{HashAlgorithm}};
+/// use hsh::{ hash_length, new_hash };
+///
 ///
 /// let password = "password";
 /// let salt = "salt";
@@ -435,5 +431,30 @@ macro_rules! new_hash {
 macro_rules! hash_length {
     ($hash:expr) => {
         $hash.hash_length()
+    };
+}
+
+#[macro_export]
+/// # `macro_log_info` Macro
+macro_rules! macro_log_info {
+    ($level:expr, $component:expr, $description:expr, $format:expr) => {
+        {
+            use $crate::loggers::{Log, LogLevel, LogFormat};
+
+            extern crate dtt;
+            use dtt::DateTime;
+            // Get the current date and time in ISO 8601 format.
+            let date = DateTime::new();
+            let iso = date.iso_8601;
+
+            extern crate vrd;
+            use vrd::Random;
+            // Create a new random number generator
+            let mut rng = Random::default();
+            let session_id = rng.rand().to_string();
+
+            let log = Log::new(&session_id, &iso, $level, $component, $description, $format);
+            let _ = log.log();
+        }
     };
 }
