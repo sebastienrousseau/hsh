@@ -10,7 +10,7 @@ use criterion::{
 };
 
 extern crate hsh;
-use self::hsh::Hash;
+use hsh::models::data::Hash;
 
 fn generate_hash_benchmark(c: &mut Criterion) {
     c.bench_function("generate_hash", |b| {

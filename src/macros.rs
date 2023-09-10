@@ -366,7 +366,7 @@ macro_rules! match_algo {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
+/// use hsh::models::data::Hash;
 /// use hsh::{ generate_hash, HashAlgorithm };
 ///
 /// let password = "password";
@@ -391,7 +391,7 @@ macro_rules! generate_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
+/// use hsh::models::data::Hash;
 /// use hsh::{ new_hash, HashAlgorithm };
 ///
 /// let password = "password";
@@ -415,7 +415,7 @@ macro_rules! new_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
+/// use hsh::models::data::Hash;
 /// use hsh::{ hash_length };
 /// use hsh::{ new_hash, HashAlgorithm };
 ///

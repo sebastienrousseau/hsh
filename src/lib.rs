@@ -106,7 +106,7 @@
 //! ```rust
 //! // Import the Hash struct
 //! extern crate hsh;
-//! use hsh::Hash;
+//! use hsh::models::data::Hash;
 //!
 //! // Main function
 //! fn main() {
@@ -169,38 +169,41 @@ extern crate base64;
 extern crate bcrypt;
 extern crate scrypt;
 extern crate vrd;
+use crate::models::data::*;
 use argon2rs::argon2i_simple;
 use base64::{engine::general_purpose, Engine as _};
-
 use scrypt::scrypt;
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 use vrd::Random;
 
-/// A type alias for a salt.
-pub type Salt = Vec<u8>;
+/// The `models` module contains the data models for the library.
+pub mod models;
 
-/// A struct for storing and verifying hashed passwords based on the argon2rs crate
-#[non_exhaustive]
-#[derive(
-    Clone,
-    Debug,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-)]
-pub struct Hash {
-    /// The password hash.
-    pub hash: Vec<u8>,
-    /// The salt used for hashing
-    pub salt: Salt,
-    /// The hash algorithm used
-    pub algorithm: HashAlgorithm,
-}
+// /// A type alias for a salt.
+// pub type Salt = Vec<u8>;
+
+// /// A struct for storing and verifying hashed passwords based on the argon2rs crate
+// #[non_exhaustive]
+// #[derive(
+//     Clone,
+//     Debug,
+//     Eq,
+//     Hash,
+//     Ord,
+//     PartialEq,
+//     PartialOrd,
+//     Serialize,
+//     Deserialize,
+// )]
+// pub struct Hash {
+//     /// The password hash.
+//     pub hash: Vec<u8>,
+//     /// The salt used for hashing
+//     pub salt: Salt,
+//     /// The hash algorithm used
+//     pub algorithm: HashAlgorithm,
+// }
 
 /// The supported hash algorithms
 #[non_exhaustive]

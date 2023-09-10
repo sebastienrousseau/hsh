@@ -4,6 +4,7 @@
 #[cfg(test)]
 mod tests {
     use hsh::*;
+    use hsh::models::data::Hash;
 
     #[test]
     fn test_new() {
