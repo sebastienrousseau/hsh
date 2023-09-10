@@ -339,7 +339,7 @@ macro_rules! random_string {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::{ match_algo, HashAlgorithm };
+/// use hsh::{ match_algo, models::hash_algorithm::HashAlgorithm };
 ///
 /// let algo = match_algo!("bcrypt");
 /// ```
@@ -366,8 +366,8 @@ macro_rules! match_algo {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::models::data::Hash;
-/// use hsh::{ generate_hash, HashAlgorithm };
+/// use hsh::models::hash::Hash;
+/// use hsh::{generate_hash, models::hash_algorithm::{HashAlgorithm}};
 ///
 /// let password = "password";
 /// let salt = "salt";
@@ -391,8 +391,8 @@ macro_rules! generate_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::models::data::Hash;
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::{new_hash, models::{hash::Hash, hash_algorithm::{HashAlgorithm}}};
+///
 ///
 /// let password = "password";
 /// let salt = "salt";
@@ -415,9 +415,9 @@ macro_rules! new_hash {
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::models::data::Hash;
-/// use hsh::{ hash_length };
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::models::{hash::Hash, hash_algorithm::{HashAlgorithm}};
+/// use hsh::{ hash_length, new_hash };
+///
 ///
 /// let password = "password";
 /// let salt = "salt";

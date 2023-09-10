@@ -3,8 +3,8 @@
 
 #[cfg(test)]
 mod tests {
-    use hsh::*;
-    use hsh::models::data::Hash;
+    use hsh::models::hash::Hash;
+    use hsh::models::hash_algorithm::HashAlgorithm;
 
     #[test]
     fn test_new() {

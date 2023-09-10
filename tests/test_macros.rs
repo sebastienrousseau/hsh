@@ -7,12 +7,12 @@ mod tests {
     // Importing hsh crate and all of its macros
     extern crate hsh;
     use hsh::{generate_hash, hash_length, new_hash};
-    use hsh::models::data::*;
+    use hsh::models::hash::*;
+    use hsh::models::hash_algorithm::HashAlgorithm;
     use hsh::{
         hsh_assert, hsh_contains, hsh_in_range, hsh_join, hsh_max,
         hsh_min, hsh_parse, hsh_print, hsh_print_vec, hsh_split,
         hsh_vec, match_algo, random_string, to_str_error,
-        HashAlgorithm,
     };
 
     #[test]

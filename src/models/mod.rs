@@ -2,4 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 /// The `data` module contains the structs.
-pub mod data;
+pub mod hash;
+
+/// The `hash_algorithm` module contains the `HashAlgorithm` enum.
+pub mod hash_algorithm;

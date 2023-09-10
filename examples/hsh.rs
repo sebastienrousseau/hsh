@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Using the Hash (HSH) library
-use hsh::{new_hash, HashAlgorithm};
-use hsh::models::data::*;
+
 use std::str::FromStr;
+use hsh::{models::{hash_algorithm::HashAlgorithm, hash::Hash}, new_hash};
 
 // Creating and verifying hashes
 fn create_and_verify_hash() {

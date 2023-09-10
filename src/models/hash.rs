@@ -1,8 +1,8 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use crate::HashAlgorithm;
 use serde::{Deserialize, Serialize};
+use super::hash_algorithm::HashAlgorithm;
 
 /// A type alias for a salt.
 pub type Salt = Vec<u8>;

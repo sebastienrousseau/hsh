@@ -106,7 +106,7 @@
 //! ```rust
 //! // Import the Hash struct
 //! extern crate hsh;
-//! use hsh::models::data::Hash;
+//! use hsh::models::hash::Hash;
 //!
 //! // Main function
 //! fn main() {
@@ -164,88 +164,21 @@
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
 
+/// The `models` module contains the data models for the library.
+pub mod models;
+
 extern crate argon2rs;
 extern crate base64;
 extern crate bcrypt;
 extern crate scrypt;
 extern crate vrd;
-use crate::models::data::*;
+use crate::models::{hash::*, hash_algorithm::*};
 use argon2rs::argon2i_simple;
 use base64::{engine::general_purpose, Engine as _};
 use scrypt::scrypt;
-use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 use vrd::Random;
 
-/// The `models` module contains the data models for the library.
-pub mod models;
-
-// /// A type alias for a salt.
-// pub type Salt = Vec<u8>;
-
-// /// A struct for storing and verifying hashed passwords based on the argon2rs crate
-// #[non_exhaustive]
-// #[derive(
-//     Clone,
-//     Debug,
-//     Eq,
-//     Hash,
-//     Ord,
-//     PartialEq,
-//     PartialOrd,
-//     Serialize,
-//     Deserialize,
-// )]
-// pub struct Hash {
-//     /// The password hash.
-//     pub hash: Vec<u8>,
-//     /// The salt used for hashing
-//     pub salt: Salt,
-//     /// The hash algorithm used
-//     pub algorithm: HashAlgorithm,
-// }
-
-/// The supported hash algorithms
-#[non_exhaustive]
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Eq,
-    Hash,
-    Ord,
-    PartialEq,
-    PartialOrd,
-    Serialize,
-    Deserialize,
-)]
-
-/// Enum representing different hash algorithms for password hashing.
-pub enum HashAlgorithm {
-    /// Argon2i: A memory-hard password hashing algorithm.
-    ///
-    /// Argon2i is designed to be resistant against various types of attacks,
-    /// including GPU-based attacks and side-channel attacks. It incorporates
-    /// multiple parameters, such as memory usage, parallelism, and time cost,
-    /// to make it difficult for attackers to crack hashed passwords efficiently.
-    Argon2i,
-
-    /// Bcrypt: A widely used password hashing algorithm.
-    ///
-    /// Bcrypt is based on the Blowfish encryption cipher and is designed to be
-    /// slow and computationally expensive. It uses a technique called key
-    /// stretching, where the password is repeatedly hashed with a random salt
-    /// and a specified number of iterations. This approach makes it time-consuming
-    /// and resource-intensive for attackers to perform password cracking.
-    Bcrypt,
-
-    /// Scrypt: A memory-hard password hashing algorithm.
-    ///
-    /// Scrypt is designed to be memory-hard and resistant to brute-force attacks.
-    /// It uses a large amount of memory, making it more difficult and costly for
-    /// attackers to perform parallelized attacks using specialized hardware.
-    Scrypt,
-}
 
 impl Hash {
     /// A function that returns the hash algorithm used by the hash map.
