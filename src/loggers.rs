@@ -122,7 +122,7 @@ impl Log {
         let mut file = OpenOptions::new()
     .write(true)
     .truncate(true)
-    .open("shokunin.log")?;
+    .open("hsh.log")?;
         match self.format {
             LogFormat::CLF => {
                 writeln!(
@@ -144,7 +144,7 @@ impl Log {
                     r#"[CEF]
                     <Event xmlns="http://www.w3.org/2003/05/events/Log">
                         <LogID>1</LogID>
-                        <SourceName>shokunin</SourceName>
+                        <SourceName>Hash (HSH)</SourceName>
                         <SourceType>Application</SourceType>
                         <EventReceivedTime>{}</EventReceivedTime>
                         <EventType>Log</EventType>
