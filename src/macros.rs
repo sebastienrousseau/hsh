@@ -433,3 +433,28 @@ macro_rules! hash_length {
         $hash.hash_length()
     };
 }
+
+#[macro_export]
+/// # `macro_log_info` Macro
+macro_rules! macro_log_info {
+    ($level:expr, $component:expr, $description:expr, $format:expr) => {
+        {
+            use $crate::loggers::{Log, LogLevel, LogFormat};
+
+            extern crate dtt;
+            use dtt::DateTime;
+            // Get the current date and time in ISO 8601 format.
+            let date = DateTime::new();
+            let iso = date.iso_8601;
+
+            extern crate vrd;
+            use vrd::Random;
+            // Create a new random number generator
+            let mut rng = Random::default();
+            let session_id = rng.rand().to_string();
+
+            let log = Log::new(&session_id, &iso, $level, $component, $description, $format);
+            let _ = log.log();
+        }
+    };
+}
