@@ -3,149 +3,92 @@
 
 //! # Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification
 //!
-//! *Part of the [Mini Functions][0] family of libraries.*
-//!
-//! <center>
+//! Part of the [Mini Functions][0] family of libraries.
 //!
 //! ![Hash (HSH) Banner][banner]
 //!
-//! [![Crates.io][crate-shield]](<https://crates.io/crates/hsh>)
-//! [![GitHub][github-shield]](<https://github.com/sebastienrousseau/hsh>)
-//! [![Lib.rs][lib-rs-shield]](<https://lib.rs/hsh>)
-//! [![License][license-shield]](<http://opensource.org/licenses/MIT>)
-//! [![Rust][rust-shield]](<https://www.rust-lang.org>)
+//! [![Crates.io][crate-shield]](https://crates.io/crates/hsh)
+//! [![GitHub][github-shield]](https://github.com/sebastienrousseau/hsh)
+//! [![Lib.rs][lib-rs-shield]](https://lib.rs/hsh)
+//! [![License][license-shield]](http://opensource.org/licenses/MIT)
+//! [![Rust][rust-shield]](https://www.rust-lang.org)
 //!
-//! </center>
+//! ## Overview
 //!
-//! ## Overview 📖
+//! The `Hash (HSH)` library in Rust offers a secure interface for hash and digest algorithms, focusing on password encryption and verification. Utilizing state-of-the-art quantum-resistant cryptography, it provides robust security against current and future computational threats.
 //!
-//! The `Hash (HSH)` Rust library provides an interface for implementing
-//! secure hash and digest algorithms, specifically designed for
-//! password encryption and verification.
+//! ### Supported Password Hashing Schemes
 //!
-//! The library provides a simple API that makes it easy to store and
-//! verify hashed passwords. It enables robust security for passwords,
-//! using the latest advancements in `Quantum-resistant cryptography`.
-//! Quantum-resistant cryptography refers to cryptographic algorithms,
-//! usually public-key algorithms, that are thought to be secure against
-//! an attack by a quantum computer. As quantum computing continues to
-//! advance, this feature of the library assures that the passwords
-//! managed through this system remain secure even against cutting-edge
-//! computational capabilities.
+//! - **Argon2i**: Highly secure, resistant to both brute-force and rainbow table attacks. (Recommended)
+//! - **Bcrypt**: Resistant to time-memory trade-off (TMTO) and brute-force attacks.
+//! - **Scrypt**: Secure against both brute-force and rainbow table attacks.
 //!
-//! The library supports the following Password Hashing Schemes
-//! (Password Based Key Derivation Functions):
+//! ## Features
 //!
-//! - **Argon2i**: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. (Recommended)
-//! - **Bcrypt**: A password hashing function designed to resist time-memory trade-off (TMTO) attacks, secure against brute-force attacks.
-//! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.
+//! - **Versatility**: Supports multiple Password Hashing Schemes like Argon2i, Bcrypt, and Scrypt.
+//! - **Future-Proof**: Quantum-resistant cryptography to secure against future technological advancements.
+//! - **Ease of Use**: Simple API for storing and verifying hashed passwords.
+//! - **Integrable**: Written in Rust, the library is fast, efficient, and easily integrable into other Rust projects.
 //!
-//! The library is a valuable tool for developers who need to store and verify passwords in a secure manner. It is easy to use and can be integrated into a variety of applications.
+//! ## Core Components
 //!
-//! ## Features ✨
+//! ### `Hash` Struct
 //!
-//! - **Compliant with multiple Password Hashing Schemes (Password Based Key Derivation Functions) such as Argon2i, Bcrypt and Scrypt.** This makes the library more versatile and can be used in a variety of applications.
-//! - **Quantum-resistant, making it secure against future attacks using quantum computers.** This is an important feature as quantum computers become more powerful.
-//! - **Easy to use.** The library provides a simple API that makes it easy to store and verify hashed passwords.
-//! - **Can be integrated into a variety of applications.** The library is written in Rust, which makes it easy to integrate into any Rust project and is fast, efficient, and secure.
+//! Contains:
+//! - **algorithm**: Enum representing the hashing algorithm (Argon2i, Bcrypt, Scrypt).
+//! - **hash**: Byte vector containing the hashed password.
+//! - **salt**: Byte vector containing the salt used in hashing.
 //!
+//! ### `HashAlgorithm` Enum
 //!
-//! ### Hash Struct
+//! Provides variants for supported hashing algorithms: Argon2i, Bcrypt, and Scrypt.
 //!
-//! The `Hash` struct is a data structure that stores the following information about a hashed password:
+//! ## Methods
 //!
-//! - **algorithm**: An enum that stores the algorithm used for password hashing. The enum has three variants: Argon2i, Bcrypt, and Scrypt.
-//! - **hash**: A vector of bytes that stores the hashed password.
-//! - **salt**: A vector of bytes that stores the salt used for password hashing.
+//! The `Hash` struct offers methods for password hashing and management, including but not limited to:
 //!
-//! ### Hash Algorithms
+//! - Creating new Hash objects.
+//! - Generating and setting salts and hashes.
+//! - Verifying passwords against stored hashes.
 //!
-//! The `HashAlgorithm` enum provides support for the following Password Hashing Schemes (Password Based Key Derivation Functions):
+//! ## Getting Started
 //!
-//! - **Argon2i**: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. It is recommended for its strong security.
-//! - **Bcrypt**: A password hashing function designed to resist time-memory trade-off (TMTO) attacks and provide security against brute-force attacks.
-//! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks.
-//!
-//! ### Hash Methods
-//!
-//! The `Hash` struct provides the following methods for working with hashed passwords:
-//!
-//! - `algorithm`: A function that returns the hash algorithm used by the hash map.
-//! - `from_hash`: A function that creates a new hash object from a hash value and a hash algorithm.
-//! - `from_string`: A function that creates a new hash object from a hash string in the format algorithm$salt$hash.
-//! - `generate_hash`: A function that generates a hash value for a password using the specified hash algorithm.
-//! - `generate_random_string`: A function that generates a random string of the specified length.
-//! - `generate_salt`: A function that generates a random salt for a password using the specified hash algorithm.
-//! - `hash`: A function that returns the hash value of a hash object.
-//! - `hash_length`: A function that returns the length of the hash value of a hash object.
-//! - `new`: A function that creates a new hash object from a password, salt, and hash algorithm.
-//! - `parse`: A function that parses a JSON string into a hash object.
-//! - `parse_algorithm`: A function that parses a hash string into a hash algorithm.
-//! - `salt`: A function that returns the salt used to hash a password.
-//! - `set_hash`: A function that sets the hash value of a hash object.
-//! - `set_password`: A function that sets the password of a hash object.
-//! - `set_salt`: A function that sets the salt of a hash object.
-//! - `to_string_representation`: A function that converts a hash object to a string representation.
-//! - `verify`: A function that verifies a password against a hash object.
-//!
-//! ### Traits
-//!
-//! The Hash struct also implements the following traits:
-//!
-//! - `FromStr`: Allows the Hash struct to be converted from a string.
-//! - `std::fmt::Display`: Allows the Hash struct to be printed as a string.
-//!
-//! ## Getting Started 🚀
-//!
-//! To start using Hash (HSH), add it as a dependency in your Cargo.toml file and import it in your Rust file. You can then create a new Hash instance and call the appropriate methods for your needs.
+//! Add `Hash (HSH)` as a dependency in your `Cargo.toml` and import it in your main Rust file.
 //!
 //! ### Example
 //!
-//! This example demonstrates how to create a Hash object, retrieve the hashed password bytes, and test the hash() method for verifying the correctness of the hash.
+//! Here's a simple example demonstrating basic usage:
 //!
 //! ```rust
-//! // Import the Hash struct
-//! extern crate hsh;
-//! use hsh::models::hash::Hash;
+//! use hsh::models::hash::Hash;  // Import the Hash struct
 //!
-//! // Main function
 //! fn main() {
+//!     let password = "password123";
+//!     let salt = "somesalt";
+//!     let algo = "argon2i";
 //!
-//!    // Define the password, salt, and algorithm
-//!    let password = "password123";  // Must be at least 8 characters.
-//!    let salt = "somesalt";         // Must be at least 8 characters.
-//!    let algo = "argon2i";          // Must be either "argon2i",  "bcrypt", or "scrypt".
+//!     let original_hash = Hash::new(password, salt, algo).expect("Failed to create hash");
+//!     let hashed_password = original_hash.hash.clone();
 //!
-//!    // Create a new Hash object
-//!    let original_hash = Hash::new(password, salt, algo).unwrap(); // Unwrap the Result
-//!
-//!    // Get the hashed password bytes from the Hash object
-//!    let hashed_password = original_hash.hash.clone(); // Clone the hash vector
-//!
-//!    // Test the `hash` method for verifying the correctness of the hash
-//!    assert_eq!(original_hash.hash(), &hashed_password); // Verify the hash
-//!
+//!     assert_eq!(original_hash.hash(), &hashed_password);
 //! }
 //! ```
 //!
-//! ## License 📝
+//! ## License
 //!
-//! The project is licensed under the terms of both the MIT license and the
-//! Apache License (Version 2.0).
+//! Licensed under the MIT and Apache License (Version 2.0).
 //!
-//! - [Apache License, Version 2.0][1]
-//! - [MIT license][2]
+//! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.svg
+//! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006
+//! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github
+//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.5-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
+//! [license-shield]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&color=007EC6&labelColor=03589B
+//! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust
 //!
-//! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.svg "The Hash (HSH) Banner"
-//! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006 "Crates.io"
-//! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github "GitHub"
-//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.5-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4 "Lib.rs"
-//! [license-shield]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&color=007EC6&labelColor=03589B "License"
-//! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust "Rust"
-//!
-//! [0]: https://minifunctions.com/ "MiniFunctions"
+//! [0]: https://minifunctions.com/
 //! [1]: http://www.apache.org/licenses/LICENSE-2.0
 //! [2]: http://opensource.org/licenses/MIT
+
 
 #![cfg_attr(feature = "bench", feature(test))]
 #![deny(dead_code)]
@@ -186,6 +129,101 @@ use std::{fmt, str::FromStr};
 use vrd::Random;
 
 impl Hash {
+    /// Creates a new `Hash` instance using Argon2i algorithm for password hashing.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hsh::models::hash::{Hash, Salt};
+    ///
+    /// let password = "my_password";
+    /// let salt: Salt = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    ///
+    /// let result = Hash::new_argon2i(password, salt);
+    /// match result {
+    ///     Ok(hash) => println!("Successfully created Argon2i hash"),
+    ///     Err(e) => println!("An error occurred: {}", e),
+    /// }
+    /// ```
+    pub fn new_argon2i(password: &str, salt: Salt) -> Result<Self, String> {
+        // Convert the Vec<u8> salt to a &str
+        let salt_str = std::str::from_utf8(&salt)
+            .map_err(|_| "Failed to convert salt to string")?;
+
+        // Perform Argon2i hashing
+        let calculated_hash = argon2i_simple(password, salt_str).to_vec();
+
+        HashBuilder::new()
+            .hash(calculated_hash)
+            .salt(salt)
+            .algorithm(HashAlgorithm::Argon2i)
+            .build()
+    }
+
+    /// Creates a new `Hash` instance using Bcrypt algorithm for password hashing.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hsh::models::hash::Hash;
+    ///
+    /// let password = "my_password";
+    /// let cost: u32 = 16;
+    ///
+    /// let result = Hash::new_bcrypt(password, cost);
+    /// match result {
+    ///     Ok(hash) => println!("Successfully created Bcrypt hash"),
+    ///     Err(e) => println!("An error occurred: {}", e),
+    /// }
+    /// ```
+    pub fn new_bcrypt(password: &str, cost: u32) -> Result<Self, String> {
+        // Perform Bcrypt hashing
+        let hashed_password = bcrypt::hash(password, cost)
+            .map_err(|e| format!("Failed to hash password with Bcrypt: {}", e))?;
+
+        // In Bcrypt, the salt is embedded in the hashed password.
+        // So, you can just use an empty salt when building the Hash object.
+        let empty_salt = Vec::new();
+
+        HashBuilder::new()
+            .hash(hashed_password.as_bytes().to_vec())
+            .salt(empty_salt)
+            .algorithm(HashAlgorithm::Bcrypt)
+            .build()
+    }
+
+    /// Creates a new `Hash` instance using Scrypt algorithm for password hashing.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use hsh::models::hash::{Hash, Salt};
+    ///
+    /// let password = "my_password";
+    /// let salt: Salt = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+    ///
+    /// let result = Hash::new_scrypt(password, salt);
+    /// match result {
+    ///     Ok(hash) => println!("Successfully created Scrypt hash"),
+    ///     Err(e) => println!("An error occurred: {}", e),
+    /// }
+    /// ```
+    pub fn new_scrypt(password: &str, salt: Salt) -> Result<Self, String> {
+        // Convert the Vec<u8> salt to a &str for hashing
+        let salt_str = std::str::from_utf8(&salt)
+            .map_err(|_| "Failed to convert salt to string")?;
+
+        // Perform Scrypt hashing using a wrapper function that sets the parameters
+        let calculated_hash = algorithms::scrypt::Scrypt::hash_password(password, salt_str)?;
+
+        // Use the builder pattern to construct the Hash instance
+        HashBuilder::new()
+            .hash(calculated_hash)
+            .salt(salt)
+            .algorithm(HashAlgorithm::Scrypt)
+            .build()
+    }
+
     /// A function that returns the hash algorithm used by the hash map.
     pub fn algorithm(&self) -> HashAlgorithm {
         self.algorithm
