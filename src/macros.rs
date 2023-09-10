@@ -14,7 +14,7 @@
 //!
 //! | Macro | Description |
 //! |--------|------------|
-//! | `hsh` | Calls the parse method on the Common struct from the hsh crate. |
+//! | `hsh` | Calls the `parse` method on the `Hash` struct from the hsh crate. |
 //! | `hsh_assert` | Asserts that a given condition is true. If the condition is false, the macro will cause the program to panic with the message "Assertion failed!". |
 //! | `hsh_contains` | Checks if a given string contains a specified substring. |
 //! | `hsh_in_range` | Checks if a given value is within a specified range (inclusive). |
@@ -41,12 +41,12 @@
 
 /// This macro takes any number of arguments and parses them into a Rust
 /// value. The parsed value is returned wrapped in
-/// `hsh::Common::parse()` function call.
+/// `hsh::Hash::parse()` function call.
 ///
 #[macro_export]
 macro_rules! hsh {
-    ($($tt:tt)*) => {
-        hsh::Hash::parse($($tt)*)
+    ($($token:tt)*) => {
+        hsh::Hash::parse($($token)*)
     };
 }
 
@@ -106,11 +106,7 @@ macro_rules! hsh_contains {
 #[macro_export]
 macro_rules! hsh_in_range {
     ($value:expr, $min:expr, $max:expr) => {
-        if $value >= $min && $value <= $max {
-            true
-        } else {
-            false
-        }
+        $value >= $min && $value <= $max
     };
 }
 
