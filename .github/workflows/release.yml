@@ -131,12 +131,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      # Check out the repository code
+      # Check out the repository code.
       - name: Checkout sources
         id: checkout
         uses: actions/checkout@v4
 
-      # Install the stable Rust toolchain
+      # Install the stable Rust toolchain.
       - name: Install stable toolchain
         id: install-toolchain
         uses: actions-rs/toolchain@v1
@@ -144,7 +144,7 @@ jobs:
           toolchain: stable
           override: true
 
-      # Cache dependencies to speed up subsequent builds
+      # Cache dependencies to speed up subsequent builds.
       - name: Cache dependencies
         id: cache-dependencies
         uses: actions/cache@v3
@@ -156,7 +156,7 @@ jobs:
       # Install the targets for the cross-compilation toolchain
       - name: Install target
         id: install-target
-        run: rustup target add ${{ matrix.target }}
+        run: rustup target add ${{ env.TARGET }}
 
       - name: Install Cross and clean artifacts
         run: |
@@ -272,16 +272,6 @@ jobs:
 
           fi
         shell: bash
-
-      # Append the artifact links to the changelog
-      - name: Append Artifact Links
-        run: |
-          echo "" >> ${{ github.workspace }}/CHANGELOG.md
-          echo "## Artifacts 🎁" >> ${{ github.workspace }}/CHANGELOG.md
-          for filename in target/package/*.tar.gz; do
-            link="$(basename $filename)"
-            echo "* [${link}](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/v${{ env.VERSION }}/$link)" >> ${{ github.workspace }}/CHANGELOG.md
-          done
 
       # Create the release on GitHub releases
       - name: Create Release
