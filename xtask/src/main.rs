@@ -1,4 +1,5 @@
-//! xtask is a tool for running tasks in the workspace.
+//! xtaskops entrypointFunction: `main` - Main function for xtaskops
 fn main() -> Result<(), anyhow::Error> {
+    // Run the xtaskops main function
     xtaskops::tasks::main()
 }
