@@ -18,7 +18,7 @@ license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
 rust-version = "1.69.0"
-version = "0.0.6"
+version = "0.0.7"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",

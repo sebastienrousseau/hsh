@@ -84,7 +84,7 @@
 //! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.svg
 //! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006
 //! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github
-//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.6-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
+//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.7-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
 //! [license-shield]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&color=007EC6&labelColor=03589B
 //! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust
 //!
