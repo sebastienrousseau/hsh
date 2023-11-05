@@ -1,13 +1,16 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-//! # HSH: Quantum-Resistant Cryptographic Hash Library for Robust Password Encryption & Verification
+// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+//! # Hash (HSH), a Quantum-Resistant Cryptographic Hash Library
 //!
-//! A highly secure cryptographic hash library with a focus on password encryption and verification. Designed with quantum-resistant cryptography, this library provides a robust line of defence against current and emerging computational threats.
+//! A Highly Secure Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification in Rust. Designed with quantum-resistant cryptography, this library provides a robust line of defence against current and emerging computational threats.
 //!
-//! ![Hash (HSH) Banner][banner]
+//! [![Hash (HSH) Banner][banner]][00]
 //!
-//! Part of the [Mini Functions][0] family of libraries.
+//! Part of the [Mini Functions][01] family of libraries.
 //!
 //! [![Available on Crates.io][crate-shield]](https://crates.io/crates/hsh)
 //! [![GitHub Repository][github-shield]](https://github.com/sebastienrousseau/hsh)
@@ -17,13 +20,15 @@
 //!
 //! ## Overview
 //!
-//! The Hash (HSH) library is a secure and easy-to-use library for password encryption and verification in Rust. It supports multiple password hashing schemes, including Argon2i, Bcrypt, and Scrypt. It is specifically designed for password encryption and verification, and uses state-of-the-art quantum-resistant cryptography to ensure maximum security against both current and future computational threats.
+//! The Hash (HSH) Rust library provides an interface for implementing secure hash and digest algorithms, specifically designed for password encryption and verification.
 //!
-//! ### Supported Password Hashing Schemes
+//! The library provides a simple API that makes it easy to store and verify hashed passwords. It enables robust security for passwords, using the latest advancements in Quantum-resistant cryptography. Quantum- resistant cryptography refers to cryptographic algorithms, usually public-key algorithms, that are thought to be secure against an attack by a quantum computer. As quantum computing continues to advance, this feature of the library assures that the passwords managed through this system remain secure even against cutting-edge computational capabilities.
 //!
-//! - **Argon2i**: Highly secure, resistant to both brute-force and rainbow table attacks. (Recommended)
-//! - **Bcrypt**: Resistant to time-memory trade-off (TMTO) and brute-force attacks.
-//! - **Scrypt**: Secure against both brute-force and rainbow table attacks.
+//! The library supports the following Password Hashing Schemes (Password Based Key Derivation Functions):
+//!
+//! - **Argon2i**: A cutting-edge and highly secure key derivation function designed to protect against both traditional brute-force attacks and rainbow table attacks. (Recommended)
+//! - **Bcrypt**: A password hashing function designed to be secure against brute-force attacks. It is a work-factor function, which means that it takes a certain amount of time to compute. This makes it difficult to attack with a brute-force algorithm.
+//! - **Scrypt**: A password hashing function designed to be secure against both brute-force attacks and rainbow table attacks. It is a memory-hard and work- factor function, which means that it requires a lot of memory and time to compute. This makes it very difficult to attack with a GPU or other parallel computing device.
 //!
 //! ## Features
 //!
@@ -81,16 +86,17 @@
 //!
 //! Licensed under the MIT and Apache License (Version 2.0).
 //!
-//! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.svg
+//! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.webp
 //! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006
 //! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github
-//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.6-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
+//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.7-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
 //! [license-shield]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&color=007EC6&labelColor=03589B
 //! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust
 //!
-//! [0]: https://minifunctions.com/
-//! [1]: http://www.apache.org/licenses/LICENSE-2.0
-//! [2]: http://opensource.org/licenses/MIT
+//! [00]: https://hshlib.one/
+//! [01]: https://minifunctions.com/
+//! [02]: http://www.apache.org/licenses/LICENSE-2.0
+//! [03]: http://opensource.org/licenses/MIT
 
 #![cfg_attr(feature = "bench", feature(test))]
 #![deny(missing_debug_implementations)]

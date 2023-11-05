@@ -17,10 +17,10 @@ use serde::{Serialize, Deserialize};
 pub struct Argon2i;
 
 impl HashingAlgorithm for Argon2i {
-    /// Hashes a given password using Argon2i algorithm.
+    /// Hashes a given password using the Argon2i algorithm.
     ///
-    /// Given a plaintext `password` and a `salt`, this method returns a hashed representation
-    /// of the password using Argon2i algorithm.
+    /// This method computes a hashed representation of the plaintext `password` using the Argon2i algorithm,
+    /// combined with the provided `salt` for added security.
     ///
     /// # Parameters
     ///
@@ -29,8 +29,8 @@ impl HashingAlgorithm for Argon2i {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing the hashed password as a vector of bytes.
-    /// If hashing fails for some reason, returns a `String` detailing the error.
+    /// Returns a `Result` with `Ok`, containing the hashed password as a vector of bytes.
+    /// Currently, this function does not handle hashing errors and will always return `Ok`.
     fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>, String> {
         Ok(argon2i_simple(password, salt).into_iter().collect())
     }

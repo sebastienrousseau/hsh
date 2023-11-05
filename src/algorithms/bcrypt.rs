@@ -35,13 +35,13 @@ pub struct Bcrypt;
 impl HashingAlgorithm for Bcrypt {
     /// Hashes a given password using the Bcrypt algorithm.
     ///
-    /// Given a plaintext `password` and a `salt`, this method returns a hashed representation
-    /// of the password using the Bcrypt algorithm.
+    /// This method computes a hashed representation of the plaintext `password` using the Bcrypt algorithm.
+    /// Note that the `salt` parameter is not used in this implementation, as Bcrypt generates its own salt internally.
     ///
     /// # Parameters
     ///
     /// - `password`: The plaintext password to be hashed.
-    /// - `salt`: A cryptographic salt to prevent rainbow table attacks.
+    /// - `_salt`: Unused in this implementation, provided for interface compatibility.
     ///
     /// # Returns
     ///

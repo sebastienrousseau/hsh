@@ -1,5 +1,5 @@
 [package]
-authors = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>"]
+authors = ["Hash (HSH) Contributors"]
 build = "build.rs"
 categories = [
     "algorithms",
@@ -8,17 +8,20 @@ categories = [
     "data-structures",
     "encoding",
 ]
-description = "Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification in Rust"
+description = """
+    Quantum-Resistant Cryptographic Hash Library for Password Encryption and
+    Verification in Rust.
+"""
 documentation = "https://docs.rs/hsh"
 edition = "2021"
 exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
-homepage = "https://minifunctions.com/"
+homepage = "https://hshlib.one/"
 keywords = ["argon2", "argon2i", "hash", "password", "security"]
 license = "MIT OR Apache-2.0"
 name = "hsh"
 repository = "https://github.com/sebastienrousseau/hsh/"
-rust-version = "1.69.0"
-version = "0.0.6"
+rust-version = "1.71.1"
+version = "0.0.7"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -50,14 +53,14 @@ path = "examples/hsh.rs"
 
 [dependencies]
 argon2rs = "0.2.5"
-base64 = "0.21.4"
+base64 = "0.21.5"
 bcrypt = "0.15.0"
 dtt = "0.0.4"
 log = {version="0.4.20", features = ["std"] }
-openssl = { version = "0.10.57", features = ["vendored"] }
+# openssl = { version = "0.10.59", features = ["vendored"] }
 scrypt = "0.11.0"
-serde = { version = "1.0.188", features = ["derive"] }
-serde_json = "1.0.107"
+serde = { version = "1.0.190", features = ["derive"] }
+serde_json = "1.0.108"
 vrd = "0.0.4"
 
 [dev-dependencies]
