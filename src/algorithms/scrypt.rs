@@ -33,6 +33,10 @@ impl HashingAlgorithm for Scrypt {
     /// Returns a `Result` containing the hashed password as a vector of bytes.
     /// If hashing fails for some reason, it returns a `String` detailing the error.
     fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>, String> {
+        // The `Params` struct is initialized with specific parameters that define the
+        // computational cost of the hashing process. The parameters used here are chosen
+        // to provide a balance between security and performance. Adjust these values based
+        // on the security requirements and the expected computational capacity.
         let params = Params::new(14, 8, 1, 64).map_err(|e| e.to_string())?;
         let mut output = [0u8; 64];
         scrypt(
