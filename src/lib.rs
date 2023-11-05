@@ -133,7 +133,7 @@ pub fn run() -> Result<(), Box<dyn std::error::Error>> {
     let name = "hsh";
     println!("Welcome to `{}` 👋!", name.to_uppercase());
     println!(
-        "Unleash the full power of Quantum-Resistant Cryptography."
+        "Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification."
     );
     Ok(())
 }
