@@ -56,7 +56,7 @@ argon2rs = "0.2.5"
 base64 = "0.21.7"
 bcrypt = "0.15.0"
 dtt = "0.0.5"
-log = {version="0.4.20", features = ["std"] }
+log = {version="0.4.21", features = ["std"] }
 # openssl = { version = "0.10.59", features = ["vendored"] }
 scrypt = "0.11.0"
 serde = { version = "1.0.196", features = ["derive"] }
