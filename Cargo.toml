@@ -53,7 +53,7 @@ path = "examples/hsh.rs"
 
 [dependencies]
 argon2rs = "0.2.5"
-base64 = "0.21.7"
+base64 = "0.22.0"
 bcrypt = "0.15.1"
 dtt = "0.0.5"
 log = {version="0.4.20", features = ["std"] }
