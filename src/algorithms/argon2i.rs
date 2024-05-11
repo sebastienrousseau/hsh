@@ -3,7 +3,7 @@
 
 use crate::models::hash_algorithm::HashingAlgorithm;
 use argon2rs::argon2i_simple;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Implementation of the Argon2i hashing algorithm.
 ///
@@ -13,7 +13,18 @@ use serde::{Serialize, Deserialize};
 ///
 /// This struct implements the `HashingAlgorithm` trait, providing a concrete implementation
 /// for hashing passwords using the Argon2i algorithm.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 pub struct Argon2i;
 
 impl HashingAlgorithm for Argon2i {
@@ -31,7 +42,10 @@ impl HashingAlgorithm for Argon2i {
     ///
     /// Returns a `Result` with `Ok`, containing the hashed password as a vector of bytes.
     /// Currently, this function does not handle hashing errors and will always return `Ok`.
-    fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>, String> {
+    fn hash_password(
+        password: &str,
+        salt: &str,
+    ) -> Result<Vec<u8>, String> {
         Ok(argon2i_simple(password, salt).into_iter().collect())
     }
 }

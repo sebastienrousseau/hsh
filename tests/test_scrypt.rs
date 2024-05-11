@@ -10,7 +10,9 @@ mod tests {
         let password = "secure_password";
         let salt = "random_salt";
 
-        let result = hsh::algorithms::scrypt::Scrypt::hash_password(password, salt);
+        let result = hsh::algorithms::scrypt::Scrypt::hash_password(
+            password, salt,
+        );
         assert!(result.is_ok());
     }
 
@@ -19,8 +21,16 @@ mod tests {
         let password = "password123";
         let salt = "salt123";
 
-        let hash1_result = hsh::algorithms::scrypt::Scrypt::hash_password(password, salt).unwrap();
-        let hash2_result = hsh::algorithms::scrypt::Scrypt::hash_password(password, salt).unwrap();
+        let hash1_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password, salt,
+            )
+            .unwrap();
+        let hash2_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password, salt,
+            )
+            .unwrap();
 
         assert_eq!(hash1_result, hash2_result);
     }
@@ -31,8 +41,16 @@ mod tests {
         let salt1 = "salt123";
         let salt2 = "another_salt123";
 
-        let hash1_result = hsh::algorithms::scrypt::Scrypt::hash_password(password, salt1).unwrap();
-        let hash2_result = hsh::algorithms::scrypt::Scrypt::hash_password(password, salt2).unwrap();
+        let hash1_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password, salt1,
+            )
+            .unwrap();
+        let hash2_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password, salt2,
+            )
+            .unwrap();
 
         assert_ne!(hash1_result, hash2_result);
     }
@@ -43,8 +61,16 @@ mod tests {
         let password2 = "other_password123";
         let salt = "salt123";
 
-        let hash1_result = hsh::algorithms::scrypt::Scrypt::hash_password(password1, salt).unwrap();
-        let hash2_result = hsh::algorithms::scrypt::Scrypt::hash_password(password2, salt).unwrap();
+        let hash1_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password1, salt,
+            )
+            .unwrap();
+        let hash2_result =
+            hsh::algorithms::scrypt::Scrypt::hash_password(
+                password2, salt,
+            )
+            .unwrap();
 
         assert_ne!(hash1_result, hash2_result);
     }

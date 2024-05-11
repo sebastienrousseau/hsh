@@ -1,7 +1,5 @@
-
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
-
 
 #[cfg(test)]
 mod tests {
@@ -11,7 +9,11 @@ mod tests {
     fn test_hash_differs_from_password() {
         let password = "password123";
         let salt = "somesalt";
-        let hashed_password = hsh::algorithms::bcrypt::Bcrypt::hash_password(password, salt).unwrap();
+        let hashed_password =
+            hsh::algorithms::bcrypt::Bcrypt::hash_password(
+                password, salt,
+            )
+            .unwrap();
 
         assert_ne!(hashed_password, password.as_bytes());
     }
@@ -22,8 +24,14 @@ mod tests {
         let salt1 = "salt1";
         let salt2 = "salt2";
 
-        let hash1 = hsh::algorithms::bcrypt::Bcrypt::hash_password(password, salt1).unwrap();
-        let hash2 = hsh::algorithms::bcrypt::Bcrypt::hash_password(password, salt2).unwrap();
+        let hash1 = hsh::algorithms::bcrypt::Bcrypt::hash_password(
+            password, salt1,
+        )
+        .unwrap();
+        let hash2 = hsh::algorithms::bcrypt::Bcrypt::hash_password(
+            password, salt2,
+        )
+        .unwrap();
 
         assert_ne!(hash1, hash2);
     }

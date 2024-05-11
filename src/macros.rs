@@ -315,7 +315,7 @@ macro_rules! to_str_error {
 macro_rules! random_string {
     ($len:expr) => {{
         let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let mut rng = vrd::Random::default();
+        let mut rng = vrd::random::Random::default();
         (0..$len as usize)
             .map(|_| {
                 let index = vrd::rand_int!(rng, 0, (chars.len() - 1) as i32) as usize;
@@ -447,7 +447,7 @@ macro_rules! hash_length {
 macro_rules! macro_log_info {
     ($level:expr, $component:expr, $description:expr, $format:expr) => {{
         use dtt::DateTime;
-        use vrd::Random;
+        use vrd::random::Random;
         use $crate::loggers::{Log, LogFormat, LogLevel};
 
         // Get the current date and time in ISO 8601 format.
@@ -467,7 +467,6 @@ macro_rules! macro_log_info {
             $format,
         );
         let _ = log.log();
-        log // Return the Log instance
     }};
 }
 

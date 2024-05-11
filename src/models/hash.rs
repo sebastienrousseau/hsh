@@ -1,12 +1,11 @@
 // Copyright © 2023 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-use serde::{Deserialize, Serialize};
 use super::hash_algorithm::HashAlgorithm;
 use crate::algorithms;
 use crate::models::hash_algorithm::HashingAlgorithm;
 use algorithms::{argon2i::Argon2i, bcrypt::Bcrypt, scrypt::Scrypt};
-use std::convert::TryInto;
+use serde::{Deserialize, Serialize};
 
 // use algorithms::{argon2i::Argon2i, bcrypt::Bcrypt, scrypt::Scrypt};
 use argon2rs::argon2i_simple;
@@ -14,8 +13,7 @@ use base64::{engine::general_purpose, Engine as _};
 // use models::{hash::*, hash_algorithm::*};
 use scrypt::scrypt;
 use std::{fmt, str::FromStr};
-use vrd::Random;
-
+use vrd::random::Random;
 
 /// A type alias for a salt.
 pub type Salt = Vec<u8>;
@@ -60,13 +58,17 @@ impl Hash {
     ///     Err(e) => println!("An error occurred: {}", e),
     /// }
     /// ```
-    pub fn new_argon2i(password: &str, salt: Salt) -> Result<Self, String> {
+    pub fn new_argon2i(
+        password: &str,
+        salt: Salt,
+    ) -> Result<Self, String> {
         // Convert the Vec<u8> salt to a &str
         let salt_str = std::str::from_utf8(&salt)
             .map_err(|_| "Failed to convert salt to string")?;
 
         // Perform Argon2i hashing
-        let calculated_hash = argon2i_simple(password, salt_str).to_vec();
+        let calculated_hash =
+            argon2i_simple(password, salt_str).to_vec();
 
         HashBuilder::new()
             .hash(calculated_hash)
@@ -91,10 +93,15 @@ impl Hash {
     ///     Err(e) => println!("An error occurred: {}", e),
     /// }
     /// ```
-    pub fn new_bcrypt(password: &str, cost: u32) -> Result<Self, String> {
+    pub fn new_bcrypt(
+        password: &str,
+        cost: u32,
+    ) -> Result<Self, String> {
         // Perform Bcrypt hashing
-        let hashed_password = bcrypt::hash(password, cost)
-            .map_err(|e| format!("Failed to hash password with Bcrypt: {}", e))?;
+        let hashed_password =
+            bcrypt::hash(password, cost).map_err(|e| {
+                format!("Failed to hash password with Bcrypt: {}", e)
+            })?;
 
         // In Bcrypt, the salt is embedded in the hashed password.
         // So, you can just use an empty salt when building the Hash object.
@@ -123,13 +130,17 @@ impl Hash {
     ///     Err(e) => println!("An error occurred: {}", e),
     /// }
     /// ```
-    pub fn new_scrypt(password: &str, salt: Salt) -> Result<Self, String> {
+    pub fn new_scrypt(
+        password: &str,
+        salt: Salt,
+    ) -> Result<Self, String> {
         // Convert the Vec<u8> salt to a &str for hashing
         let salt_str = std::str::from_utf8(&salt)
             .map_err(|_| "Failed to convert salt to string")?;
 
         // Perform Scrypt hashing using a wrapper function that sets the parameters
-        let calculated_hash = algorithms::scrypt::Scrypt::hash_password(password, salt_str)?;
+        let calculated_hash =
+            Scrypt::hash_password(password, salt_str)?;
 
         // Use the builder pattern to construct the Hash instance
         HashBuilder::new()
@@ -362,11 +373,15 @@ impl Hash {
         match self.algorithm {
             HashAlgorithm::Argon2i => {
                 // Hash the password once
-                let calculated_hash = argon2i_simple(password, salt).to_vec();
+                let calculated_hash =
+                    argon2i_simple(password, salt).to_vec();
 
                 // Debugging information
                 println!("Algorithm: Argon2i");
-                println!("Provided password for verification: {}", password);
+                println!(
+                    "Provided password for verification: {}",
+                    password
+                );
                 println!("Salt used for verification: {}", salt);
                 println!("Calculated Hash: {:?}", calculated_hash);
                 println!("Stored Hash: {:?}", self.hash);
@@ -377,7 +392,10 @@ impl Hash {
             HashAlgorithm::Bcrypt => {
                 // Debugging information
                 println!("Algorithm: Bcrypt");
-                println!("Provided password for verification: {}", password);
+                println!(
+                    "Provided password for verification: {}",
+                    password
+                );
 
                 let hash_str = std::str::from_utf8(&self.hash)
                     .map_err(|_| "Failed to convert hash to string")?;
@@ -387,11 +405,16 @@ impl Hash {
             HashAlgorithm::Scrypt => {
                 // Debugging information
                 println!("Algorithm: Scrypt");
-                println!("Provided password for verification: {}", password);
+                println!(
+                    "Provided password for verification: {}",
+                    password
+                );
                 println!("Salt used for verification: {}", salt);
 
                 let scrypt_params = scrypt::Params::new(14, 8, 1, 64)
-                    .map_err(|_| "Failed to create Scrypt params")?;
+                    .map_err(|_| {
+                    "Failed to create Scrypt params"
+                })?;
                 let mut output = [0u8; 64];
                 match scrypt(
                     password.as_bytes(),
@@ -400,7 +423,10 @@ impl Hash {
                     &mut output,
                 ) {
                     Ok(_) => {
-                        println!("Calculated Hash: {:?}", output.to_vec());
+                        println!(
+                            "Calculated Hash: {:?}",
+                            output.to_vec()
+                        );
                         println!("Stored Hash: {:?}", self.hash);
                         Ok(output.to_vec() == self.hash)
                     }
@@ -409,7 +435,6 @@ impl Hash {
             }
         }
     }
-
 }
 
 impl fmt::Display for Hash {
@@ -495,7 +520,9 @@ impl HashBuilder {
     /// Consumes the builder and returns a `Hash` if all fields are set.
     /// Otherwise, it returns an error.
     pub fn build(self) -> Result<Hash, String> {
-        if let (Some(hash), Some(salt), Some(algorithm)) = (self.hash, self.salt, self.algorithm) {
+        if let (Some(hash), Some(salt), Some(algorithm)) =
+            (self.hash, self.salt, self.algorithm)
+        {
             Ok(Hash {
                 hash,
                 salt,
@@ -513,4 +540,3 @@ impl Default for HashBuilder {
         Self::new()
     }
 }
-

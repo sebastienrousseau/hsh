@@ -3,10 +3,10 @@ name: 🧪 Document
 on:
   push:
     branches:
-      - feat/hsh
+      - main
   pull_request:
     branches:
-      - feat/hsh
+      - main
   release:
     types: [created]
 
@@ -45,16 +45,15 @@ jobs:
           retention-days: 1
 
       - name: Write CNAME file
-        run: echo 'doc.hshlib.one' > ./target/doc/CNAME
+        run: echo 'doc.hshlib.com' > ./target/doc/CNAME
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./target/doc
-          publish_branch: gh-pages
           cname: true
-          clean: true
           commit_message: Deploy documentation at ${{ github.sha }}
-          commit_user_name: github-actions
-          commit_user_email: actions@users.noreply.github.com
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: ./target/doc
+          user_email: actions@users.noreply.github.com
+          user_name: github-actions

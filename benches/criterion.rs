@@ -4,16 +4,13 @@
 //! Benchmarking the Hash (HSH) library using Criterion.rs
 
 #![allow(missing_docs)]
-extern crate argon2rs;
-extern crate criterion;
 
 use criterion::{
     black_box, criterion_group, criterion_main, Criterion,
 };
-
-extern crate hsh;
 use hsh::models::hash::Hash;
 
+#[allow(unused_results)]
 fn generate_hash_benchmark(c: &mut Criterion) {
     c.bench_function("generate_hash", |b| {
         b.iter(|| {
@@ -26,6 +23,7 @@ fn generate_hash_benchmark(c: &mut Criterion) {
     });
 }
 
+#[allow(unused_results)]
 fn new_hash_benchmark(c: &mut Criterion) {
     c.bench_function("new_hash", |b| {
         b.iter(|| {
@@ -38,6 +36,7 @@ fn new_hash_benchmark(c: &mut Criterion) {
     });
 }
 
+#[allow(unused_results)]
 fn set_password_benchmark(c: &mut Criterion) {
     let mut hash =
         Hash::new("password", "salt12345", "argon2i").unwrap(); // Unwrap the Result
@@ -55,6 +54,7 @@ fn set_password_benchmark(c: &mut Criterion) {
     });
 }
 
+#[allow(unused_results)]
 fn verify_benchmark(c: &mut Criterion) {
     let hash = Hash::new("password", "salt12345", "argon2i").unwrap(); // Unwrap the Result
 

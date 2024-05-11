@@ -3,6 +3,7 @@ name: 🧪 Check
 on:
   push:
     branches:
+      - main
       - feat/hsh
   pull_request:
     branches:
