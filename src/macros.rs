@@ -434,42 +434,6 @@ macro_rules! hash_length {
     };
 }
 
-/// Custom logging macro for various log levels and formats.
-///
-/// # Parameters
-///
-/// * `$level`: The log level of the message.
-/// * `$component`: The component where the log is coming from.
-/// * `$description`: A description of the log message.
-/// * `$format`: The format of the log message.
-///
-#[macro_export]
-macro_rules! macro_log_info {
-    ($level:expr, $component:expr, $description:expr, $format:expr) => {{
-        use dtt::DateTime;
-        use vrd::random::Random;
-        use $crate::loggers::{Log, LogFormat, LogLevel};
-
-        // Get the current date and time in ISO 8601 format.
-        let date = DateTime::new();
-        let iso = date.iso_8601;
-
-        // Create a new random number generator
-        let mut rng = Random::default();
-        let session_id = rng.rand().to_string();
-
-        let log = Log::new(
-            &session_id,
-            &iso,
-            $level,
-            $component,
-            $description,
-            $format,
-        );
-        let _ = log.log();
-    }};
-}
-
 /// Macros related to executing shell commands.
 ///
 /// Executes a shell command, logs the start and completion of the operation, and handles any errors that occur.

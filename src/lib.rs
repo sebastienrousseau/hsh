@@ -108,9 +108,6 @@
 /// The `algorithms` module contains the password hashing algorithms.
 pub mod algorithms;
 
-/// The `loggers` module contains the loggers for the library.
-pub mod loggers;
-
 /// The `macros` module contains functions for generating macros.
 pub mod macros;
 
