@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/macros.rs`."><title>macros.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-f3501f0f5ae15dfb.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hsh" data-themes="" data-resource-suffix="" data-rustdoc-version="1.71.0-nightly (1a5f8bce7 2023-05-26)" data-search-js="search-4926e5fc22a5646a.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-11255107d0a65077.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f0540c1d82cde29b.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="icon" href="https://kura.pro/hsh/images/favicon.ico"></head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../hsh/index.html"><img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/macros.rs`."><title>macros.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-dd39b87e5fcfba68.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hsh" data-themes="" data-resource-suffix="" data-rustdoc-version="1.80.0-nightly (78a775127 2024-05-11)" data-channel="nightly" data-search-js="search-d52510db62a78183.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-20a3ad099b048cf2.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="icon" href="https://kura.pro/hsh/images/favicon.ico"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -437,7 +437,65 @@
 <a href="#437" id="437">437</a>
 <a href="#438" id="438">438</a>
 <a href="#439" id="439">439</a>
-</pre></div><pre class="rust"><code><span class="comment">// Copyright © 2023 Hash (HSH) library. All rights reserved.
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
+<a href="#455" id="455">455</a>
+<a href="#456" id="456">456</a>
+<a href="#457" id="457">457</a>
+<a href="#458" id="458">458</a>
+<a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
+<a href="#464" id="464">464</a>
+<a href="#465" id="465">465</a>
+<a href="#466" id="466">466</a>
+<a href="#467" id="467">467</a>
+<a href="#468" id="468">468</a>
+<a href="#469" id="469">469</a>
+<a href="#470" id="470">470</a>
+<a href="#471" id="471">471</a>
+<a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
+<a href="#477" id="477">477</a>
+<a href="#478" id="478">478</a>
+<a href="#479" id="479">479</a>
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a>
+<a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
+<a href="#496" id="496">496</a>
+<a href="#497" id="497">497</a>
+</pre></div><pre class="rust"><code><span class="comment">// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 </span><span class="doccomment">//! # Macros for the `hsh` crate.
@@ -453,8 +511,8 @@
 //!
 //! | Macro | Description |
 //! |--------|------------|
-//! | `hsh` | Calls the parse method on the Common struct from the hsh crate. |
-//! | `hsh_assert` | Asserts that a given condition is true. If the condition is false, the macro will cause the program to panic with the message &quot;Assertion failed!&quot;. |
+//! | `hsh` | Calls the `parse` method on the `Hash` struct from the hsh crate. |
+//! | `hsh_assert` | Asserts that a given condition is true. If the condition is false, the macro will cause the program to panic with the message "Assertion failed!". |
 //! | `hsh_contains` | Checks if a given string contains a specified substring. |
 //! | `hsh_in_range` | Checks if a given value is within a specified range (inclusive). |
 //! | `hsh_join` | Joins multiple strings together using a specified separator. |
@@ -480,18 +538,18 @@
 
 /// This macro takes any number of arguments and parses them into a Rust
 /// value. The parsed value is returned wrapped in
-/// `hsh::Common::parse()` function call.
+/// `hsh::Hash::parse()` function call.
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh {
-    ($(<span class="macro-nonterminal">$tt</span>:tt)<span class="kw-2">*</span>) =&gt; {
-        hsh::Hash::parse($(<span class="macro-nonterminal">$tt</span>)<span class="kw-2">*</span>)
+</span><span class="macro">macro_rules!</span> hsh {
+    ($(<span class="macro-nonterminal">$token</span>:tt)<span class="kw-2">*</span>) =&gt; {
+        hsh::Hash::parse($(<span class="macro-nonterminal">$token</span>)<span class="kw-2">*</span>)
     };
 }
 
 <span class="doccomment">/// This macro asserts that the given condition is true. If the
-/// condition is false, the macro panics with the message &quot;Assertion
-/// failed!&quot;.
+/// condition is false, the macro panics with the message "Assertion
+/// failed!".
 ///
 /// # Example
 ///
@@ -504,10 +562,10 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_assert {
+</span><span class="macro">macro_rules!</span> hsh_assert {
     ($(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {
         <span class="kw">if </span>!$(<span class="macro-nonterminal">$arg</span>)* {
-            <span class="macro">panic!</span>(<span class="string">&quot;Assertion failed!&quot;</span>);
+            <span class="macro">panic!</span>(<span class="string">"Assertion failed!"</span>);
         }
     };
 }
@@ -520,11 +578,11 @@
 /// extern crate hsh;
 /// use hsh::{ hsh_contains };
 ///
-/// let contains = hsh_contains!(&quot;Hello world&quot;, &quot;world&quot;);
+/// let contains = hsh_contains!("Hello world", "world");
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_contains {
+</span><span class="macro">macro_rules!</span> hsh_contains {
     (<span class="macro-nonterminal">$s</span>:expr, <span class="macro-nonterminal">$sub</span>:expr) =&gt; {
         <span class="macro-nonterminal">$s</span>.contains(<span class="macro-nonterminal">$sub</span>)
     };
@@ -543,14 +601,10 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_in_range {
+</span><span class="macro">macro_rules!</span> hsh_in_range {
     (<span class="macro-nonterminal">$value</span>:expr, <span class="macro-nonterminal">$min</span>:expr, <span class="macro-nonterminal">$max</span>:expr) =&gt; {
-        <span class="kw">if </span><span class="macro-nonterminal">$value </span>&gt;= <span class="macro-nonterminal">$min </span>&amp;&amp; <span class="macro-nonterminal">$value </span>&lt;= <span class="macro-nonterminal">$max </span>{
-            <span class="bool-val">true
-        </span>} <span class="kw">else </span>{
-            <span class="bool-val">false
-        </span>}
-    };
+        <span class="macro-nonterminal">$value </span>&gt;= <span class="macro-nonterminal">$min </span>&amp;&amp; <span class="macro-nonterminal">$value </span>&lt;= <span class="macro-nonterminal">$max
+    </span>};
 }
 
 <span class="doccomment">/// This macro joins the given strings together with the given
@@ -562,11 +616,11 @@
 /// extern crate hsh;
 /// use hsh::{ hsh_join };
 ///
-/// let joined = hsh_join!(&quot;, &quot;, &quot;Hello&quot;, &quot;world&quot;);
+/// let joined = hsh_join!(", ", "Hello", "world");
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_join {
+</span><span class="macro">macro_rules!</span> hsh_join {
     (<span class="macro-nonterminal">$sep</span>:expr, $(<span class="macro-nonterminal">$s</span>:expr),<span class="kw-2">*</span>) =&gt; {{
         <span class="kw">let </span>vec = <span class="macro">vec!</span>[$(<span class="macro-nonterminal">$s</span>.to_string()),<span class="kw-2">*</span>];
         vec.join(<span class="macro-nonterminal">$sep</span>)
@@ -584,7 +638,7 @@
 /// let max = hsh_max!(1, 2, 3);  // `max` will be 3
 /// ```
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_max {
+</span><span class="macro">macro_rules!</span> hsh_max {
     (<span class="macro-nonterminal">$x</span>:expr $(, <span class="macro-nonterminal">$y</span>:expr)<span class="kw-2">*</span>) =&gt; {{
         <span class="kw">let </span><span class="kw-2">mut </span>max = <span class="macro-nonterminal">$x</span>;
         $(
@@ -606,7 +660,7 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_min {
+</span><span class="macro">macro_rules!</span> hsh_min {
     (<span class="macro-nonterminal">$x</span>:expr $(, <span class="macro-nonterminal">$y</span>:expr)<span class="kw-2">*</span>) =&gt; {{
         <span class="kw">let </span><span class="kw-2">mut </span>min = <span class="macro-nonterminal">$x</span>;
         $(
@@ -624,10 +678,10 @@
 /// extern crate hsh;
 /// use hsh::{ hsh_print };
 ///
-/// hsh_print!(&quot;Hello {}&quot;, &quot;world&quot;);  // This will print &quot;Hello world&quot;
+/// hsh_print!("Hello {}", "world");  // This will print "Hello world"
 /// ```
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_print {
+</span><span class="macro">macro_rules!</span> hsh_print {
     ($(<span class="macro-nonterminal">$arg</span>:tt)<span class="kw-2">*</span>) =&gt; {
         <span class="macro">println!</span>($(<span class="macro-nonterminal">$arg</span>)<span class="kw-2">*</span>);
     };
@@ -647,10 +701,10 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_print_vec {
+</span><span class="macro">macro_rules!</span> hsh_print_vec {
     ($(<span class="macro-nonterminal">$v</span>:expr),<span class="kw-2">*</span>) =&gt; {
         <span class="kw">for </span>v <span class="kw">in </span>$(<span class="macro-nonterminal">$v</span>),* {
-            <span class="macro">println!</span>(<span class="string">&quot;{}&quot;</span>, v);
+            <span class="macro">println!</span>(<span class="string">"{}"</span>, v);
         }
     };
 }
@@ -664,11 +718,11 @@
 /// extern crate hsh;
 /// use hsh::{ hsh_split };
 ///
-/// let split = hsh_split!(&quot;Hello world&quot;);
+/// let split = hsh_split!("Hello world");
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_split {
+</span><span class="macro">macro_rules!</span> hsh_split {
     (<span class="macro-nonterminal">$s</span>:expr) =&gt; {
         <span class="macro-nonterminal">$s</span>.split_whitespace()
             .map(|w| w.to_string())
@@ -688,7 +742,7 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_vec {
+</span><span class="macro">macro_rules!</span> hsh_vec {
     ($(<span class="macro-nonterminal">$elem</span>:expr),<span class="kw-2">*</span>) =&gt; {{
         <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::new();
         $(v.push(<span class="macro-nonterminal">$elem</span>);)*
@@ -706,14 +760,14 @@
 /// extern crate hsh;
 /// use hsh::{ hsh_parse };
 ///
-/// let parsed = hsh_parse!(&quot;123&quot;);  // `parsed` will be Ok(123)
+/// let parsed = hsh_parse!("123");  // `parsed` will be Ok(123)
 /// ```
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hsh_parse {
+</span><span class="macro">macro_rules!</span> hsh_parse {
     (<span class="macro-nonterminal">$input</span>:expr) =&gt; {
         <span class="macro-nonterminal">$input
             </span>.parse::&lt;u64&gt;()
-            .map_err(|e| <span class="macro">format!</span>(<span class="string">&quot;Failed to parse input: {}&quot;</span>, e))
+            .map_err(|e| <span class="macro">format!</span>(<span class="string">"Failed to parse input: {}"</span>, e))
     };
 }
 
@@ -729,14 +783,14 @@
 ///
 /// let result: Result&lt;(), String&gt; = Ok(());
 /// let error: Result&lt;(), String&gt; =
-/// Err(&quot;Error message&quot;.to_string());
+/// Err("Error message".to_string());
 ///
 /// let result_str = to_str_error!(result);
 /// assert_eq!(result_str, Ok(()));
 ///
 /// ```
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>to_str_error {
+</span><span class="macro">macro_rules!</span> to_str_error {
     (<span class="macro-nonterminal">$expr</span>:expr) =&gt; {
         <span class="macro-nonterminal">$expr</span>.map_err(|e| e.to_string())
     };
@@ -755,10 +809,10 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>random_string {
+</span><span class="macro">macro_rules!</span> random_string {
     (<span class="macro-nonterminal">$len</span>:expr) =&gt; {{
-        <span class="kw">let </span>chars = <span class="string">&quot;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&quot;</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>rng = vrd::Random::default();
+        <span class="kw">let </span>chars = <span class="string">"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = vrd::random::Random::default();
         (<span class="number">0</span>..<span class="macro-nonterminal">$len </span><span class="kw">as </span>usize)
             .map(|<span class="kw">_</span>| {
                 <span class="kw">let </span>index = <span class="macro">vrd::rand_int!</span>(rng, <span class="number">0</span>, (chars.len() - <span class="number">1</span>) <span class="kw">as </span>i32) <span class="kw">as </span>usize;
@@ -778,20 +832,20 @@
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::{ match_algo, HashAlgorithm };
+/// use hsh::{ match_algo, models::hash_algorithm::HashAlgorithm };
 ///
-/// let algo = match_algo!(&quot;bcrypt&quot;);
+/// let algo = match_algo!("bcrypt");
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>match_algo {
+</span><span class="macro">macro_rules!</span> match_algo {
     (<span class="macro-nonterminal">$algo_str</span>:expr) =&gt; {
         <span class="kw">match </span><span class="macro-nonterminal">$algo_str </span>{
-            <span class="string">&quot;argon2i&quot; </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Argon2i),
-            <span class="string">&quot;bcrypt&quot; </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Bcrypt),
-            <span class="string">&quot;scrypt&quot; </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Scrypt),
+            <span class="string">"argon2i" </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Argon2i),
+            <span class="string">"bcrypt" </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Bcrypt),
+            <span class="string">"scrypt" </span>=&gt; <span class="prelude-val">Ok</span>(HashAlgorithm::Scrypt),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-                <span class="string">&quot;Unsupported hash algorithm: {}&quot;</span>,
+                <span class="string">"Unsupported hash algorithm: {}"</span>,
                 <span class="macro-nonterminal">$algo_str
             </span>)),
         }
@@ -805,19 +859,19 @@
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ generate_hash, HashAlgorithm };
+/// use hsh::models::hash::Hash;
+/// use hsh::{generate_hash, models::hash_algorithm::{HashAlgorithm}};
 ///
-/// let password = &quot;password&quot;;
-/// let salt = &quot;salt&quot;;
-/// let algo = &quot;bcrypt&quot;;
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
 /// let hash_bytes = generate_hash!(password, salt, algo);
 ///
 /// assert!(hash_bytes.is_ok());
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>generate_hash {
+</span><span class="macro">macro_rules!</span> generate_hash {
     (<span class="macro-nonterminal">$password</span>:expr, <span class="macro-nonterminal">$salt</span>:expr, <span class="macro-nonterminal">$algo</span>:expr) =&gt; {
         Hash::generate_hash(<span class="macro-nonterminal">$password</span>, <span class="macro-nonterminal">$salt</span>, <span class="macro-nonterminal">$algo</span>)
     };
@@ -830,18 +884,18 @@
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::{new_hash, models::{hash::Hash, hash_algorithm::{HashAlgorithm}}};
 ///
-/// let password = &quot;password&quot;;
-/// let salt = &quot;salt&quot;;
-/// let algo = &quot;bcrypt&quot;;
+///
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
 /// let hash = new_hash!(password, salt, algo);
 ///
 /// assert!(hash.is_ok());
 /// ```
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>new_hash {
+</span><span class="macro">macro_rules!</span> new_hash {
     (<span class="macro-nonterminal">$password</span>:expr, <span class="macro-nonterminal">$salt</span>:expr, <span class="macro-nonterminal">$algo</span>:expr) =&gt; {
         Hash::new(<span class="macro-nonterminal">$password</span>, <span class="macro-nonterminal">$salt</span>, <span class="macro-nonterminal">$algo</span>)
     };
@@ -854,13 +908,13 @@
 ///
 /// ```
 /// extern crate hsh;
-/// use hsh::Hash;
-/// use hsh::{ hash_length };
-/// use hsh::{ new_hash, HashAlgorithm };
+/// use hsh::models::{hash::Hash, hash_algorithm::{HashAlgorithm}};
+/// use hsh::{ hash_length, new_hash };
 ///
-/// let password = &quot;password&quot;;
-/// let salt = &quot;salt&quot;;
-/// let algo = &quot;bcrypt&quot;;
+///
+/// let password = "password";
+/// let salt = "salt";
+/// let algo = "bcrypt";
 ///
 /// let hash = new_hash!(password, salt, algo);
 /// assert!(hash.is_ok());
@@ -871,9 +925,71 @@
 /// ```
 ///
 </span><span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hash_length {
+</span><span class="macro">macro_rules!</span> hash_length {
     (<span class="macro-nonterminal">$hash</span>:expr) =&gt; {
         <span class="macro-nonterminal">$hash</span>.hash_length()
     };
+}
+
+<span class="doccomment">/// Macros related to executing shell commands.
+///
+/// Executes a shell command, logs the start and completion of the operation, and handles any errors that occur.
+///
+/// # Parameters
+///
+/// * `$command`: The shell command to execute.
+/// * `$package`: The name of the package the command is being run on.
+/// * `$operation`: A description of the operation being performed.
+/// * `$start_message`: The log message to be displayed at the start of the operation.
+/// * `$complete_message`: The log message to be displayed upon successful completion of the operation.
+/// * `$error_message`: The log message to be displayed in case of an error.
+///
+/// # Returns
+///
+/// Returns a `Result&lt;(), anyhow::Error&gt;` indicating the success or failure of the operation.
+///
+</span><span class="attr">#[macro_export]
+</span><span class="macro">macro_rules!</span> macro_execute_and_log {
+    (<span class="macro-nonterminal">$command</span>:expr, <span class="macro-nonterminal">$package</span>:expr, <span class="macro-nonterminal">$operation</span>:expr, <span class="macro-nonterminal">$start_message</span>:expr, <span class="macro-nonterminal">$complete_message</span>:expr, <span class="macro-nonterminal">$error_message</span>:expr) =&gt; {{
+        <span class="kw">use </span>anyhow::{Context, <span class="prelude-ty">Result </span><span class="kw">as </span>AnyResult};
+        <span class="kw">use </span><span class="macro-nonterminal">$crate::loggers</span>::{LogFormat, LogLevel};
+        <span class="kw">use </span><span class="macro-nonterminal">$crate::macro_log_info</span>;
+
+        <span class="macro">macro_log_info!</span>(
+            LogLevel::INFO,
+            <span class="macro-nonterminal">$operation</span>,
+            <span class="macro-nonterminal">$start_message</span>,
+            LogFormat::CLF
+        );
+
+        <span class="macro-nonterminal">$command
+            </span>.run()
+            .map(|<span class="kw">_</span>| ())
+            .map_err(|err| {
+                <span class="macro">macro_log_info!</span>(
+                    LogLevel::ERROR,
+                    <span class="macro-nonterminal">$operation</span>,
+                    <span class="macro-nonterminal">$error_message</span>,
+                    LogFormat::CLF
+                );
+                err
+            })
+            .with_context(|| {
+                <span class="macro">format!</span>(
+                    <span class="string">"Failed to execute '{}' for {} on package '{}'"</span>,
+                    <span class="macro">stringify!</span>(<span class="macro-nonterminal">$command</span>),
+                    <span class="macro-nonterminal">$operation</span>,
+                    <span class="macro-nonterminal">$package
+                </span>)
+            })<span class="question-mark">?</span>;
+
+        <span class="macro">macro_log_info!</span>(
+            LogLevel::INFO,
+            <span class="macro-nonterminal">$operation</span>,
+            <span class="macro-nonterminal">$complete_message</span>,
+            LogFormat::CLF
+        );
+        <span class="prelude-val">Ok</span>(())
+    }};
 }
 </code></pre></div></section></main></body></html>
