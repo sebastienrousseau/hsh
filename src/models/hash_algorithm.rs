@@ -1,4 +1,4 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use serde::{Deserialize, Serialize};
@@ -8,7 +8,18 @@ use serde::{Deserialize, Serialize};
 /// This enum is used to specify which hashing algorithm should be used
 /// when creating a new hashed password.
 ///
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 pub enum HashAlgorithm {
     /// Argon2i - A memory-hard password hashing algorithm.
     ///
@@ -61,7 +72,8 @@ pub trait HashingAlgorithm {
     ///
     /// Returns a `Result` containing the hashed password as a vector of bytes.
     /// If hashing fails, returns a `String` detailing the error.
-    fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>, String>;
+    fn hash_password(
+        password: &str,
+        salt: &str,
+    ) -> Result<Vec<u8>, String>;
 }
-
-

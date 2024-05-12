@@ -1,7 +1,7 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # Hash (HSH), a Quantum-Resistant Cryptographic Hash Library
@@ -70,16 +70,14 @@
 //! ```rust
 //! use hsh::models::hash::Hash;  // Import the Hash struct
 //!
-//! fn main() {
-//!     let password = "password123";
-//!     let salt = "somesalt";
-//!     let algo = "argon2i";
-//!
-//!     let original_hash = Hash::new(password, salt, algo).expect("Failed to create hash");
-//!     let hashed_password = original_hash.hash.clone();
-//!
-//!     assert_eq!(original_hash.hash(), &hashed_password);
-//! }
+//! let password = "password123";
+//! let salt = "somesalt";
+//! let algo = "argon2i";
+//
+//! let original_hash = Hash::new(password, salt, algo).expect("Failed to create hash");
+//! let hashed_password = original_hash.hash.clone();
+//
+//! assert_eq!(original_hash.hash(), &hashed_password);
 //! ```
 //!
 //! ## License
@@ -89,21 +87,16 @@
 //! [banner]: https://kura.pro/hsh/images/banners/banner-hsh.webp
 //! [crate-shield]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=success&labelColor=27A006
 //! [github-shield]: https://img.shields.io/badge/github-555555?style=for-the-badge&labelColor=000000&logo=github
-//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.7-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
+//! [lib-rs-shield]: https://img.shields.io/badge/lib.rs-v0.0.8-success.svg?style=for-the-badge&color=8A48FF&labelColor=6F36E4
 //! [license-shield]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge&color=007EC6&labelColor=03589B
 //! [rust-shield]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust
 //!
-//! [00]: https://hshlib.one/
+//! [00]: https://hshlib.com/
 //! [01]: https://minifunctions.com/
 //! [02]: http://www.apache.org/licenses/LICENSE-2.0
 //! [03]: http://opensource.org/licenses/MIT
 
 #![cfg_attr(feature = "bench", feature(test))]
-#![deny(missing_debug_implementations)]
-#![deny(missing_docs)]
-#![deny(unsafe_code)]
-#![warn(clippy::all)]
-#![warn(rust_2018_idioms)]
 #![doc(
     html_favicon_url = "https://kura.pro/hsh/images/favicon.ico",
     html_logo_url = "https://kura.pro/hsh/images/logos/hsh.svg",
@@ -114,9 +107,6 @@
 
 /// The `algorithms` module contains the password hashing algorithms.
 pub mod algorithms;
-
-/// The `loggers` module contains the loggers for the library.
-pub mod loggers;
 
 /// The `macros` module contains functions for generating macros.
 pub mod macros;

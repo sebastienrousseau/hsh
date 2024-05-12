@@ -1,5 +1,6 @@
 [package]
-authors = ["Hash (HSH) Contributors"]
+# Metadata about the package.
+authors = ["The Hash (HSH) library contributors <contact@hshlib.com>"]
 build = "build.rs"
 categories = [
     "algorithms",
@@ -14,14 +15,13 @@ description = """
 """
 documentation = "https://docs.rs/hsh"
 edition = "2021"
-exclude = ["/.git/*", "/.github/*", "/.gitignore", "/.vscode/*"]
-homepage = "https://hshlib.one/"
-keywords = ["argon2", "argon2i", "hash", "password", "security"]
-license = "MIT OR Apache-2.0"
-name = "hsh"
-repository = "https://github.com/sebastienrousseau/hsh/"
-rust-version = "1.71.1"
-version = "0.0.7"
+exclude = [
+    "/.git/*",
+    "/.github/*",
+    "/.gitignore",
+    "/.vscode/*"
+]
+homepage = "https://hshlib.com/"
 include = [
     "/CONTRIBUTING.md",
     "/LICENSE-APACHE",
@@ -33,13 +33,17 @@ include = [
     "/README.md",
     "/src/**",
     "/tests/**",
-    "/xtask/**",
 ]
-
-[workspace]
-members = ["xtask"]
+keywords = ["argon2", "argon2i", "hash", "password", "security"]
+license = "MIT OR Apache-2.0"
+name = "hsh"
+readme = "README.md"
+repository = "https://github.com/sebastienrousseau/hsh/"
+rust-version = "1.60"
+version = "0.0.8"
 
 [[bench]]
+# Benchmarking configuration.
 name = "benchmark"
 harness = false
 path = "benches/criterion.rs"
@@ -48,35 +52,94 @@ path = "benches/criterion.rs"
 debug = true
 
 [[example]]
+# Example configuration.
 name = "hsh"
 path = "examples/hsh.rs"
 
 [dependencies]
+# Dependencies of the package.
 argon2rs = "0.2.5"
-base64 = "0.22.0"
+base64 = "0.22.1"
 bcrypt = "0.15.1"
 dtt = "0.0.6"
-log = {version="0.4.20", features = ["std"] }
-# openssl = { version = "0.10.59", features = ["vendored"] }
+log = {version="0.4.21", features = ["std"] }
 scrypt = "0.11.0"
 serde = { version = "1.0.201", features = ["derive"] }
-serde_json = "1.0.116"
-vrd = "0.0.5"
+serde_json = "1.0.117"
+vrd = "0.0.7"
 
 [dev-dependencies]
-assert_cmd = "2.0.13"
+# Dependencies for testing and development.
+assert_cmd = "2.0.14"
 criterion = "0.5.1"
 
 [lib]
+# Metadata about the library.
 crate-type = ["lib"]
 name = "hsh"
 path = "src/lib.rs"
 
 [features]
+# No default features
 default = []
 
 [package.metadata.docs.rs]
-all-features = true
+targets = ["x86_64-unknown-linux-gnu"]
+rustdoc-args = ["--generate-link-to-definition"]
+
+# Linting config
+[lints.rust]
+
+## Warn
+# box_pointers = "warn"
+missing_copy_implementations = "warn"
+missing_docs = "warn"
+unstable_features = "warn"
+# unused_crate_dependencies = "warn"
+unused_extern_crates = "warn"
+unused_results = "warn"
+
+## Allow
+bare_trait_objects = "allow"
+elided_lifetimes_in_paths = "allow"
+non_camel_case_types = "allow"
+non_upper_case_globals = "allow"
+trivial_bounds = "allow"
+unsafe_code = "allow"
+
+## Forbid
+missing_debug_implementations = "forbid"
+non_ascii_idents = "forbid"
+unreachable_pub = "forbid"
+
+## Deny
+dead_code = "deny"
+deprecated_in_future = "deny"
+ellipsis_inclusive_range_patterns = "deny"
+explicit_outlives_requirements = "deny"
+future_incompatible = { level = "deny", priority = -1 }
+keyword_idents = "deny"
+macro_use_extern_crate = "deny"
+meta_variable_misuse = "deny"
+missing_fragment_specifier = "deny"
+noop_method_call = "deny"
+pointer_structural_match = "deny"
+rust_2018_idioms = { level = "deny", priority = -1 }
+rust_2021_compatibility = { level = "deny", priority = -1 }
+single_use_lifetimes = "deny"
+trivial_casts = "deny"
+trivial_numeric_casts = "deny"
+unused = { level = "deny", priority = -1 }
+unused_features = "deny"
+unused_import_braces = "deny"
+unused_labels = "deny"
+unused_lifetimes = "deny"
+unused_macro_rules = "deny"
+unused_qualifications = "deny"
+variant_size_differences = "deny"
+
+[package.metadata.clippy]
+warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]
 
 [profile.dev]
 codegen-units = 256
@@ -91,16 +154,16 @@ rpath = false
 strip = false
 
 [profile.release]
-codegen-units = 1        # Compile crates one after another so the compiler can optimize better
-debug = false            # Disable debug information
-debug-assertions = false # Disable debug assertions
-incremental = false      # Disable incremental compilation
-lto = true               # Enables link to optimizations
-opt-level = "s"          # Optimize for binary size
-overflow-checks = false  # Disable overflow checks
-panic = "abort"          # Strip expensive panic clean-up logic
-rpath = false            # Disable rpath
-strip = "symbols"        # Automatically strip symbols from the binary.
+codegen-units = 1
+debug = false
+debug-assertions = false
+incremental = false
+lto = true
+opt-level = "s"
+overflow-checks = false
+panic = "abort"
+rpath = false
+strip = "symbols"
 
 [profile.test]
 codegen-units = 256

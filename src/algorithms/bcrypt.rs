@@ -1,9 +1,9 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::models::hash_algorithm::HashingAlgorithm;
 use bcrypt::{hash, DEFAULT_COST};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Implementation of the Bcrypt hashing algorithm.
 ///
@@ -29,7 +29,18 @@ use serde::{Serialize, Deserialize};
 ///
 /// let hashed_password = Bcrypt::hash_password(password, salt).unwrap();
 /// ```
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize, Deserialize)]
+#[derive(
+    Clone,
+    Copy,
+    Debug,
+    Eq,
+    Hash,
+    Ord,
+    PartialEq,
+    PartialOrd,
+    Serialize,
+    Deserialize,
+)]
 pub struct Bcrypt;
 
 impl HashingAlgorithm for Bcrypt {
@@ -47,7 +58,10 @@ impl HashingAlgorithm for Bcrypt {
     ///
     /// Returns a `Result` containing the hashed password as a vector of bytes.
     /// If hashing fails for some reason, returns a `String` detailing the error.
-    fn hash_password(password: &str, _salt: &str) -> Result<Vec<u8>, String> {
+    fn hash_password(
+        password: &str,
+        _salt: &str,
+    ) -> Result<Vec<u8>, String> {
         hash(password, DEFAULT_COST)
             .map_err(|e| e.to_string())
             .map(|hash_parts| hash_parts.into_bytes())

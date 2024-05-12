@@ -1,16 +1,21 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 #[cfg(test)]
 mod tests {
-    use hsh::models::hash_algorithm::{HashAlgorithm, HashingAlgorithm};
+    use hsh::models::hash_algorithm::{
+        HashAlgorithm, HashingAlgorithm,
+    };
 
     // Dummy struct to implement HashingAlgorithm for testing
     struct DummyAlgorithm;
 
     impl HashingAlgorithm for DummyAlgorithm {
-        fn hash_password(_password: &str, _salt: &str) -> Result<Vec<u8>, String> {
-            Ok(vec![1, 2, 3, 4])  // Dummy logic
+        fn hash_password(
+            _password: &str,
+            _salt: &str,
+        ) -> Result<Vec<u8>, String> {
+            Ok(vec![1, 2, 3, 4]) // Dummy logic
         }
     }
 
@@ -29,7 +34,8 @@ mod tests {
     fn test_hashing_algorithm_trait() {
         let password = "password123";
         let salt = "salt123";
-        let hashed = DummyAlgorithm::hash_password(password, salt).unwrap();
+        let hashed =
+            DummyAlgorithm::hash_password(password, salt).unwrap();
         assert_eq!(hashed, vec![1, 2, 3, 4]);
     }
 }

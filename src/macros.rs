@@ -1,4 +1,4 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! # Macros for the `hsh` crate.
@@ -315,7 +315,7 @@ macro_rules! to_str_error {
 macro_rules! random_string {
     ($len:expr) => {{
         let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        let mut rng = vrd::Random::default();
+        let mut rng = vrd::random::Random::default();
         (0..$len as usize)
             .map(|_| {
                 let index = vrd::rand_int!(rng, 0, (chars.len() - 1) as i32) as usize;
@@ -432,43 +432,6 @@ macro_rules! hash_length {
     ($hash:expr) => {
         $hash.hash_length()
     };
-}
-
-/// Custom logging macro for various log levels and formats.
-///
-/// # Parameters
-///
-/// * `$level`: The log level of the message.
-/// * `$component`: The component where the log is coming from.
-/// * `$description`: A description of the log message.
-/// * `$format`: The format of the log message.
-///
-#[macro_export]
-macro_rules! macro_log_info {
-    ($level:expr, $component:expr, $description:expr, $format:expr) => {{
-        use dtt::DateTime;
-        use vrd::Random;
-        use $crate::loggers::{Log, LogFormat, LogLevel};
-
-        // Get the current date and time in ISO 8601 format.
-        let date = DateTime::new();
-        let iso = date.iso_8601;
-
-        // Create a new random number generator
-        let mut rng = Random::default();
-        let session_id = rng.rand().to_string();
-
-        let log = Log::new(
-            &session_id,
-            &iso,
-            $level,
-            $component,
-            $description,
-            $format,
-        );
-        let _ = log.log();
-        log // Return the Log instance
-    }};
 }
 
 /// Macros related to executing shell commands.

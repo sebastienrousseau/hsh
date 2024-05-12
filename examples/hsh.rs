@@ -1,10 +1,13 @@
-// Copyright © 2023 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! Using the Hash (HSH) library
 
+use hsh::{
+    models::{hash::Hash, hash_algorithm::HashAlgorithm},
+    new_hash,
+};
 use std::str::FromStr;
-use hsh::{models::{hash::Hash, hash_algorithm::HashAlgorithm}, new_hash};
 
 /// This function demonstrates how to create and verify password hashes using Argon2i, Bcrypt, and Scrypt algorithms.
 ///
@@ -37,9 +40,11 @@ use hsh::{models::{hash::Hash, hash_algorithm::HashAlgorithm}, new_hash};
 /// Note: This is a simplified example, and in a real-world application, you should handle errors and edge cases more carefully.
 fn create_and_verify_hash() {
     // Create new hashes for Argon2i, Bcrypt, and Scrypt
-    let hash_argon2i = Hash::new_argon2i("password", "salt1234".into()).unwrap();
+    let hash_argon2i =
+        Hash::new_argon2i("password", "salt1234".into()).unwrap();
     let hash_bcrypt = Hash::new_bcrypt("password", 16).unwrap();
-    let hash_scrypt = Hash::new_scrypt("password", "salt1234".into()).unwrap();
+    let hash_scrypt =
+        Hash::new_scrypt("password", "salt1234".into()).unwrap();
 
     // Verify these hashes
     verify_password(&hash_argon2i, "password", "Argon2i");
@@ -48,13 +53,19 @@ fn create_and_verify_hash() {
 
     // Update the hashes
     let mut new_hash_argon2i = hash_argon2i.clone();
-    new_hash_argon2i.set_password("new_password", "salt1234", "argon2i").unwrap();
+    new_hash_argon2i
+        .set_password("new_password", "salt1234", "argon2i")
+        .unwrap();
 
     let mut new_hash_bcrypt = hash_bcrypt.clone();
-    new_hash_bcrypt.set_password("new_password", "salt1234", "bcrypt").unwrap();
+    new_hash_bcrypt
+        .set_password("new_password", "salt1234", "bcrypt")
+        .unwrap();
 
     let mut new_hash_scrypt = hash_scrypt.clone();
-    new_hash_scrypt.set_password("new_password", "salt1234", "scrypt").unwrap();
+    new_hash_scrypt
+        .set_password("new_password", "salt1234", "scrypt")
+        .unwrap();
 
     // Verify the updated hashes
     verify_password(&new_hash_argon2i, "new_password", "Argon2i");
@@ -65,18 +76,33 @@ fn create_and_verify_hash() {
 // Function to verify the password
 fn verify_password(hash: &Hash, password: &str, algorithm: &str) {
     // Print header
-    println!("\n===[ Verifying Password with {} Algorithm ]===\n", algorithm);
+    println!(
+        "\n===[ Verifying Password with {} Algorithm ]===\n",
+        algorithm
+    );
 
     let is_valid = hash.verify(password);
     match is_valid {
         Ok(valid) => {
             println!("Algorithm: {}", algorithm);
-            println!("Provided password for verification: {}", password);
-            println!("Salt used for verification: {}", String::from_utf8_lossy(hash.salt()));
-            println!("🦀 Password verification result for {}: ✅ {:?}", algorithm, valid);
-        },
+            println!(
+                "Provided password for verification: {}",
+                password
+            );
+            println!(
+                "Salt used for verification: {}",
+                String::from_utf8_lossy(hash.salt())
+            );
+            println!(
+                "🦀 Password verification result for {}: ✅ {:?}",
+                algorithm, valid
+            );
+        }
         Err(e) => {
-            eprintln!("🦀 Error during password verification for {}: ❌ {}", algorithm, e);
+            eprintln!(
+                "🦀 Error during password verification for {}: ❌ {}",
+                algorithm, e
+            );
         }
     }
 
