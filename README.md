@@ -117,43 +117,12 @@ It takes just a few minutes to get up and running with `hsh`.
 ### Requirements
 
 The minimum supported Rust toolchain version is currently Rust
-**1.69.0** or later (stable). It is recommended that you install the
+**1.60** or later (stable). It is recommended that you install the
 latest stable version of Rust.
 
 ### Platform support
 
-`Hash (HSH)` is supported and tested on the following platforms:
-
-### Tier 1 platforms 🏆
-
-| | Operating System | Target | Description |
-| --- | --- | --- | --- |
-| ✅ | Linux   | aarch64-unknown-linux-gnu | 64-bit Linux systems on ARM architecture |
-| ✅ | Linux   | i686-unknown-linux-gnu | 32-bit Linux (kernel 3.2+, glibc 2.17+) |
-| ✅ | Linux   | x86_64-unknown-linux-gnu | 64-bit Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | macOS   | x86_64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
-| ✅ | Windows | i686-pc-windows-gnu | 32-bit Windows (7 or later) |
-| ✅ | Windows | i686-pc-windows-msvc | 32-bit Windows (7 or later) |
-| ✅ | Windows | x86_64-pc-windows-gnu | 64-bit Windows (7 or later) |
-| ✅ | Windows | x86_64-pc-windows-msvc | 64-bit Windows (7 or later) |
-
-### Tier 2 platforms 🥈
-
-| | Operating System | Target | Description |
-| --- | --- | --- | --- |
-| ✅ | Linux   | aarch64-unknown-linux-musl | 64-bit Linux systems on ARM architecture |
-| ✅ | Linux   | arm-unknown-linux-gnueabi | ARMv6 Linux (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | arm-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | armv7-unknown-linux-gnueabihf | ARMv7 Linux, hardfloat (kernel 3.2, glibc 2.17) |
-| ✅ | Linux   | mips-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mips64-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mips64el-unknown-linux-gnuabi64 | MIPS64 Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | Linux   | mipsel-unknown-linux-gnu | MIPS Linux (kernel 2.6.32+, glibc 2.11+) |
-| ✅ | macOS   | aarch64-apple-darwin | 64-bit macOS (10.7 Lion or later) |
-| ✅ | Windows | aarch64-pc-windows-msvc | 64-bit Windows (7 or later) |
-
-The [GitHub Actions][10] shows the platforms in which the
-`Hash (HSH)` library tests are run.
+`hsh` supports a variety of CPU architectures. It is supported and tested on MacOS, Linux, and Windows.
 
 ### Documentation
 
