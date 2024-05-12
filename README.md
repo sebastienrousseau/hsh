@@ -122,7 +122,8 @@ latest stable version of Rust.
 
 ### Platform support
 
-`hsh` supports a variety of CPU architectures. It is supported and tested on MacOS, Linux, and Windows.
+`hsh` supports a variety of CPU architectures. It is supported and tested on
+MacOS, Linux, and Windows.
 
 ### Documentation
 
