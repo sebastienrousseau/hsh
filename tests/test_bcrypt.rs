@@ -4,7 +4,8 @@
 #[cfg(test)]
 mod tests {
     use hsh::algorithms::bcrypt::Bcrypt;
-    use hsh::models::hash::Hash;
+    use hsh::models::hash::
+    Hash;
     use hsh::models::hash_algorithm::{
         HashAlgorithm, HashingAlgorithm,
     };
