@@ -70,7 +70,7 @@ vrd = "0.0.7"
 
 [dev-dependencies]
 # Dependencies for testing and development.
-assert_cmd = "2.0.14"
+assert_cmd = "2.0.16"
 criterion = "0.5.1"
 
 [lib]
