@@ -92,7 +92,12 @@ fn hash_with(
             salt.as_bytes(),
             &mut out,
         )
-        .map_err(|e| Error::Hashing(e.to_string()))?;
+        .map_err(|e| {
+            Error::hashing(
+                crate::error::HashingErrorKind::Argon2,
+                e.to_string(),
+            )
+        })?;
     Ok(out)
 }
 
@@ -152,6 +157,11 @@ pub fn verify(
             salt.as_bytes(),
             &mut calculated,
         )
-        .map_err(|e| Error::Hashing(e.to_string()))?;
+        .map_err(|e| {
+            Error::hashing(
+                crate::error::HashingErrorKind::Argon2,
+                e.to_string(),
+            )
+        })?;
     Ok(bool::from(calculated.ct_eq(stored)))
 }

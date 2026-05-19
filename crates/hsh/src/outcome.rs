@@ -4,17 +4,20 @@
 //! The [`Outcome`] of a verification — used by
 //! [`crate::api::verify_and_upgrade`] to signal whether the caller should
 //! re-hash the password under the current [`crate::Policy`].
+//!
+//! The rehashed PHC string is folded into the `Valid` variant so the
+//! invariant *"rehashed payload exists iff needs_rehash"* is enforced by
+//! the type system, not by callers reading docs.
 
 /// Result of verifying a candidate password against a stored hash.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Outcome {
-    /// The candidate password matches the stored hash. `needs_rehash`
-    /// is `true` when the stored hash's algorithm or parameters are
-    /// weaker than the current [`crate::Policy`] — the caller should
-    /// persist a fresh hash to keep stored material at the current bar.
+    /// The candidate password matches the stored hash.
     Valid {
-        /// Whether the stored hash is now below policy.
-        needs_rehash: bool,
+        /// `Some(new_phc)` when the stored hash falls below current
+        /// policy — caller persists the value. `None` when no rehash
+        /// is needed.
+        rehashed: Option<String>,
     },
     /// The candidate password does not match. Constant-time path —
     /// timing does not leak how much of the candidate matched.
@@ -23,13 +26,58 @@ pub enum Outcome {
 
 impl Outcome {
     /// Returns `true` if the verification succeeded.
-    pub fn is_valid(self) -> bool {
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hsh::Outcome;
+    ///
+    /// assert!(Outcome::Valid { rehashed: None }.is_valid());
+    /// assert!(!Outcome::Invalid.is_valid());
+    /// ```
+    #[must_use]
+    pub const fn is_valid(&self) -> bool {
         matches!(self, Outcome::Valid { .. })
     }
 
     /// Returns `true` if the verification succeeded *and* the caller
     /// should re-hash to bring stored material up to current policy.
-    pub fn needs_rehash(self) -> bool {
-        matches!(self, Outcome::Valid { needs_rehash: true })
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hsh::Outcome;
+    ///
+    /// assert!(!Outcome::Valid { rehashed: None }.needs_rehash());
+    /// assert!(Outcome::Valid { rehashed: Some(String::new()) }.needs_rehash());
+    /// assert!(!Outcome::Invalid.needs_rehash());
+    /// ```
+    #[must_use]
+    pub const fn needs_rehash(&self) -> bool {
+        matches!(self, Outcome::Valid { rehashed: Some(_) })
+    }
+
+    /// Returns the new PHC string to persist, if any.
+    #[must_use]
+    pub fn rehashed(&self) -> Option<&str> {
+        match self {
+            Outcome::Valid { rehashed: Some(p) } => Some(p.as_str()),
+            _ => None,
+        }
+    }
+
+    /// Consumes the outcome and yields the new PHC string to persist.
+    #[must_use]
+    pub fn into_rehashed(self) -> Option<String> {
+        match self {
+            Outcome::Valid { rehashed } => rehashed,
+            Outcome::Invalid => None,
+        }
     }
 }
+
+// Compile-time: outcome must stay shareable across threads.
+const _: fn() = || {
+    fn assert<T: Send + Sync>() {}
+    assert::<Outcome>();
+};

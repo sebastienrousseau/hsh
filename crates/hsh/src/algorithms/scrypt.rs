@@ -52,7 +52,7 @@ impl ScryptParams {
     /// validation errors.
     pub fn to_native(self) -> Result<Params> {
         Params::new(self.log_n, self.r, self.p, self.dk_len)
-            .map_err(|e| Error::InvalidParameter(e.to_string()))
+            .map_err(|e| Error::InvalidParameter(e.to_string().into()))
     }
 }
 
@@ -92,7 +92,12 @@ impl Scrypt {
             &native,
             &mut output,
         )
-        .map_err(|e| Error::Hashing(e.to_string()))?;
+        .map_err(|e| {
+            Error::hashing(
+                crate::error::HashingErrorKind::Scrypt,
+                e.to_string(),
+            )
+        })?;
         Ok(output)
     }
 }

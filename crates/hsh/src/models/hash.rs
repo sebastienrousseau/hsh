@@ -160,7 +160,7 @@ impl Hash {
         let parts: Vec<&str> = hash_str.split('$').collect();
         if parts.len() != 6 {
             return Err(Error::InvalidHashString(
-                "expected 6 fields separated by '$'",
+                "expected 6 fields separated by '$'".into(),
             ));
         }
         let algorithm = Self::parse_algorithm(hash_str)?;
@@ -194,7 +194,9 @@ impl Hash {
             "pbkdf2" | "pbkdf2-sha256" => {
                 Pbkdf2::hash_password(password, salt)
             }
-            other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
+            other => Err(Error::UnsupportedAlgorithm(
+                other.to_owned().into(),
+            )),
         }
     }
 
@@ -206,7 +208,10 @@ impl Hash {
 
         let mut raw = vec![0u8; len];
         getrandom::getrandom(&mut raw).map_err(|e| {
-            Error::Hashing(format!("OS RNG failed: {e}"))
+            Error::hashing(
+                crate::error::HashingErrorKind::Argon2,
+                format!("OS RNG failed: {e}"),
+            )
         })?;
 
         let s: String = raw
@@ -226,18 +231,26 @@ impl Hash {
             "bcrypt" => {
                 let mut raw = [0u8; 16];
                 getrandom::getrandom(&mut raw).map_err(|e| {
-                    Error::Hashing(format!("OS RNG failed: {e}"))
+                    Error::hashing(
+                        crate::error::HashingErrorKind::Argon2,
+                        format!("OS RNG failed: {e}"),
+                    )
                 })?;
                 Ok(general_purpose::STANDARD.encode(raw))
             }
             "scrypt" => {
                 let mut raw = [0u8; 32];
                 getrandom::getrandom(&mut raw).map_err(|e| {
-                    Error::Hashing(format!("OS RNG failed: {e}"))
+                    Error::hashing(
+                        crate::error::HashingErrorKind::Argon2,
+                        format!("OS RNG failed: {e}"),
+                    )
                 })?;
                 Ok(general_purpose::STANDARD.encode(raw))
             }
-            other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
+            other => Err(Error::UnsupportedAlgorithm(
+                other.to_owned().into(),
+            )),
         }
     }
 
@@ -258,7 +271,7 @@ impl Hash {
     pub fn new(password: &str, salt: &str, algo: &str) -> Result<Self> {
         if password.len() < 8 {
             return Err(Error::InvalidPassword(
-                "must be at least 8 characters",
+                "must be at least 8 characters".into(),
             ));
         }
         let hash = Self::generate_hash(password, salt, algo)?;
@@ -280,7 +293,7 @@ impl Hash {
         let parts: Vec<&str> = hash_str.split('$').collect();
         if parts.len() < 2 {
             return Err(Error::InvalidHashString(
-                "missing algorithm marker",
+                "missing algorithm marker".into(),
             ));
         }
         parse_algorithm_tag(parts[1])
@@ -383,8 +396,8 @@ impl Hash {
             }
             HashAlgorithm::Pbkdf2 => {
                 let calculated = Pbkdf2::hash_with(
-                    password,
-                    salt,
+                    password.as_bytes(),
+                    salt.as_bytes(),
                     Pbkdf2Params::default(),
                 )?;
                 let ok = bool::from(calculated.ct_eq(&self.hash));
@@ -406,7 +419,9 @@ fn parse_algorithm_tag(algo: &str) -> Result<HashAlgorithm> {
         "argon2d" => Ok(HashAlgorithm::Argon2d),
         "bcrypt" => Ok(HashAlgorithm::Bcrypt),
         "scrypt" => Ok(HashAlgorithm::Scrypt),
-        other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
+        other => {
+            Err(Error::UnsupportedAlgorithm(other.to_owned().into()))
+        }
     }
 }
 
@@ -426,8 +441,9 @@ impl FromStr for HashAlgorithm {
     type Err = Error;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        parse_algorithm_tag(s)
-            .map_err(|_| Error::UnsupportedAlgorithm(s.to_owned()))
+        parse_algorithm_tag(s).map_err(|_| {
+            Error::UnsupportedAlgorithm(s.to_owned().into())
+        })
     }
 }
 
@@ -484,7 +500,8 @@ impl HashBuilder {
                 algorithm,
             }),
             _ => Err(Error::InvalidHashString(
-                "HashBuilder missing one of: hash, salt, algorithm",
+                "HashBuilder missing one of: hash, salt, algorithm"
+                    .into(),
             )),
         }
     }

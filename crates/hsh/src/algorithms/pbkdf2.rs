@@ -116,16 +116,21 @@ pub struct Pbkdf2;
 
 impl HashingAlgorithm for Pbkdf2 {
     fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>> {
-        Self::hash_with(password, salt, Pbkdf2Params::default())
+        Self::hash_with(
+            password.as_bytes(),
+            salt.as_bytes(),
+            Pbkdf2Params::default(),
+        )
     }
 }
 
 impl Pbkdf2 {
     /// Derives `dk_len` bytes from `password` and `salt` under the
-    /// supplied [`Pbkdf2Params`].
+    /// supplied [`Pbkdf2Params`]. Both inputs are accepted as raw byte
+    /// slices — PBKDF2 doesn't impose a UTF-8 constraint.
     pub fn hash_with(
-        password: &str,
-        salt: &str,
+        password: &[u8],
+        salt: &[u8],
         params: Pbkdf2Params,
     ) -> Result<Vec<u8>> {
         if params.iterations < 1 {
@@ -152,31 +157,35 @@ mod rust_crypto {
     //! Pure-Rust PBKDF2 derive via the RustCrypto `pbkdf2` crate.
 
     use super::{Pbkdf2Params, Prf};
-    use crate::error::{Error, Result};
+    use crate::error::{Error, HashingErrorKind, Result};
     use hmac::Hmac;
     use sha2::{Sha256, Sha512};
 
     pub(super) fn derive(
-        password: &str,
-        salt: &str,
+        password: &[u8],
+        salt: &[u8],
         params: Pbkdf2Params,
     ) -> Result<Vec<u8>> {
         let mut out = vec![0u8; params.dk_len];
         match params.prf {
             Prf::Sha256 => pbkdf2::pbkdf2::<Hmac<Sha256>>(
-                password.as_bytes(),
-                salt.as_bytes(),
+                password,
+                salt,
                 params.iterations,
                 &mut out,
             )
-            .map_err(|e| Error::Hashing(e.to_string()))?,
+            .map_err(|e| {
+                Error::hashing(HashingErrorKind::Pbkdf2, e.to_string())
+            })?,
             Prf::Sha512 => pbkdf2::pbkdf2::<Hmac<Sha512>>(
-                password.as_bytes(),
-                salt.as_bytes(),
+                password,
+                salt,
                 params.iterations,
                 &mut out,
             )
-            .map_err(|e| Error::Hashing(e.to_string()))?,
+            .map_err(|e| {
+                Error::hashing(HashingErrorKind::Pbkdf2, e.to_string())
+            })?,
         }
         Ok(out)
     }

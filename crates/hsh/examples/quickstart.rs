@@ -18,17 +18,12 @@ fn main() {
         api::hash(&policy, "correct horse battery staple").unwrap();
     println!("stored: {stored}");
 
-    let (outcome, _) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &policy,
         "correct horse battery staple",
         &stored,
     )
     .unwrap();
-    assert!(matches!(
-        outcome,
-        Outcome::Valid {
-            needs_rehash: false
-        }
-    ));
+    assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
     println!("verified: valid");
 }

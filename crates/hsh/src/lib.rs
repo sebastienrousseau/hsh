@@ -112,7 +112,7 @@ pub use policy::{Policy, PrimaryAlgorithm};
 /// Library entry point used by the `hsh` binary.
 pub fn run() -> Result<()> {
     if std::env::var("HSH_TEST_MODE").unwrap_or_default() == "1" {
-        return Err(Error::Verification("simulated error"));
+        return Err(Error::Verification("simulated error".into()));
     }
 
     let name = "hsh";

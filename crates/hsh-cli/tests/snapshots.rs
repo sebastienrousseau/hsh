@@ -46,8 +46,7 @@ fn run_check_stdout(args: &[&str]) -> String {
 // same output across every host.
 // ---------------------------------------------------------------------------
 
-const ARGON2ID_FIXTURE: &str =
-    "$argon2id$v=19$m=19456,t=2,p=1$c2FsdHNhbHRzYWx0$\
+const ARGON2ID_FIXTURE: &str = "$argon2id$v=19$m=19456,t=2,p=1$c2FsdHNhbHRzYWx0$\
      ZJG8Sl9MhEd84QPshSeWLNVnPLBPp9DiOhcPjT0bDqQ";
 
 #[test]

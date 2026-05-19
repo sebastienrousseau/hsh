@@ -39,7 +39,7 @@ fn fast_test_policy() -> Policy {
 
 fn fast_policy_with_pepper(pepper: Arc<dyn hsh_kms::Pepper>) -> Policy {
     PolicyBuilder::from_preset(&fast_test_policy())
-        .pepper(pepper)
+        .pepper_arc(pepper)
         .build()
         .expect("fast peppered policy")
 }
@@ -82,20 +82,14 @@ fn peppered_round_trip_holds() {
 
     assert!(stored.starts_with("hsh-pepper:1:"));
 
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &policy,
         "correct horse battery staple",
         &stored,
     )
     .unwrap();
 
-    assert!(matches!(
-        outcome,
-        Outcome::Valid {
-            needs_rehash: false
-        }
-    ));
-    assert!(rehashed.is_none());
+    assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
 }
 
 #[test]
@@ -103,7 +97,7 @@ fn peppered_rejects_wrong_password() {
     let policy = fast_policy_with_pepper(pepper_v1());
     let stored = api::hash(&policy, "right password").unwrap();
 
-    let (outcome, _) =
+    let outcome =
         api::verify_and_upgrade(&policy, "wrong password", &stored)
             .unwrap();
     assert!(matches!(outcome, Outcome::Invalid));
@@ -114,30 +108,25 @@ fn peppered_rejected_when_policy_has_no_pepper() {
     let peppered_policy = fast_policy_with_pepper(pepper_v1());
     let stored = api::hash(&peppered_policy, "secret").unwrap();
 
-    // Drop the pepper from the policy and try to verify.
     let unpeppered = PolicyBuilder::from_preset(&peppered_policy)
         .no_pepper()
         .build()
         .unwrap();
 
-    let (outcome, _) =
+    let outcome =
         api::verify_and_upgrade(&unpeppered, "secret", &stored)
             .unwrap();
-    // Without the pepper, the verifier can't compute the HMAC and must
-    // refuse rather than fail open.
     assert!(matches!(outcome, Outcome::Invalid));
 }
 
 #[test]
 fn pepper_rotation_triggers_rehash() {
-    // Hash under v1.
     let v1_policy = fast_policy_with_pepper(pepper_v1());
     let stored_v1 = api::hash(&v1_policy, "user password").unwrap();
     assert!(stored_v1.starts_with("hsh-pepper:1:"));
 
-    // Verify under v1+v2 policy where current is v2.
     let v2_policy = fast_policy_with_pepper(pepper_v1_v2_current_v2());
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &v2_policy,
         "user password",
         &stored_v1,
@@ -145,33 +134,26 @@ fn pepper_rotation_triggers_rehash() {
     .unwrap();
     assert!(outcome.is_valid());
     assert!(outcome.needs_rehash());
-    let new_phc = rehashed.expect("rotation should yield a rehash");
+    let new_phc = outcome
+        .rehashed()
+        .expect("rotation should yield a rehash")
+        .to_owned();
     assert!(new_phc.starts_with("hsh-pepper:2:"));
 
-    // The rehashed value verifies cleanly under v2 with no further rehash.
-    let (outcome2, rehashed2) =
+    let outcome2 =
         api::verify_and_upgrade(&v2_policy, "user password", &new_phc)
             .unwrap();
-    assert!(matches!(
-        outcome2,
-        Outcome::Valid {
-            needs_rehash: false
-        }
-    ));
-    assert!(rehashed2.is_none());
+    assert!(matches!(outcome2, Outcome::Valid { rehashed: None }));
 }
 
 #[test]
 fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
-    // Hash without pepper.
     let bare_policy = fast_test_policy();
     let legacy = api::hash(&bare_policy, "legacy user pw").unwrap();
     assert!(legacy.starts_with("$argon2id$"));
 
-    // Now verify under a pepper-enabled policy — should succeed and
-    // trigger rehash.
     let pepper_policy = fast_policy_with_pepper(pepper_v1());
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &pepper_policy,
         "legacy user pw",
         &legacy,
@@ -179,7 +161,8 @@ fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
     .unwrap();
     assert!(outcome.is_valid());
     assert!(outcome.needs_rehash());
-    let new_phc = rehashed.expect("legacy → peppered upgrade");
+    let new_phc =
+        outcome.rehashed().expect("legacy → peppered upgrade");
     assert!(new_phc.starts_with("hsh-pepper:1:"));
 }
 

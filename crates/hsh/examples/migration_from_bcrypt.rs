@@ -27,15 +27,18 @@ fn main() {
     // Step 2: deploy with an Argon2id-primary policy. Existing bcrypt
     // hashes are still accepted on verify.
     let new_policy = Policy::owasp_minimum_2025(); // Argon2id primary
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &new_policy,
         "user-password",
         &legacy_bcrypt,
     )
     .unwrap();
 
-    assert!(matches!(outcome, Outcome::Valid { needs_rehash: true }));
-    let upgraded = rehashed.expect("needs_rehash → new PHC");
+    assert!(matches!(outcome, Outcome::Valid { rehashed: Some(_) }));
+    let upgraded = outcome
+        .rehashed()
+        .expect("needs_rehash → new PHC")
+        .to_owned();
     assert!(upgraded.starts_with("$argon2id$"));
     println!("upgraded     : {upgraded}");
 

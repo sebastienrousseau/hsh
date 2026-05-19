@@ -14,11 +14,14 @@ pub(crate) fn run(args: RehashArgs, json: bool) -> Result<()> {
         .context("resolving password")?;
     let policy = resolve_policy(args.policy, None);
 
-    let (outcome, rehashed) =
+    let outcome =
         hsh::api::verify_and_upgrade(&policy, &password, &args.stored)
             .context("hsh::api::verify_and_upgrade")?;
 
-    if !outcome.is_valid() {
+    let valid = outcome.is_valid();
+    let rehashed = outcome.into_rehashed();
+
+    if !valid {
         if json {
             print_kv(
                 true,

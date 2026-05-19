@@ -31,10 +31,10 @@ fn fips_available_is_false_today() {
 // ---------------------------------------------------------------- Outcome
 #[test]
 fn outcome_is_valid_and_needs_rehash() {
-    let valid_no_rehash = Outcome::Valid {
-        needs_rehash: false,
+    let valid_no_rehash = Outcome::Valid { rehashed: None };
+    let valid_rehash = Outcome::Valid {
+        rehashed: Some(String::from("placeholder")),
     };
-    let valid_rehash = Outcome::Valid { needs_rehash: true };
     let invalid = Outcome::Invalid;
 
     assert!(valid_no_rehash.is_valid());
@@ -160,22 +160,27 @@ mod pepper_tests {
     use hsh_kms::{KeyVersion, LocalPepper};
     use std::sync::Arc;
 
-    fn test_pepper() -> Arc<dyn hsh_kms::Pepper> {
-        Arc::new(
-            LocalPepper::builder()
-                .add(
-                    KeyVersion::new(1),
-                    b"v1-test-pepper-key-16+ bytes".to_vec(),
-                )
-                .current(KeyVersion::new(1))
-                .build()
-                .unwrap(),
-        )
+    fn test_pepper() -> LocalPepper {
+        LocalPepper::builder()
+            .add(
+                KeyVersion::new(1),
+                b"v1-test-pepper-key-16+ bytes".to_vec(),
+            )
+            .current(KeyVersion::new(1))
+            .build()
+            .unwrap()
     }
 
     #[test]
     fn policy_with_pepper_sets_flag() {
         let p = Policy::owasp_minimum_2025().with_pepper(test_pepper());
+        assert!(p.has_pepper());
+    }
+
+    #[test]
+    fn policy_with_pepper_arc_sets_flag() {
+        let arc: Arc<dyn hsh_kms::Pepper> = Arc::new(test_pepper());
+        let p = Policy::owasp_minimum_2025().with_pepper_arc(arc);
         assert!(p.has_pepper());
     }
 

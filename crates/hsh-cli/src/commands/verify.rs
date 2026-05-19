@@ -21,12 +21,13 @@ pub(crate) fn run(args: VerifyArgs, json: bool) -> Result<()> {
         .context("resolving password")?;
     let policy = resolve_policy(args.policy, None);
 
-    let (outcome, rehashed) =
+    let outcome =
         hsh::api::verify_and_upgrade(&policy, &password, &args.stored)
             .context("hsh::api::verify_and_upgrade")?;
 
     let valid = outcome.is_valid();
     let needs_rehash = outcome.needs_rehash();
+    let rehashed = outcome.into_rehashed();
 
     if json {
         let mut pairs: Vec<(&str, serde_json::Value)> = vec![

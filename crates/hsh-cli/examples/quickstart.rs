@@ -22,7 +22,7 @@ fn main() {
     println!();
 
     println!("# hsh verify -H '<stored>'");
-    let (outcome, _) =
+    let outcome =
         api::verify_and_upgrade(&policy, "demo-password", &stored)
             .unwrap();
     if outcome.is_valid() {

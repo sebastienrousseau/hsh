@@ -57,7 +57,7 @@ proptest! {
     fn argon2id_round_trip_holds(pwd in password_strategy()) {
         let p = fast_test_policy(PrimaryAlgorithm::Argon2id);
         let stored = api::hash(&p, &pwd).unwrap();
-        let (outcome, _) = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
+        let outcome = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
         let is_valid = matches!(outcome, Outcome::Valid { .. });
         prop_assert!(is_valid);
     }
@@ -71,7 +71,7 @@ proptest! {
         prop_assume!(a != b);
         let p = fast_test_policy(PrimaryAlgorithm::Argon2id);
         let stored = api::hash(&p, &a).unwrap();
-        let (outcome, _) = api::verify_and_upgrade(&p, &b, &stored).unwrap();
+        let outcome = api::verify_and_upgrade(&p, &b, &stored).unwrap();
         let is_invalid = matches!(outcome, Outcome::Invalid);
         prop_assert!(is_invalid);
     }
@@ -81,7 +81,7 @@ proptest! {
     fn bcrypt_round_trip_holds(pwd in password_strategy()) {
         let p = fast_test_policy(PrimaryAlgorithm::Bcrypt);
         let stored = api::hash(&p, &pwd).unwrap();
-        let (outcome, _) = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
+        let outcome = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
         let is_valid = matches!(outcome, Outcome::Valid { .. });
         prop_assert!(is_valid);
     }
@@ -91,7 +91,7 @@ proptest! {
     fn scrypt_round_trip_holds(pwd in password_strategy()) {
         let p = fast_test_policy(PrimaryAlgorithm::Scrypt);
         let stored = api::hash(&p, &pwd).unwrap();
-        let (outcome, _) = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
+        let outcome = api::verify_and_upgrade(&p, &pwd, &stored).unwrap();
         let is_valid = matches!(outcome, Outcome::Valid { .. });
         prop_assert!(is_valid);
     }

@@ -180,6 +180,11 @@ impl Policy {
     /// Attaches a pepper provider to this policy and returns the
     /// updated value.
     ///
+    /// Accepts any `impl hsh_kms::Pepper + 'static` so callers don't
+    /// have to wrap their provider in `Arc` manually — the wrap is
+    /// applied internally. Pass an already-wrapped `Arc<dyn Pepper>`
+    /// via [`Self::with_pepper_arc`] when sharing across instances.
+    ///
     /// New hashes will be peppered with `provider.current()`. Old
     /// hashes carrying earlier key versions remain verifiable, and
     /// [`crate::api::verify_and_upgrade`] will signal `needs_rehash`
@@ -187,6 +192,19 @@ impl Policy {
     #[cfg(feature = "pepper")]
     #[must_use]
     pub fn with_pepper(
+        mut self,
+        provider: impl hsh_kms::Pepper + 'static,
+    ) -> Self {
+        self.pepper = Some(Arc::new(provider));
+        self
+    }
+
+    /// Variant of [`Self::with_pepper`] that accepts an already-wrapped
+    /// `Arc<dyn Pepper>` — useful when the same provider instance is
+    /// shared across multiple policies.
+    #[cfg(feature = "pepper")]
+    #[must_use]
+    pub fn with_pepper_arc(
         mut self,
         provider: Arc<dyn hsh_kms::Pepper>,
     ) -> Self {
@@ -319,9 +337,23 @@ impl PolicyBuilder {
     }
 
     /// Attaches a pepper provider. Requires the `pepper` feature.
+    ///
+    /// Accepts any `impl Pepper + 'static`; the `Arc` wrap is internal.
     #[cfg(feature = "pepper")]
     #[must_use]
     pub fn pepper(
+        mut self,
+        provider: impl hsh_kms::Pepper + 'static,
+    ) -> Self {
+        self.pepper = Some(Arc::new(provider));
+        self
+    }
+
+    /// Variant of [`Self::pepper`] for callers holding an already-
+    /// wrapped `Arc<dyn Pepper>` (e.g. sharing across many builders).
+    #[cfg(feature = "pepper")]
+    #[must_use]
+    pub fn pepper_arc(
         mut self,
         provider: Arc<dyn hsh_kms::Pepper>,
     ) -> Self {
@@ -347,7 +379,7 @@ impl PolicyBuilder {
     pub fn build(self) -> Result<Policy, Error> {
         Ok(Policy {
             primary: self.primary.ok_or(Error::InvalidPolicy(
-                "primary algorithm required",
+                "primary algorithm required".into(),
             ))?,
             backend: self.backend.unwrap_or_default(),
             argon2: self

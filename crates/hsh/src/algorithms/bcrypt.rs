@@ -126,7 +126,12 @@ impl Bcrypt {
             prepare_payload(password.as_bytes(), params.prehash)?;
         bcrypt::hash(&payload, params.cost)
             .map(String::into_bytes)
-            .map_err(|e| Error::Hashing(e.to_string()))
+            .map_err(|e| {
+                Error::hashing(
+                    crate::error::HashingErrorKind::Bcrypt,
+                    e.to_string(),
+                )
+            })
     }
 
     /// Verifies `password` against a bcrypt hash string.
@@ -139,8 +144,9 @@ impl Bcrypt {
         prehash: PrehashAlgorithm,
     ) -> Result<bool> {
         let payload = prepare_payload(password.as_bytes(), prehash)?;
-        bcrypt::verify(&payload, stored)
-            .map_err(|_| Error::Verification("bcrypt verify failed"))
+        bcrypt::verify(&payload, stored).map_err(|_| {
+            Error::Verification("bcrypt verify failed".into())
+        })
     }
 }
 
@@ -152,7 +158,7 @@ fn prepare_payload(
         PrehashAlgorithm::None => {
             if password.len() > BCRYPT_MAX_INPUT_BYTES {
                 return Err(Error::InvalidPassword(
-                    "bcrypt input exceeds 72 bytes; opt into a pre-hash via BcryptParams::with_prehash to handle longer inputs",
+                    "bcrypt input exceeds 72 bytes; opt into a pre-hash via BcryptParams::with_prehash to handle longer inputs".into(),
                 ));
             }
             Ok(password.to_vec())

@@ -24,7 +24,7 @@ fn fast_pbkdf2_policy() -> Policy {
         })
         .pbkdf2(Pbkdf2Params {
             prf: Prf::Sha256,
-            iterations: 1_000, // fast for tests; OWASP-2025 = 600_000
+            iterations: 1_000,
             dk_len: 32,
         })
         .build()
@@ -38,20 +38,14 @@ fn pbkdf2_round_trip_holds() {
         api::hash(&policy, "correct horse battery staple").unwrap();
     assert!(stored.starts_with("$pbkdf2-sha256$"));
 
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &policy,
         "correct horse battery staple",
         &stored,
     )
     .unwrap();
 
-    assert!(matches!(
-        outcome,
-        Outcome::Valid {
-            needs_rehash: false
-        }
-    ));
-    assert!(rehashed.is_none());
+    assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
 }
 
 #[test]
@@ -59,7 +53,7 @@ fn pbkdf2_rejects_wrong_password() {
     let policy = fast_pbkdf2_policy();
     let stored = api::hash(&policy, "correct").unwrap();
 
-    let (outcome, _) =
+    let outcome =
         api::verify_and_upgrade(&policy, "wrong", &stored).unwrap();
     assert!(matches!(outcome, Outcome::Invalid));
 }
@@ -78,17 +72,17 @@ fn pbkdf2_iteration_drift_triggers_rehash() {
         .build()
         .unwrap();
 
-    let (outcome, rehashed) =
+    let outcome =
         api::verify_and_upgrade(&strong, "user pw", &stored).unwrap();
     assert!(outcome.is_valid());
     assert!(outcome.needs_rehash());
-    let new_phc = rehashed.expect("iteration drift should rehash");
+    let new_phc =
+        outcome.rehashed().expect("iteration drift should rehash");
     assert!(new_phc.starts_with("$pbkdf2-sha256$i=10000,"));
 }
 
 #[test]
 fn pbkdf2_prf_drift_triggers_rehash() {
-    // Hash with SHA-256, then verify under SHA-512 policy.
     let sha256_policy = fast_pbkdf2_policy();
     let stored = api::hash(&sha256_policy, "user pw").unwrap();
 
@@ -102,20 +96,19 @@ fn pbkdf2_prf_drift_triggers_rehash() {
             .build()
             .unwrap();
 
-    let (outcome, rehashed) =
+    let outcome =
         api::verify_and_upgrade(&sha512_policy, "user pw", &stored)
             .unwrap();
     assert!(outcome.is_valid());
     assert!(outcome.needs_rehash());
-    assert!(rehashed
+    assert!(outcome
+        .rehashed()
         .expect("PRF drift should rehash")
         .starts_with("$pbkdf2-sha512$"));
 }
 
 #[test]
 fn fips_policy_refuses_to_mint_argon2id() {
-    // Construct a FIPS policy but with Argon2id as primary — that's
-    // an internal contradiction the API must refuse.
     let bad_policy =
         PolicyBuilder::from_preset(&Policy::fips_140_pbkdf2())
             .primary(PrimaryAlgorithm::Argon2id)
@@ -130,8 +123,6 @@ fn fips_policy_refuses_to_mint_argon2id() {
 
 #[test]
 fn fips_policy_refuses_when_feature_not_enabled() {
-    // `fips_available_in_build()` is hardcoded false today. Even a
-    // correctly-shaped FIPS policy is refused to avoid fail-open.
     let policy = Policy::fips_140_pbkdf2();
     let err = api::hash(&policy, "user pw").unwrap_err();
     assert!(
@@ -156,7 +147,6 @@ fn policy_fips_140_pbkdf2_uses_pbkdf2_primary() {
 
 #[test]
 fn policy_builder_requires_primary_when_blank() {
-    // PolicyBuilder::new() with no primary should refuse to build.
     let err = PolicyBuilder::new().build().unwrap_err();
     assert!(matches!(err, hsh::Error::InvalidPolicy(_)));
 }
