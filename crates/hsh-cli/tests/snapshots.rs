@@ -37,7 +37,11 @@ fn run_check_stdout(args: &[&str]) -> String {
         output.status,
         String::from_utf8_lossy(&output.stderr),
     );
-    String::from_utf8(output.stdout).expect("utf-8 stdout")
+    // Normalize line endings so the Windows runner (CRLF on stdout for
+    // clap's help output) produces the same snapshot as Linux / macOS.
+    String::from_utf8(output.stdout)
+        .expect("utf-8 stdout")
+        .replace("\r\n", "\n")
 }
 
 // ---------------------------------------------------------------------------
