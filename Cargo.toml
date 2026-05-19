@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members  = ["crates/hsh", "crates/hsh-kms"]
+members  = ["crates/hsh", "crates/hsh-cli", "crates/hsh-kms"]
 # fuzz/ is a libfuzzer crate driven by cargo-fuzz (`cargo +nightly fuzz`);
 # it depends on the unstable libfuzzer runtime and must not be part of
 # the default `cargo build --workspace` set.
@@ -51,6 +51,15 @@ assert_cmd = "2.0.14"
 criterion  = "0.5.1"
 proptest   = "1.5"
 hex        = "0.4"
+
+# CLI deps (hsh-cli only)
+clap          = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+clap_complete = "4.5"
+# clap_mangen is currently version-skewed against clap_builder 4.5.2;
+# revisit when both move. Manpage generation is a Phase 5 follow-up
+# under release.yml — the CLI works without it.
+anyhow        = "1.0"
+rpassword     = "7.3"
 
 [profile.dev]
 codegen-units    = 256

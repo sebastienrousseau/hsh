@@ -1,0 +1,53 @@
+#
+# Homebrew formula template for `hsh`.
+#
+# The release.yml workflow regenerates this file with the right version
+# and SHAs for each tagged release, then opens a PR against the tap.
+#
+# Tap layout:
+#   sebastienrousseau/homebrew-tap
+#     Formula/
+#       hsh.rb           <- generated from this template
+#
+
+class Hsh < Formula
+  desc "Enterprise password hashing for the command line"
+  homepage "https://github.com/sebastienrousseau/hsh"
+  license "MIT OR Apache-2.0"
+  version "{{VERSION}}"
+
+  on_macos do
+    on_intel do
+      url "https://github.com/sebastienrousseau/hsh/releases/download/v#{version}/hsh-#{version}-x86_64-apple-darwin.tar.xz"
+      sha256 "{{SHA256_X86_64_DARWIN}}"
+    end
+    on_arm do
+      url "https://github.com/sebastienrousseau/hsh/releases/download/v#{version}/hsh-#{version}-aarch64-apple-darwin.tar.xz"
+      sha256 "{{SHA256_AARCH64_DARWIN}}"
+    end
+  end
+
+  on_linux do
+    on_intel do
+      url "https://github.com/sebastienrousseau/hsh/releases/download/v#{version}/hsh-#{version}-x86_64-unknown-linux-gnu.tar.xz"
+      sha256 "{{SHA256_X86_64_LINUX}}"
+    end
+    on_arm do
+      url "https://github.com/sebastienrousseau/hsh/releases/download/v#{version}/hsh-#{version}-aarch64-unknown-linux-gnu.tar.xz"
+      sha256 "{{SHA256_AARCH64_LINUX}}"
+    end
+  end
+
+  def install
+    bin.install "hsh"
+
+    # Shell completions, generated at install time.
+    generate_completions_from_executable(bin/"hsh", "completions")
+  end
+
+  test do
+    stored = shell_output("echo -n correct-horse | #{bin}/hsh hash --algorithm scrypt")
+    assert_match(/\$scrypt\$/, stored)
+    system bin/"hsh", "--version"
+  end
+end

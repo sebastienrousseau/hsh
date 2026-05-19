@@ -1,0 +1,52 @@
+[package]
+name        = "hsh-cli"
+version     = "0.0.9"
+description = "Command-line companion for the `hsh` password-hashing library: hash / verify / rehash / inspect / calibrate."
+
+# CLI gets the modern edition; the lib stays on 2021 / MSRV 1.75 so it
+# remains broadly consumable.
+edition       = "2024"
+rust-version  = "1.85"
+
+authors.workspace       = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+keywords                = ["argon2id", "password", "cli", "phc", "kdf"]
+categories              = ["authentication", "command-line-utilities", "cryptography"]
+
+[[bin]]
+name = "hsh"
+path = "src/main.rs"
+
+[dependencies]
+hsh        = { path = "../hsh" }
+hsh-kms    = { path = "../hsh-kms", optional = true }
+
+# Re-used directly for the `calibrate` subcommand's parameter ladder.
+argon2     = { workspace = true }
+
+clap          = { workspace = true }
+clap_complete = { workspace = true }
+anyhow        = { workspace = true }
+rpassword     = { workspace = true }
+serde_json    = { workspace = true }
+
+[features]
+default = []
+pepper  = ["hsh/pepper", "dep:hsh-kms"]
+fips    = ["hsh/fips"]
+
+[lints.rust]
+unsafe_code                   = "forbid"
+missing_docs                  = "warn"
+missing_debug_implementations = "forbid"
+non_ascii_idents              = "forbid"
+unreachable_pub               = "forbid"
+dead_code                     = "deny"
+deprecated_in_future          = "deny"
+unused                        = { level = "deny", priority = -1 }
+
+[package.metadata.clippy]
+warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]

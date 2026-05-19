@@ -9,7 +9,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 5 (#144) — `hsh-cli` binary + multi-platform packaging.
+- Phase 6 (#145) — optional general-purpose hashing primitives.
+- Phase 7 (#146) — v1.0.0 stabilisation.
+
+### Added (Phase 5)
+
+- **`crates/hsh-cli`** — new workspace member providing the `hsh`
+  binary with 6 subcommands:
+  - `hsh hash` — produce a storable hash from a password.
+  - `hsh verify` — verify a candidate against a stored hash; exit
+    code 0 on match, 1 on mismatch.
+  - `hsh rehash` — verify + mint a fresh hash under current policy.
+  - `hsh inspect` — pretty-print algorithm + parameters of a stored
+    hash (PHC, MCF, or `hsh-pepper:` wrapper).
+  - `hsh calibrate` — measure KDF parameters to hit a target
+    wall-time on the current hardware.
+  - `hsh completions <shell>` — emit bash/zsh/fish/powershell/elvish
+    completion scripts at runtime.
+- **Preset policies** on the CLI: `--policy owasp` (default),
+  `--policy rfc9106`, `--policy fips`.
+- **`--json`** flag for machine-readable output on every subcommand.
+- **6 CLI integration tests** in `crates/hsh-cli/tests/cli.rs`.
+- **Packaging templates** under `pkg/`: Docker (multi-stage musl +
+  distroless), Homebrew formula, Debian control, Arch PKGBUILD,
+  Scoop manifest. Materialised by `release.yml` on tag push.
+- **5 migration guides** under `doc/`: from `argonautica`,
+  `rust-argon2`, `bcrypt`, `djangohashers`, and raw `password-hash`.
+
+### Changed (Phase 5)
+
+- Removed the old `crates/hsh/src/main.rs` stub binary — the
+  `hsh-cli` workspace member is now the canonical `hsh` binary.
+- Removed `crates/hsh/tests/test_main.rs` (covered the stub).
+- Workspace dev-deps add `clap 4.5`, `clap_complete 4.5`, `anyhow
+  1.0`, `rpassword 7.3` for the CLI.
+
+### Security (Phase 5)
+
+- The CLI **never accepts a password on argv**. Passwords are read
+  from stdin (TTY prompt with no echo if interactive, first line
+  otherwise) or `$HSH_PASSWORD` env. The `--password` flag exists
+  but is documented as insecure.
+
+### Forward-compat (Phase 5)
+
+- `clap_mangen`-driven man-page generation deferred: the current
+  release of `clap_mangen 0.2.33` is version-skewed against
+  `clap_builder 4.5.2`. The CLI works without man pages; this
+  becomes a Phase 5 follow-up under `release.yml`.
+- MSI / Flatpak / Snap / Nix packaging deferred — listed in
+  `pkg/README.md`.
 - Phase 4 follow-up — dedicated `hsh-backend-awslc` workspace member
   that routes PBKDF2 through `aws-lc-rs`'s FIPS 140-3 validated module
   and flips `Backend::fips_available_in_build()` to `true`.

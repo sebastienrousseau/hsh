@@ -1,0 +1,29 @@
+{
+  "version": "{{VERSION}}",
+  "description": "Enterprise password hashing for the command line.",
+  "homepage": "https://github.com/sebastienrousseau/hsh",
+  "license": "MIT OR Apache-2.0",
+  "architecture": {
+    "64bit": {
+      "url": "https://github.com/sebastienrousseau/hsh/releases/download/v{{VERSION}}/hsh-{{VERSION}}-x86_64-pc-windows-msvc.zip",
+      "hash": "{{SHA256_X86_64_WINDOWS}}",
+      "bin": "hsh.exe"
+    },
+    "arm64": {
+      "url": "https://github.com/sebastienrousseau/hsh/releases/download/v{{VERSION}}/hsh-{{VERSION}}-aarch64-pc-windows-msvc.zip",
+      "hash": "{{SHA256_AARCH64_WINDOWS}}",
+      "bin": "hsh.exe"
+    }
+  },
+  "checkver": "github",
+  "autoupdate": {
+    "architecture": {
+      "64bit": {
+        "url": "https://github.com/sebastienrousseau/hsh/releases/download/v$version/hsh-$version-x86_64-pc-windows-msvc.zip"
+      },
+      "arm64": {
+        "url": "https://github.com/sebastienrousseau/hsh/releases/download/v$version/hsh-$version-aarch64-pc-windows-msvc.zip"
+      }
+    }
+  }
+}
