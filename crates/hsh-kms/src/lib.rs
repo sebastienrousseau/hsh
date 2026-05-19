@@ -316,9 +316,8 @@ mod tests {
     #[test]
     fn unknown_version_errors() {
         let p = fixture();
-        let err = p
-            .apply(KeyVersion::new(99), test_input())
-            .unwrap_err();
+        let err =
+            p.apply(KeyVersion::new(99), test_input()).unwrap_err();
         assert!(matches!(err, PepperError::UnknownVersion(_)));
     }
 

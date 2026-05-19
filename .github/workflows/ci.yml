@@ -8,28 +8,51 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# No workflow-level `permissions:` block — reusable-workflow calls
-# (`ci`, `security`, `docs`) require their own permissions to be
-# computed from the caller's defaults. The local jobs below set the
-# minimum they need explicitly.
+# Minimum permissions are declared per-job (workflow level intentionally
+# omitted so reusable callers can still claim what they need).
 
 jobs:
   ci:
     uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: read
     with:
       rust-version: 'stable'
       run-coverage: true
     secrets:
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
-  security:
-    uses: sebastienrousseau/pipelines/.github/workflows/security.yml@main
-    with:
-      language: rust
+  # Note: we previously called sebastienrousseau/pipelines's security
+  # reusable workflow, but its CodeQL job doesn't accept a
+  # `config-file` input — so test/example fixtures kept tripping
+  # `rust/hard-coded-cryptographic-value`. CodeQL now runs only from
+  # the local `codeql.yml` (which pins `.github/codeql/codeql-config.yml`),
+  # cargo-audit / cargo-deny live in `supply-chain.yml`, and the
+  # dependency-review piece is inlined below.
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: moderate
 
   docs:
     if: github.ref == 'refs/heads/main'
     uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@main
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
     with:
       type: rust
       redirect-crate: hsh
