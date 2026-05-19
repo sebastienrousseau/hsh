@@ -1,214 +1,122 @@
-<!-- markdownlint-disable MD033 MD041 -->
+<p align="center">
+  <img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="Hash (HSH) logo" width="128" />
+</p>
 
-<img src="https://kura.pro/hsh/images/logos/hsh.svg"
-alt="Hash (HSH) logo" width="261" align="right" />
+<h1 align="center">Hash (HSH)</h1>
 
-<!-- markdownlint-enable MD033 MD041 -->
-# Hash (HSH)
+<p align="center">
+  <strong>Enterprise password hashing for Rust.</strong>
+</p>
 
-Quantum-Resistant Cryptographic Hash Library for Password Hashing and
-Verification
+<p align="center">
+  <a href="https://github.com/sebastienrousseau/hsh/actions"><img src="https://img.shields.io/github/actions/workflow/status/sebastienrousseau/hsh/ci.yml?style=for-the-badge&logo=github" alt="Build" /></a>
+  <a href="https://crates.io/crates/hsh"><img src="https://img.shields.io/crates/v/hsh.svg?style=for-the-badge&color=fc8d62&logo=rust" alt="Crates.io" /></a>
+  <a href="https://docs.rs/hsh"><img src="https://img.shields.io/badge/docs.rs-hsh-66c2a5?style=for-the-badge&labelColor=555555&logo=docs.rs" alt="Docs.rs" /></a>
+  <a href="https://codecov.io/gh/sebastienrousseau/hsh"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/hsh?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
+  <a href="https://lib.rs/crates/hsh"><img src="https://img.shields.io/badge/lib.rs-v0.0.9-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
+</p>
 
-*Part of the [Mini Functions][0] family of libraries.*
+---
 
-<!-- markdownlint-disable MD033 MD041 -->
-<center>
-<!-- markdownlint-enable MD033 MD041 -->
+## Install
 
-![Hash (HSH) Banner][banner]
+```bash
+cargo add hsh
+```
 
-[![Made With Rust][made-with-rust]][6] [![Crates.io][crates-badge]][8]
-[![Lib.rs][libs-badge]][10] [![Docs.rs][docs-badge]][9]
-[![License][license-badge]][2] [![Codecov][codecov-badge]][11]
-
-• [Website][0] • [Documentation][9] • [Report Bug][3]
-• [Request Feature][3] • [Contributing Guidelines][4]
-
-<!-- markdownlint-disable MD033 MD041 -->
-</center>
-<!-- markdownlint-enable MD033 MD041 -->
-
-![divider][divider]
-
-## Overview 📖
-
-The `Hash (HSH)` Rust library provides an interface for implementing
-secure hash and digest algorithms, specifically designed for password
-encryption and verification.
-
-The library provides a simple API that makes it easy to store and verify
-hashed passwords. It enables robust security for passwords, using the
-latest advancements in `Quantum-resistant cryptography`. Quantum-
-resistant cryptography refers to cryptographic algorithms, usually
-public-key algorithms, that are thought to be secure against an attack
-by a quantum computer. As quantum computing continues to advance, this
-feature of the library assures that the passwords managed through this
-system remain secure even against cutting-edge computational
-capabilities.
-
-The library supports the following Password Hashing Schemes (Password
-Based Key Derivation Functions):
-
-- [**Argon2i**](<https://en.wikipedia.org/wiki/Argon2>): A cutting-edge
-  and highly secure key derivation function designed to protect against
-  both traditional brute-force attacks and rainbow table attacks.
-  (Recommended)
-- [**Bcrypt**](<https://en.wikipedia.org/wiki/Bcrypt>): A password
-  hashing function designed to be secure against brute-force attacks.
-  It is a work-factor function, which means that it takes a certain
-  amount of time to compute. This makes it difficult to attack with a
-  brute-force algorithm.
-- [**Scrypt**](<https://en.wikipedia.org/wiki/Scrypt>): A password
-  hashing function designed to be secure against both brute-force
-  attacks and rainbow table attacks. It is a memory-hard and work-
-  factor function, which means that it requires a lot of memory and
-  time to compute. This makes it very difficult to attack with a GPU
-  or other parallel computing device.
-
-The library is a valuable tool for developers who need to store and
-verify passwords in a secure manner. It is easy to use and can be
-integrated into a variety of applications.
-
-## Features ✨
-
-- **Compliant with multiple Password Hashing Schemes (Password Based Key Derivation Functions) such as Argon2i, Bcrypt and Scrypt.** This makes the library more versatile and can be used in a variety of applications.
-- **Quantum-resistant, making it secure against future attacks using quantum computers.** This is an important feature as quantum computers become more powerful.
-- **Easy to use.** The library provides a simple API that makes it easy to store and verify hashed passwords.
-- **Can be integrated into a variety of applications.** The library is written in Rust, which makes it easy to integrate into any Rust project and is fast, efficient, and secure.
-
-### Secure password storage
-
-Hash (HSH) provides a secure way to store and verify hashed passwords.
-Passwords are hashed using the argon2i, bcrypt, scrypt algorithms, which
-are considered one of the most secure hashing algorithms available
-today. The library provides a simple interface for generating and
-verifying hashes, making it easy to implement secure password storage
-in any Rust application.
-
-### Easy to use
-
-Hash (HSH) includes simple functions for generating and verifying
-password hashes, and managing password and salt values. Developers can
-easily integrate the library into their Rust projects and start using
-it right away. The library is designed to be intuitive and easy to use,
-so developers can build apps without worrying about password security.
-
-### Flexible
-
-Hash (HSH) allows users to customize the length of passwords and salts
-used in generating hashes. This flexibility allows developers to tailor
-the library to their specific needs, whether they require shorter or
-longer password and salt values. The library also includes macros that
-make it easy to work with the Hash structure, allowing developers to
-quickly and easily set and retrieve password and salt values.
-
-### Lightweight
-
-Hash (HSH) is a lightweight library that can easily integrate into any
-Rust project. The library has no external dependencies and is efficient.
-It means that developers can add secure password storage to their
-applications without having to worry about significant performance
-overheads.
-
-## Installation 📦
-
-It takes just a few minutes to get up and running with `hsh`.
-
-### Requirements
-
-The minimum supported Rust toolchain version is currently Rust
-**1.60** or later (stable). It is recommended that you install the
-latest stable version of Rust.
-
-### Platform support
-
-`hsh` supports a variety of CPU architectures. It is supported and tested on
-MacOS, Linux, and Windows.
-
-### Documentation
-
-> ℹ️ **Info:** Please check out our [website][0] for more information
-and find our documentation on [docs.rs][9], [lib.rs][10] and
-[crates.io][8].
-
-## Usage 📖
-
-To use `hsh` in your project, add the following to your `Cargo.toml`
-file:
+Or add to `Cargo.toml`:
 
 ```toml
 [dependencies]
-hsh = "0.0.8"
+hsh = "0.0.9"
 ```
 
-Add the following to your `main.rs` file:
+Requires Rust **1.75** or later. Works on macOS, Linux, and Windows.
+
+---
+
+## Overview
+
+HSH is a Rust library for **storing and verifying passwords** with multiple
+memory-hard KDFs behind a single, ergonomic API. v0.0.9 is the first release
+on the enterprise-readiness roadmap (see [the milestone][ms]).
+
+- **Multi-algorithm** — Argon2i, bcrypt, scrypt today; Argon2id, PHC strings, KMS pepper, and an optional FIPS backend on the roadmap.
+- **Constant-time verification** — `subtle::ConstantTimeEq` everywhere a hash is compared.
+- **Zeroized on drop** — password / hash / salt buffers are wiped from memory.
+- **Structured errors** — every fallible op returns a `hsh::Error` that implements `std::error::Error`.
+- **`#![forbid(unsafe_code)]`** — workspace-wide.
+
+[ms]: https://github.com/sebastienrousseau/hsh/milestone/1
+
+### What HSH is *not*
+
+- **Not post-quantum cryptography.** Memory-hard KDFs make brute-force expensive on classical and quantum hardware alike, but they aren't PQ primitives (ML-KEM, ML-DSA, SLH-DSA). If you need PQ, use [`aws-lc-rs`](https://crates.io/crates/aws-lc-rs).
+- **Not yet PHC-compliant** in the serialized hash form — see issue [#159][i159].
+- **Not yet FIPS-validated** — see issue [#143][i143].
+
+[i159]: https://github.com/sebastienrousseau/hsh/issues/159
+[i143]: https://github.com/sebastienrousseau/hsh/issues/143
+
+---
+
+## Algorithms
+
+| Algorithm | Status   | Notes                                                            |
+| --------- | -------- | ---------------------------------------------------------------- |
+| Argon2i   | Default  | Argon2**id** replaces it in v0.1.0 (issue [#156][i156])           |
+| Bcrypt    | OK       | 72-byte safety rail lands in v0.1.0 ([#158][i158])                |
+| Scrypt    | OK       | Fixed params today; configurable per OWASP 2025 in v0.1.0         |
+
+[i156]: https://github.com/sebastienrousseau/hsh/issues/156
+[i158]: https://github.com/sebastienrousseau/hsh/issues/158
+
+---
+
+## Usage
 
 ```rust
-extern crate hsh;
-use hsh::*;
+use hsh::models::hash::Hash;
+
+let password = "correct horse battery staple";
+let salt     = "abcdefghijklmnop";
+let h = Hash::new(password, salt, "argon2i").unwrap();
+
+assert!(h.verify(password).unwrap());
+assert!(!h.verify("wrong-guess").unwrap());
 ```
 
-then you can use the functions in your application code.
+---
 
-### Examples
+## Roadmap
 
-`Hash (HSH)` comes with a set of examples that you can use to get
-started. The examples are located in the `examples` directory of the
-project. To run the examples, clone the repository and run the following
-command in your terminal from the project root directory.
+The v0.0.9 milestone tracks the full enterprise-readiness programme across
+seven phases — workspace + security hot-fixes (Phase 0), RustCrypto core
+refactor + PHC strings (Phase 1), fuzzing + Miri + SLSA release automation
+(Phase 2), KMS pepper integrations (Phase 3), `aws-lc-rs` FIPS backend
+(Phase 4), CLI + packaging (Phase 5), optional general primitives (Phase 6),
+and v1.0 stabilisation (Phase 7).
 
-```shell
-cargo run --example hsh
+See the [milestone tracker][ms] for live status.
+
+---
+
+## Development
+
+```bash
+cargo build        # Build the workspace
+cargo test         # Run all tests
+cargo clippy       # Lint with Clippy
+cargo fmt          # Format with rustfmt
 ```
 
-## Semantic Versioning Policy 🚥
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, signed commits, and PR guidelines.
+See [SECURITY.md](SECURITY.md) for the vulnerability reporting policy.
 
-For transparency into our release cycle and in striving to maintain
-backward compatibility, `Hash (HSH)` follows [semantic versioning][7].
+---
 
-## License 📝
+## License
 
-The project is licensed under the terms of both the MIT license and the
-Apache License (Version 2.0).
+Dual-licensed under [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0) or [MIT](https://opensource.org/licenses/MIT), at your option.
 
-- [Apache License, Version 2.0][1]
-- [MIT license][2]
-
-## Contribution 🤝
-
-Unless you explicitly state otherwise, any contribution intentionally
-submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms
-or conditions.
-
-![divider][divider]
-
-## Acknowledgements 💙
-
-A big thank you to all the awesome contributors of [Mini Functions][6]
-for their help and support.
-
-And a special thank you goes to the
-[Rust Reddit](https://www.reddit.com/r/rust/) community for providing a
-lot of useful suggestions on how to improve this project.
-
-[0]: https://minifunctions.com/hsh
-[1]: http://www.apache.org/licenses/LICENSE-2.0
-[2]: http://opensource.org/licenses/MIT
-[3]: https://github.com/sebastienrousseau/hsh/issues
-[4]: https://raw.githubusercontent.com/sebastienrousseau/hsh/main/.github/CONTRIBUTING.md
-[6]: https://github.com/sebastienrousseau/hsh/graphs/contributors
-[7]: http://semver.org/
-[8]: https://crates.io/crates/hsh
-[9]: https://docs.rs/hsh
-[10]: https://lib.rs/crates/hsh
-[11]: https://codecov.io/github/sebastienrousseau/hsh
-
-[banner]: https://kura.pro/hsh/images/titles/title-hsh.svg "Hash (HSH) Banner"
-[codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/cmn?style=for-the-badge&token=DMNW4DN0LO 'Codecov'
-[crates-badge]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge 'Crates.io'
-[divider]: https://kura.pro/common/images/elements/divider.svg "divider"
-[docs-badge]: https://img.shields.io/docsrs/hsh.svg?style=for-the-badge 'Docs.rs'
-[libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.8-orange.svg?style=for-the-badge 'Lib.rs'
-[license-badge]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge 'License'
-[made-with-rust]: https://img.shields.io/badge/rust-f04041?style=for-the-badge&labelColor=c0282d&logo=rust 'Made With Rust'
+<p align="right"><a href="#hash-hsh">Back to Top</a></p>

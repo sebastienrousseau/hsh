@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 // Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 

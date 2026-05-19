@@ -1,4 +1,5 @@
-// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
+#![allow(missing_docs)]
+// Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 #[cfg(test)]
@@ -19,7 +20,7 @@ mod tests {
 
         // Assert that the error message was printed to stderr
         let stderr = String::from_utf8(output.stderr).unwrap();
-        assert!(stderr.contains("Error running hsh: Simulated error"));
+        assert!(stderr.contains("simulated error"));
     }
 
     #[test]
@@ -35,7 +36,9 @@ mod tests {
         // Assert that the welcome messages were printed to stdout
         let stdout = String::from_utf8(output.stdout).unwrap();
         assert!(stdout.contains("Welcome to `HSH` 👋!"));
-        assert!(stdout.contains("Quantum-Resistant Cryptographic Hash Library for Password Encryption and Verification."));
+        assert!(
+            stdout.contains("Enterprise password hashing for Rust.")
+        );
     }
 
     fn run_test_scenario() -> Result<(), Box<dyn std::error::Error>> {
@@ -62,6 +65,6 @@ mod tests {
 
         // Assert that the error message was printed to stderr
         let stderr = String::from_utf8(output.stderr).unwrap();
-        assert!(stderr.contains("Error running hsh: Simulated error"));
+        assert!(stderr.contains("simulated error"));
     }
 }

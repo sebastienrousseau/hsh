@@ -1,4 +1,5 @@
-// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
+#![allow(missing_docs)]
+// Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 #[cfg(test)]
@@ -7,15 +8,14 @@ mod tests {
         HashAlgorithm, HashingAlgorithm,
     };
 
-    // Dummy struct to implement HashingAlgorithm for testing
     struct DummyAlgorithm;
 
     impl HashingAlgorithm for DummyAlgorithm {
         fn hash_password(
             _password: &str,
             _salt: &str,
-        ) -> Result<Vec<u8>, String> {
-            Ok(vec![1, 2, 3, 4]) // Dummy logic
+        ) -> hsh::Result<Vec<u8>> {
+            Ok(vec![1, 2, 3, 4])
         }
     }
 

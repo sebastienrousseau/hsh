@@ -1,6 +1,7 @@
 // Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
+use crate::error::Result;
 use serde::{Deserialize, Serialize};
 
 /// Represents the different algorithms available for password hashing.
@@ -70,10 +71,7 @@ pub trait HashingAlgorithm {
     ///
     /// # Returns
     ///
-    /// Returns a `Result` containing the hashed password as a vector of bytes.
-    /// If hashing fails, returns a `String` detailing the error.
-    fn hash_password(
-        password: &str,
-        salt: &str,
-    ) -> Result<Vec<u8>, String>;
+    /// Returns the hashed password as a vector of bytes, or an
+    /// [`Error`](crate::error::Error) describing the failure.
+    fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>>;
 }
