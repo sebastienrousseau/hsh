@@ -4,19 +4,17 @@ name: CodeQL config for `hsh`
 # code legitimately carries hard-coded passwords, salts, and KDF
 # parameters as fixtures — those are *not* security issues.
 #
-# Production code (`crates/*/src/`) is analysed normally.
-
-paths:
-  - crates/hsh/src
-  - crates/hsh-cli/src
-  - crates/hsh-kms/src
-  - crates/hsh-digest/src
+# Production code under `crates/*/src/` is analysed normally; so are
+# the workflow YAMLs under `.github/workflows/` for the `actions`
+# language. We use `paths-ignore` exclusively here so language
+# discovery isn't restricted (a top-level `paths:` would scope
+# everything to those globs, including GitHub Actions YAMLs).
 
 paths-ignore:
-  - crates/*/tests
-  - crates/*/examples
-  - crates/*/benches
-  - fuzz/fuzz_targets
+  - crates/*/tests/**
+  - crates/*/examples/**
+  - crates/*/benches/**
+  - fuzz/fuzz_targets/**
   - pkg/**
 
 # Queries are the defaults. The `rust/hard-coded-cryptographic-value`
