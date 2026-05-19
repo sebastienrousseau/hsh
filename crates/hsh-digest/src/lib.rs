@@ -55,6 +55,14 @@
 //! assert_eq!(digest.len(), 32);
 //! ```
 
+// At least one algorithm feature must be enabled — the `Algorithm`
+// enum and `HasherInner` would otherwise be uninhabited, producing
+// downstream `unreachable_code` errors.
+#[cfg(not(any(feature = "sha2", feature = "sha3", feature = "blake3")))]
+compile_error!(
+    "hsh-digest requires at least one algorithm feature: `sha2`, `sha3`, or `blake3`."
+);
+
 pub mod error;
 
 pub use error::DigestError;

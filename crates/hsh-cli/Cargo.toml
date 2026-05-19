@@ -21,8 +21,8 @@ name = "hsh"
 path = "src/main.rs"
 
 [dependencies]
-hsh        = { path = "../hsh" }
-hsh-kms    = { path = "../hsh-kms", optional = true }
+hsh        = { version = "0.0.9", path = "../hsh" }
+hsh-kms    = { version = "0.0.9", path = "../hsh-kms", optional = true }
 
 # Re-used directly for the `calibrate` subcommand's parameter ladder.
 argon2     = { workspace = true }

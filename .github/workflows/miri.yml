@@ -37,6 +37,10 @@ jobs:
       - name: Miri setup
         run: cargo +nightly miri setup
       - name: Run focused Miri suite
+        env:
+          # proptest reads `current_dir()` for failure-persistence file
+          # resolution; Miri's isolation blocks that syscall.
+          MIRIFLAGS: "-Zmiri-disable-isolation"
         run: ./scripts/miri.sh focused
 
   full:
@@ -56,4 +60,6 @@ jobs:
       - name: Miri setup
         run: cargo +nightly miri setup
       - name: Run full Miri sweep
+        env:
+          MIRIFLAGS: "-Zmiri-disable-isolation -Zmiri-strict-provenance"
         run: ./scripts/miri.sh full

@@ -76,7 +76,7 @@ rand_core = { workspace = true }
 getrandom = { workspace = true }
 
 # Pepper / KMS — optional, behind the `pepper` feature.
-hsh-kms = { path = "../hsh-kms", optional = true }
+hsh-kms = { version = "0.0.9", path = "../hsh-kms", optional = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }

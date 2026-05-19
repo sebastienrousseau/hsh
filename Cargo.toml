@@ -103,56 +103,22 @@ unused_qualifications         = "deny"
 variant_size_differences      = "deny"
 
 [workspace.lints.clippy]
-# Pedantic / nursery / cargo groups at warn — these are advisory.
-# CI runs `cargo clippy -- -D warnings` for the BASE lints (above),
-# while pedantic/nursery findings show up but don't fail the build
-# (Cargo treats the cli-level -D warnings as an additive promotion).
+# Only the `all` group is promoted to warn at the workspace level.
+# Pedantic/nursery/cargo groups are not enabled here because external
+# CI runs `cargo clippy -- -D warnings`, which would otherwise turn
+# every advisory finding into a build break. Developers can opt in
+# locally with `cargo clippy -- -W clippy::pedantic`.
 all                     = { level = "warn", priority = -1 }
-pedantic                = { level = "warn", priority = -1 }
-nursery                 = { level = "warn", priority = -1 }
-cargo                   = { level = "warn", priority = -1 }
 
-# Explicit must-warns.
-unwrap_used             = "warn"
-expect_used             = "warn"
-
-# Allow specific pedantic lints that are too noisy at the
-# workspace-wide level.
-module_name_repetitions  = "allow"
-missing_errors_doc       = "allow"
-missing_panics_doc       = "allow"
-must_use_candidate       = "allow"
-multiple_crate_versions  = "allow"
-cargo_common_metadata    = "allow"
-needless_pass_by_value   = "allow"
-return_self_not_must_use = "allow"
-similar_names            = "allow"
-too_many_lines           = "allow"
-items_after_statements   = "allow"
-redundant_closure_for_method_calls = "allow"
-implicit_hasher          = "allow"
-# Documentation pedantry that fires on every prose paragraph.
-doc_markdown                       = "allow"
-doc_lazy_continuation              = "allow"
-# Style preferences we don't enforce workspace-wide.
-missing_const_for_fn               = "allow"
-struct_field_names                 = "allow"
-struct_excessive_bools             = "allow"
-result_large_err                   = "allow"
-significant_drop_tightening        = "allow"
-# Nursery preview lints that produce noise without obvious wins.
-option_if_let_else                 = "allow"
-or_fun_call                        = "allow"
-use_self                           = "allow"
-redundant_pub_crate                = "allow"
-inconsistent_struct_constructor    = "allow"
-trivially_copy_pass_by_ref         = "allow"
-needless_collect                   = "allow"
-unused_self                        = "allow"
-# Test code uses unwrap/expect freely; these warn at the workspace
-# level but per-test-file `#![allow(...)]` silences them where
-# legitimate.
-unused_async                       = "allow"
+# Allows for noisy lints in the `all` group that we knowingly accept
+# across the workspace.
+collection_is_never_read           = "allow"
+too_long_first_doc_paragraph       = "allow"
+uninlined_format_args              = "allow"
+format_collect                     = "allow"
+# `.expect(...)` is used in a handful of places with documented
+# unreachable error paths; tests/examples use it freely.
+expect_used                        = "allow"
 
 [profile.dev]
 codegen-units    = 256

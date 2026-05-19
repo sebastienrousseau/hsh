@@ -18,18 +18,19 @@ MODE="${1:-focused}"
 
 case "$MODE" in
 focused)
+    # test_properties uses proptest, which reads `current_dir()` for
+    # the failure-persistence file path; that requires `-Zmiri-disable-isolation`
+    # (set in the calling workflow / Makefile). Restrict the focused
+    # suite to test_api, which is fast under Miri.
     cargo +nightly miri test \
         -p hsh \
-        --test test_properties \
         --test test_api \
-        -- \
-        --skip "scrypt_round_trip_holds" \
-        --skip "bcrypt_round_trip_holds"
+        --test test_backend_policy
     ;;
 full)
     # Full Miri sweep. Excludes tests that require getrandom or rely on
     # platform-specific syscalls Miri can't model.
-    MIRIFLAGS="-Zmiri-strict-provenance" cargo +nightly miri test \
+    cargo +nightly miri test \
         -p hsh \
         --all-features \
         -- \

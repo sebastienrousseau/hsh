@@ -1,0 +1,27 @@
+name: CodeQL config for `hsh`
+
+# Path filters for the CodeQL analysis. Test / example / bench / fuzz
+# code legitimately carries hard-coded passwords, salts, and KDF
+# parameters as fixtures — those are *not* security issues.
+#
+# Production code (`crates/*/src/`) is analysed normally.
+
+paths:
+  - crates/hsh/src
+  - crates/hsh-cli/src
+  - crates/hsh-kms/src
+  - crates/hsh-digest/src
+
+paths-ignore:
+  - crates/*/tests
+  - crates/*/examples
+  - crates/*/benches
+  - fuzz/fuzz_targets
+  - pkg/**
+
+# Queries are the defaults. The `rust/hard-coded-cryptographic-value`
+# rule is *expected* to fire in test/example/bench/fuzz code (which is
+# why we exclude those paths above); for any production-code finding
+# we want the alert.
+queries:
+  - uses: security-and-quality

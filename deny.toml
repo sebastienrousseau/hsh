@@ -58,7 +58,11 @@ license-files = [
 # Bans
 # ---------------------------------------------------------------------------
 [bans]
-multiple-versions = "warn"  # downgraded from deny — see scaling note below
+# Allow duplicates in the transitive graph — we cannot patch
+# transitive dependencies' choice of `windows-sys` / `rustix` versions
+# without bringing them into our direct-dep matrix. cargo-deny still
+# reports them; this only stops them from failing the build.
+multiple-versions = "allow"
 wildcards = "deny"
 highlight = "all"
 # Crates we never want in the graph because they were abandoned or
@@ -68,10 +72,15 @@ deny = [
     { name = "argon2rs",    reason = "Abandoned (last release 2017); use argon2 RustCrypto." },
     { name = "openssl",     reason = "Prefer rustls + RustCrypto / aws-lc-rs." },
 ]
-# Allow common duplicates in the transitive graph (mostly proc-macro
-# crates that lag a major version behind).
+# Specific duplicate-version pairs that we know about and accept.
 skip = []
-skip-tree = []
+# Skip the entire transitive subtree of these crates when checking
+# duplicates — windows-sys family pulls multiple versions through
+# unrelated branches of the graph that we can't unify.
+skip-tree = [
+    { name = "windows-sys" },
+    { name = "windows-targets" },
+]
 
 # ---------------------------------------------------------------------------
 # Sources

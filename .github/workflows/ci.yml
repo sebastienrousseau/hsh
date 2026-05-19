@@ -40,11 +40,15 @@ jobs:
         uses: taiki-e/install-action@v2
         with:
           tool: cargo-hack
-      - name: Check feature powerset
+      - name: Check feature powerset (excl. hsh-digest)
         # `--no-dev-deps` skips features that only exist for dev to keep
         # the matrix size sane; `--exclude-features` skips the FIPS marker
         # since enabling it without a real backend changes no behaviour.
-        run: cargo hack check --workspace --feature-powerset --no-dev-deps --exclude-features fips
+        run: cargo hack check --workspace --exclude hsh-digest --feature-powerset --no-dev-deps --exclude-features fips
+      - name: Check feature powerset (hsh-digest, at-least-one algorithm)
+        # hsh-digest requires at least one of sha2/sha3/blake3 — the
+        # empty feature set is rejected by a `compile_error!`.
+        run: cargo hack check -p hsh-digest --feature-powerset --no-dev-deps --at-least-one-of sha2,sha3,blake3
 
   public-api:
     name: Public API diff vs main
