@@ -141,3 +141,61 @@ jobs:
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
+
+  msrv:
+    name: MSRV (${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # Floor toolchains from each crate's `rust-version` declaration.
+        # hsh / hsh-kms / hsh-digest are 1.75; hsh-cli is 1.85 (edition 2024).
+        toolchain: ["1.75", "1.85"]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          key: msrv-${{ matrix.toolchain }}
+      - name: Check libs at 1.75 floor
+        if: matrix.toolchain == '1.75'
+        # --locked enforces Cargo.lock; --no-default-features keeps the
+        # surface narrow (the floor is committed for the lib defaults).
+        run: |
+          cargo +1.75 check --locked -p hsh        --no-default-features
+          cargo +1.75 check --locked -p hsh        --all-features
+          cargo +1.75 check --locked -p hsh-kms    --all-features
+          cargo +1.75 check --locked -p hsh-digest --all-features
+      - name: Check CLI at 1.85 floor
+        if: matrix.toolchain == '1.85'
+        run: cargo +1.85 check --locked -p hsh-cli --all-features
+
+  cross-platform:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          key: ${{ matrix.os }}
+      - name: cargo test --locked --workspace
+        # --locked = fail if Cargo.lock would change.
+        # --no-fail-fast = let the matrix see every failure, not just the first.
+        run: cargo test --locked --workspace --all-features --no-fail-fast

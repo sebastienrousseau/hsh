@@ -1,0 +1,89 @@
+# clippy.toml — workspace lint knobs.
+#
+# The lint **levels** live in `Cargo.toml`'s `[workspace.lints.clippy]`
+# block (which we promote via `-D warnings` in CI). This file pins the
+# subjective thresholds and disallowed-method lists so they don't drift
+# between contributors.
+
+# ---------------------------------------------------------------------------
+# Cognitive / cyclomatic complexity
+#
+# Defaults: 25 cognitive, 25 cyclomatic. We tighten because every fn in
+# the API surface should be inspectable in a code review without a
+# whiteboard. The dispatcher in `crates/hsh/src/api.rs::verify_dispatch_inner`
+# is the only known offender and is explicitly `#[allow]`'d at the
+# function level.
+cognitive-complexity-threshold = 20
+
+# ---------------------------------------------------------------------------
+# Type / signature limits
+#
+# `verify_and_upgrade` returns a `Result<(Outcome, Option<String>)>`
+# today which trips the default `type-complexity-threshold = 250`
+# easily. The new `Outcome { rehashed: Option<String> }` shape (proposed
+# in the API refactor) brings this below 100.
+type-complexity-threshold = 250
+
+# Up to 7 args is the absolute cap; anything beyond is a builder/struct.
+too-many-arguments-threshold = 7
+
+# Boolean args are an anti-pattern past 3 (enum/struct instead).
+max-fn-params-bools = 3
+
+# ---------------------------------------------------------------------------
+# Naming
+#
+# Allow short single-letter names in tight numeric / cryptographic code
+# (e.g. `m`, `t`, `p` for Argon2 memory / time / parallelism, `N` / `r`
+# for scrypt). Outside crypto, prefer descriptive names.
+single-char-binding-names-threshold = 4
+
+# ---------------------------------------------------------------------------
+# Disallowed methods — defence-in-depth at the lint layer
+# ---------------------------------------------------------------------------
+disallowed-methods = [
+    # Forbid every constructor of a non-CSPRNG. Use `getrandom::OsRng`.
+    { path = "rand::thread_rng",        reason = "use getrandom::OsRng — non-crypto RNGs must never feed a salt" },
+    { path = "rand::random",            reason = "use getrandom::OsRng" },
+    { path = "fastrand::Rng::new",      reason = "non-crypto RNG; use getrandom::OsRng" },
+
+    # `String::leak` is rarely what you want and never what you want in
+    # a library that handles passwords.
+    { path = "std::string::String::leak", reason = "leaks the buffer; passwords must be zeroized on drop" },
+
+    # `mem::forget` defeats `Drop` — same hazard, broader reach.
+    { path = "std::mem::forget", reason = "skips Drop; password / pepper buffers must be zeroized" },
+]
+
+# ---------------------------------------------------------------------------
+# Disallowed types — same idea
+# ---------------------------------------------------------------------------
+disallowed-types = [
+    # `std::sync::Mutex` is preferred over `parking_lot::Mutex` here so
+    # poisoning surfaces — `parking_lot` silently ignores poisoning.
+    # (We don't actually use parking_lot, this is a forward guard.)
+    { path = "parking_lot::Mutex",      reason = "use std::sync::Mutex so poisoning is visible" },
+]
+
+# ---------------------------------------------------------------------------
+# `arithmetic-side-effects` exceptions
+#
+# Crypto code does a lot of integer arithmetic — we keep the lint on but
+# allow these well-vetted integer ops to silence false positives in
+# parameter-validation helpers.
+arithmetic-side-effects-allowed = ["u32", "u64", "usize"]
+
+# ---------------------------------------------------------------------------
+# Misc thresholds
+# ---------------------------------------------------------------------------
+# Default 16. Argon2/PBKDF2 param structs pass right at the boundary.
+trivial-copy-size-limit = 64
+
+# Suppress doc-fence-language warnings for fenced blocks with no language;
+# we use unfenced `text` blocks for terminal output examples.
+doc-valid-idents = [
+    "PHC", "MCF", "OWASP", "RFC", "HMAC", "KDF", "KMS", "CSPRNG",
+    "PBKDF2", "SHA256", "SHA512", "SHA-256", "SHA-512", "SHA-3",
+    "BLAKE3", "FIPS", "GitHub", "RustCrypto", "OpenSSF", "SLSA",
+    "TurboSHAKE", "KangarooTwelve", "rustc", "rustdoc",
+]
