@@ -207,6 +207,7 @@ impl Hasher {
     /// feature-gated; kept as `Result` for forward compatibility when
     /// runtime-selectable algorithms land.
     pub fn new(algorithm: Algorithm) -> Result<Self, DigestError> {
+        #[cfg(any(feature = "sha2", feature = "sha3"))]
         use digest::Digest;
         let inner = match algorithm {
             #[cfg(feature = "sha2")]
@@ -264,6 +265,7 @@ impl Hasher {
 
     /// Feeds bytes into the hasher state.
     pub fn update(&mut self, bytes: &[u8]) {
+        #[cfg(any(feature = "sha2", feature = "sha3"))]
         use digest::Digest;
         match &mut self.inner {
             #[cfg(feature = "sha2")]
@@ -288,6 +290,7 @@ impl Hasher {
     /// Consumes the hasher and returns the digest bytes.
     #[must_use]
     pub fn finalize(self) -> Vec<u8> {
+        #[cfg(any(feature = "sha2", feature = "sha3"))]
         use digest::Digest;
         match self.inner {
             #[cfg(feature = "sha2")]
