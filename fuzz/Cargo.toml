@@ -1,0 +1,60 @@
+[package]
+name        = "hsh-fuzz"
+version     = "0.0.0"
+description = "Fuzzing harnesses for hsh. Run via `cargo +nightly fuzz run <target>`."
+authors     = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>"]
+license     = "MIT OR Apache-2.0"
+publish     = false
+edition     = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+hsh           = { path = "../crates/hsh" }
+argon2        = "0.5"
+
+# Keep symbols for crash triage.
+[profile.release]
+debug = true
+
+[[bin]]
+name             = "fuzz_api_round_trip"
+path             = "fuzz_targets/fuzz_api_round_trip.rs"
+test             = false
+doc              = false
+bench            = false
+doctest          = false
+
+[[bin]]
+name             = "fuzz_phc_parse"
+path             = "fuzz_targets/fuzz_phc_parse.rs"
+test             = false
+doc              = false
+bench            = false
+doctest          = false
+
+[[bin]]
+name             = "fuzz_argon2id_verify"
+path             = "fuzz_targets/fuzz_argon2id_verify.rs"
+test             = false
+doc              = false
+bench            = false
+doctest          = false
+
+[[bin]]
+name             = "fuzz_bcrypt_verify"
+path             = "fuzz_targets/fuzz_bcrypt_verify.rs"
+test             = false
+doc              = false
+bench            = false
+doctest          = false
+
+[[bin]]
+name             = "fuzz_legacy_from_string"
+path             = "fuzz_targets/fuzz_legacy_from_string.rs"
+test             = false
+doc              = false
+bench            = false
+doctest          = false

@@ -9,7 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 2 (#141) — Operational hardening: fuzz/, Miri, SLSA L3 release.
+- Phase 3 (#142) — Pepper / KMS integration.
+
+### Added (Phase 2)
+
+- **`fuzz/`** — cargo-fuzz crate with 5 libfuzzer targets:
+  `fuzz_api_round_trip`, `fuzz_phc_parse`, `fuzz_argon2id_verify`,
+  `fuzz_bcrypt_verify`, `fuzz_legacy_from_string`. Excluded from the
+  workspace default build set; driven via `cargo +nightly fuzz`.
+- **`crates/hsh/tests/test_properties.rs`** — proptest harness with 7
+  property invariants (round-trip, wrong-password rejection, salt
+  uniqueness, bcrypt 72-byte rejection, short-password rejection).
+- **Criterion bench suite** — three groups (`hash_owasp_2025`,
+  `verify_owasp_2025`, `fast_params`) replacing the previous trivial
+  benches.
+- **Supply-chain hardening** — rewritten `deny.toml` (yanked = deny,
+  multiple-versions = warn, wildcards = deny, bans `argonautica`,
+  `argon2rs`, `openssl`, deny unknown-registry/git);
+  `supply-chain/audits.toml` (cargo-vet criteria + trusted import
+  feeds); `supply-chain/imports.lock` placeholder; `about.toml`
+  (cargo-about target matrix for SBOMs).
+- **`Makefile`** — POSIX, 25 targets (ci, release, fmt, clippy, test,
+  doc, deny, audit, sbom, miri, fuzz, bench, coverage, calibrate).
+- **`scripts/`** — `miri.sh` (focused / full), `pre-commit.sh`,
+  `parameter-calibration.sh`, `coverage-gap-report.sh`.
+- **CI workflows**:
+  - `release.yml` — tag↔Cargo.toml verification, quality gate, SBOM,
+    SLSA L3 build-provenance via `actions/attest-build-provenance`,
+    keyless sigstore signing via `cosign sign-blob`, cargo publish.
+  - `miri.yml` — focused Miri on every PR (60-minute budget),
+    full sweep weekly (90-minute budget).
+  - `scorecard.yml` — OpenSSF Scorecard weekly, SARIF uploaded to
+    code-scanning.
+  - `fuzz.yml` — nightly cron, 5-target matrix, 10-min-per-target
+    budget, crash artefacts retained 30 days.
+  - `supply-chain.yml` — `cargo-deny check` + `cargo-audit` on every
+    dependency change and weekly.
+- **`doc/pre-commit.md`** — install / scope / bypass / CI-parity
+  guidance for the local pre-commit hook.
+
+### Changed (Phase 2)
+
+- Workspace `Cargo.toml` adds `exclude = ["fuzz"]` so the libfuzzer
+  crate isn't pulled into stable-toolchain builds.
 
 ### Added (Phase 1)
 

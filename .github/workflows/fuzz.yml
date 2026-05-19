@@ -1,0 +1,74 @@
+name: Fuzz
+
+# Nightly cron + on-demand. Each fuzz target gets a 10-minute budget;
+# any crash is uploaded as an artefact for triage.
+on:
+  schedule:
+    - cron: "0 4 * * *"      # 04:00 UTC every day
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Specific target (omit to run all)"
+        required: false
+        default: ""
+      duration_seconds:
+        description: "Wall-time per target"
+        required: false
+        default: "600"
+
+concurrency:
+  group: fuzz-${{ github.ref }}
+  cancel-in-progress: false   # never cancel an in-flight fuzz batch
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - fuzz_api_round_trip
+          - fuzz_phc_parse
+          - fuzz_argon2id_verify
+          - fuzz_bcrypt_verify
+          - fuzz_legacy_from_string
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Skip if dispatch picked a different target
+        if: github.event_name == 'workflow_dispatch' && inputs.target != '' && inputs.target != matrix.target
+        run: echo "skipping ${{ matrix.target }}" && exit 0
+
+      - name: Install nightly Rust
+        uses: dtolnay/rust-toolchain@nightly
+
+      - name: Install cargo-fuzz
+        run: cargo install --locked cargo-fuzz
+
+      - name: Cache fuzz target build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fuzz
+
+      - name: Run fuzz target
+        env:
+          TARGET: ${{ matrix.target }}
+          DURATION: ${{ inputs.duration_seconds || '600' }}
+        working-directory: fuzz
+        run: |
+          mkdir -p corpus/${TARGET} artifacts/${TARGET}
+          cargo +nightly fuzz run "${TARGET}" \
+            corpus/${TARGET} \
+            -- \
+            -max_total_time="${DURATION}" \
+            -artifact_prefix=artifacts/${TARGET}/
+
+      - name: Upload crash artefacts
+        if: failure() || always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-artifacts-${{ matrix.target }}
+          path: fuzz/artifacts/
+          if-no-files-found: ignore
+          retention-days: 30

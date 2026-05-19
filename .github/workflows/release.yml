@@ -1,0 +1,162 @@
+name: Release
+
+# Triggered by pushing a semver tag (v0.0.9, v0.1.0, v1.0.0, …).
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write          # required to attach release artefacts
+  id-token: write          # required for sigstore keyless signing
+  attestations: write      # required for SLSA L3 build provenance
+  packages: write          # required to push images, if we add Docker later
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------------
+  # Quality gate — fmt, clippy, test, doc must all pass before we even
+  # consider publishing.
+  # ---------------------------------------------------------------------
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Cache cargo registry / target
+        uses: Swatinem/rust-cache@v2
+      - name: fmt
+        run: cargo fmt --all --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: test
+        run: cargo test --workspace --all-features
+      - name: doc
+        run: cargo doc --workspace --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+
+  # ---------------------------------------------------------------------
+  # Tag verification — assert the git tag matches Cargo.toml.
+  # ---------------------------------------------------------------------
+  verify-version:
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Extract tag version
+        id: extract
+        run: |
+          tag="${GITHUB_REF#refs/tags/v}"
+          echo "Tag version: $tag"
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+      - name: Cross-check against Cargo.toml
+        run: |
+          cargo_ver="$(grep -E '^version =' crates/hsh/Cargo.toml | head -1 | sed -E 's/version = "([^"]+)"/\1/')"
+          if [ "$cargo_ver" != "${{ steps.extract.outputs.version }}" ]; then
+            echo "::error::tag ${{ steps.extract.outputs.version }} != crates/hsh Cargo.toml $cargo_ver"
+            exit 1
+          fi
+          echo "OK: tag and Cargo.toml agree on $cargo_ver"
+
+  # ---------------------------------------------------------------------
+  # SBOM generation via cargo-about.
+  # ---------------------------------------------------------------------
+  sbom:
+    runs-on: ubuntu-latest
+    needs: verify-version
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Install cargo-about
+        run: cargo install --locked cargo-about
+      - name: Generate plain-text NOTICE
+        run: |
+          mkdir -p artifacts
+          cargo about generate --output-file artifacts/NOTICE.md doc/about.md.hbs \
+            || echo "no template yet — emitting `cargo about` raw output instead" \
+            && cargo about generate --output-file artifacts/NOTICE.md \
+                <(echo '{{#each licenses}}- {{name}} ({{spdx_id}}){{/each}}') \
+            || true
+      - name: Cargo tree manifest
+        run: cargo tree --workspace --all-features --no-default-features > artifacts/CARGO-TREE.txt || true
+      - name: Upload SBOM artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: artifacts/
+
+  # ---------------------------------------------------------------------
+  # SLSA L3 build provenance + sigstore keyless signing.
+  #
+  # The attest-build-provenance action does SLSA L3 in-toto attestations
+  # using the GitHub OIDC token. cosign sign-blob with --yes uses the
+  # same OIDC for keyless signing through Fulcio + Rekor.
+  # ---------------------------------------------------------------------
+  attest:
+    runs-on: ubuntu-latest
+    needs: sbom
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Build release artefact
+        run: |
+          mkdir -p artifacts
+          cargo build --release --workspace
+          cp target/release/hsh artifacts/hsh-${{ needs.verify-version.outputs.version }}-x86_64-unknown-linux-gnu \
+            || echo "no binary — library-only release"
+          (cd artifacts && find . -type f -exec sha256sum {} +) > artifacts/SHA256SUMS || true
+      - name: Generate SLSA build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: artifacts/
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+      - name: Keyless sign every artefact
+        run: |
+          for f in artifacts/*; do
+            [ -f "$f" ] || continue
+            cosign sign-blob --yes --output-signature "${f}.sig" --output-certificate "${f}.pem" "$f"
+          done
+      - name: Upload signed artefacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-artefacts
+          path: artifacts/
+
+  # ---------------------------------------------------------------------
+  # Publish to crates.io.
+  # ---------------------------------------------------------------------
+  publish:
+    runs-on: ubuntu-latest
+    needs: [verify-version, attest]
+    environment: crates-io
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: Cargo publish
+        run: cargo publish --token "${CARGO_REGISTRY_TOKEN}" -p hsh
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}

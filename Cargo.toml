@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["crates/hsh"]
+members  = ["crates/hsh"]
+# fuzz/ is a libfuzzer crate driven by cargo-fuzz (`cargo +nightly fuzz`);
+# it depends on the unstable libfuzzer runtime and must not be part of
+# the default `cargo build --workspace` set.
+exclude  = ["fuzz"]
 
 [workspace.package]
 authors       = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>", "The Hash (HSH) library contributors"]
@@ -35,6 +39,8 @@ log        = { version = "0.4.25", features = ["std"] }
 # Dev
 assert_cmd = "2.0.14"
 criterion  = "0.5.1"
+proptest   = "1.5"
+hex        = "0.4"
 
 [profile.dev]
 codegen-units    = 256

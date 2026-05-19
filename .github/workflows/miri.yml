@@ -1,0 +1,59 @@
+name: Miri
+
+# Focused per-PR (cheap), full weekly (expensive).
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "fuzz/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/miri.yml"
+      - "scripts/miri.sh"
+  schedule:
+    # Sunday 03:00 UTC — full sweep budget.
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: miri-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  focused:
+    name: Miri (focused, per-PR)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install nightly + miri
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri, rust-src
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Miri setup
+        run: cargo +nightly miri setup
+      - name: Run focused Miri suite
+        run: ./scripts/miri.sh focused
+
+  full:
+    name: Miri (full sweep, weekly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install nightly + miri
+        uses: dtolnay/rust-toolchain@nightly
+        with:
+          components: miri, rust-src
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+      - name: Miri setup
+        run: cargo +nightly miri setup
+      - name: Run full Miri sweep
+        run: ./scripts/miri.sh full

@@ -1,0 +1,50 @@
+name: OpenSSF Scorecard
+
+# Weekly + on-demand. Reports security-maturity rating that goes to
+# the deps.dev card and is consumed by downstream consumers when
+# evaluating us as a dependency.
+on:
+  branch_protection_rule:
+  schedule:
+    - cron: "0 5 * * 1"   # Monday 05:00 UTC
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  analysis:
+    name: Scorecard analysis
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write   # required to upload SARIF
+      id-token: write          # required for OIDC token
+      contents: read
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Run Scorecard
+        uses: ossf/scorecard-action@v2
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          # publish_results: true requires a fresh OIDC token on every
+          # run; safe because workflow has id-token: write.
+          publish_results: true
+
+      - name: Upload Scorecard SARIF artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: scorecard-results
+          path: results.sarif
+          retention-days: 30
+
+      - name: Upload to GitHub code-scanning
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
