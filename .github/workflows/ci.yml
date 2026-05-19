@@ -8,7 +8,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions: {}
+# No workflow-level `permissions:` block — reusable-workflow calls
+# (`ci`, `security`, `docs`) require their own permissions to be
+# computed from the caller's defaults. The local jobs below set the
+# minimum they need explicitly.
 
 jobs:
   ci:
