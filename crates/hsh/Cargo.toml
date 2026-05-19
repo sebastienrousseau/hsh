@@ -59,6 +59,8 @@ thiserror = { workspace = true }
 # Algorithms — RustCrypto stack
 argon2        = { workspace = true }
 bcrypt        = { workspace = true }
+hmac          = { workspace = true }
+pbkdf2        = { workspace = true }
 scrypt        = { workspace = true }
 sha2          = { workspace = true }
 password-hash = { workspace = true }
@@ -93,6 +95,14 @@ compat-v0_0_x = []
 # Off by default to keep the dependency surface minimal for callers that
 # don't want it.
 pepper = ["dep:hsh-kms"]
+
+# Marker feature for the future FIPS 140-3 routing through `aws-lc-rs`.
+# **Today this feature is a no-op** — enabling it does NOT route through
+# a FIPS-validated module. It exists so callers can lock in the
+# intended build flag now while the `hsh-backend-awslc` follow-up crate
+# bakes (see doc/FIPS.md). When the real backend lands, this feature
+# will pull it in transparently.
+fips = []
 
 [package.metadata.docs.rs]
 all-features    = true

@@ -43,6 +43,10 @@ pub enum HashAlgorithm {
     /// **Scrypt** — memory-hard KDF. Default params follow OWASP-2025
     /// (`N = 2^17`, `r = 8`, `p = 1`).
     Scrypt,
+
+    /// **PBKDF2** — the only KDF with a FIPS 140-3 validated
+    /// implementation (via `aws-lc-rs` behind the `fips` feature).
+    Pbkdf2,
 }
 
 /// Generic password-hashing trait.

@@ -19,5 +19,9 @@ pub mod argon2i {
 /// Bcrypt with the 72-byte safety rail enforced.
 pub mod bcrypt;
 
+/// PBKDF2-HMAC-SHA-256 / SHA-512 — the only KDF with a FIPS 140-3
+/// validated implementation today (via the `fips` feature).
+pub mod pbkdf2;
+
 /// Scrypt with configurable parameters (default = OWASP-2025 minimum).
 pub mod scrypt;

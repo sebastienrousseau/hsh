@@ -26,6 +26,8 @@
 //! ```
 
 use crate::algorithms::bcrypt::{Bcrypt, PrehashAlgorithm};
+use crate::algorithms::pbkdf2::{Pbkdf2, Prf};
+use crate::backend::Backend;
 use crate::error::{Error, Result};
 use crate::outcome::Outcome;
 use crate::policy::{Policy, PrimaryAlgorithm};
@@ -33,7 +35,6 @@ use argon2::password_hash::{
     PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
 };
 use argon2::{Algorithm, Argon2, Version};
-#[cfg(feature = "pepper")]
 use base64::{engine::general_purpose, Engine as _};
 use rand_core::OsRng;
 use scrypt::Scrypt as ScryptHasher;
@@ -70,6 +71,27 @@ pub fn hash(policy: &Policy, password: &str) -> Result<String> {
 }
 
 fn hash_unpeppered(policy: &Policy, password: &str) -> Result<String> {
+    // Enforce FIPS contract — the only KDF with a FIPS 140-3 validated
+    // implementation is PBKDF2 (via aws-lc-rs). Argon2 / bcrypt /
+    // scrypt have no validated module anywhere, so a policy declaring
+    // Backend::Fips140Required must use PBKDF2 as its primary.
+    if policy.backend.is_fips()
+        && !matches!(policy.primary, PrimaryAlgorithm::Pbkdf2)
+    {
+        return Err(Error::InvalidParameter(format!(
+            "Backend::Fips140Required cannot mint hashes with {:?} — only PBKDF2 has a FIPS 140-3 validated implementation. Switch policy.primary to PrimaryAlgorithm::Pbkdf2 or relax policy.backend.",
+            policy.primary
+        )));
+    }
+    // Also refuse if the policy is FIPS but the binary wasn't compiled
+    // with the `fips` feature — silently falling through to pure-Rust
+    // primitives would be fail-open.
+    if policy.backend.is_fips() && !Backend::fips_available_in_build() {
+        return Err(Error::InvalidParameter(
+            "Backend::Fips140Required policy supplied but the `fips` Cargo feature is not enabled in this build. Rebuild with `--features fips` or relax policy.backend to Backend::Native.".into(),
+        ));
+    }
+
     match policy.primary {
         PrimaryAlgorithm::Argon2id => {
             let salt = SaltString::generate(&mut OsRng);
@@ -103,6 +125,30 @@ fn hash_unpeppered(policy: &Policy, password: &str) -> Result<String> {
                 .hash_password(password.as_bytes(), &salt)
                 .map_err(|e| Error::Hashing(e.to_string()))?;
             Ok(phc.to_string())
+        }
+        PrimaryAlgorithm::Pbkdf2 => {
+            // Custom params for PBKDF2 — derive raw bytes and serialize
+            // as a hsh-internal wrapper. We don't use the RustCrypto
+            // pbkdf2 PHC encoder because its PHC string would silently
+            // bypass our FIPS routing.
+            let salt = SaltString::generate(&mut OsRng);
+            let raw = Pbkdf2::hash_with(
+                password,
+                salt.as_str(),
+                policy.pbkdf2,
+            )?;
+            let salt_b64 = salt.as_str();
+            let hash_b64 =
+                general_purpose::STANDARD_NO_PAD.encode(&raw);
+            Ok(format!(
+                "${alg}$i={iters},l={len}${salt_b64}${hash_b64}",
+                alg = match policy.pbkdf2.prf {
+                    Prf::Sha256 => "pbkdf2-sha256",
+                    Prf::Sha512 => "pbkdf2-sha512",
+                },
+                iters = policy.pbkdf2.iterations,
+                len = policy.pbkdf2.dk_len,
+            ))
         }
     }
 }
@@ -265,6 +311,9 @@ fn verify_and_upgrade_inner(
         "scrypt" => ScryptHasher
             .verify_password(password.as_bytes(), &parsed)
             .is_ok(),
+        "pbkdf2-sha256" | "pbkdf2-sha512" => {
+            verify_pbkdf2_phc(&parsed, password, algo_id)?
+        }
         other => {
             return Err(Error::UnsupportedAlgorithm(other.to_owned()));
         }
@@ -288,6 +337,62 @@ fn verify_and_upgrade_inner(
     }
 }
 
+/// PBKDF2 verifier. We re-derive with the iteration count + PRF
+/// embedded in the stored PHC string, then constant-time compare the
+/// tag against the stored value. This bypasses the RustCrypto pbkdf2
+/// PHC verifier so the `fips` feature's routing through `aws-lc-rs`
+/// stays in effect.
+fn verify_pbkdf2_phc(
+    parsed: &PasswordHash<'_>,
+    password: &str,
+    algo_id: &str,
+) -> Result<bool> {
+    use crate::algorithms::pbkdf2::{Pbkdf2Params, Prf};
+    use subtle::ConstantTimeEq;
+
+    let salt = parsed
+        .salt
+        .ok_or(Error::InvalidHashString("PBKDF2 PHC missing salt"))?;
+    let stored = parsed
+        .hash
+        .ok_or(Error::InvalidHashString("PBKDF2 PHC missing hash"))?;
+
+    let mut iterations: u32 = 0;
+    let mut dk_len: usize = stored.as_bytes().len();
+    for p in parsed.params.iter() {
+        let id = p.0.as_str();
+        if id == "i" {
+            iterations = p.1.decimal().map_err(|_| {
+                Error::InvalidHashString(
+                    "PBKDF2 PHC bad iteration count",
+                )
+            })?;
+        } else if id == "l" {
+            dk_len = p.1.decimal().map_err(|_| {
+                Error::InvalidHashString("PBKDF2 PHC bad output length")
+            })? as usize;
+        }
+    }
+    if iterations == 0 {
+        return Err(Error::InvalidHashString(
+            "PBKDF2 PHC missing iteration count",
+        ));
+    }
+
+    let params = Pbkdf2Params {
+        prf: match algo_id {
+            "pbkdf2-sha256" => Prf::Sha256,
+            "pbkdf2-sha512" => Prf::Sha512,
+            _ => unreachable!(),
+        },
+        iterations,
+        dk_len,
+    };
+    let calculated =
+        Pbkdf2::hash_with(password, salt.as_str(), params)?;
+    Ok(bool::from(calculated.ct_eq(stored.as_bytes())))
+}
+
 /// Decides whether a successful verification should trigger a rehash.
 fn needs_rehash(
     parsed: &PasswordHash<'_>,
@@ -300,6 +405,10 @@ fn needs_rehash(
         (policy.primary, algo_id),
         (PrimaryAlgorithm::Argon2id, "argon2id")
             | (PrimaryAlgorithm::Scrypt, "scrypt")
+            | (
+                PrimaryAlgorithm::Pbkdf2,
+                "pbkdf2-sha256" | "pbkdf2-sha512"
+            )
     );
     if !primary_matches {
         return true;
@@ -312,6 +421,25 @@ fn needs_rehash(
             return !policy.argon2_satisfies(&stored_params);
         }
         return true;
+    }
+
+    // PBKDF2: rehash if the stored iteration count or output length is
+    // below the policy's. PRF (SHA-256 / SHA-512) drift also triggers.
+    if algo_id == "pbkdf2-sha256" || algo_id == "pbkdf2-sha512" {
+        let policy_prf_id = match policy.pbkdf2.prf {
+            Prf::Sha256 => "pbkdf2-sha256",
+            Prf::Sha512 => "pbkdf2-sha512",
+        };
+        if algo_id != policy_prf_id {
+            return true;
+        }
+        let mut stored_iters: u32 = 0;
+        for p in parsed.params.iter() {
+            if p.0.as_str() == "i" {
+                stored_iters = p.1.decimal().unwrap_or(0);
+            }
+        }
+        return stored_iters < policy.pbkdf2.iterations;
     }
 
     // Scrypt: minimal parameter check via the parsed params string.

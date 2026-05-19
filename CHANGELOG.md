@@ -9,7 +9,71 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 4 (#143) — FIPS backend via `aws-lc-rs`.
+- Phase 5 (#144) — `hsh-cli` binary + multi-platform packaging.
+- Phase 4 follow-up — dedicated `hsh-backend-awslc` workspace member
+  that routes PBKDF2 through `aws-lc-rs`'s FIPS 140-3 validated module
+  and flips `Backend::fips_available_in_build()` to `true`.
+
+### Added (Phase 4)
+
+- **`PrimaryAlgorithm::Pbkdf2`** + **`HashAlgorithm::Pbkdf2`** —
+  PBKDF2-HMAC-SHA-256/512 support across the workspace.
+- **`crate::algorithms::pbkdf2`** module with `Prf::{Sha256, Sha512}`,
+  `Pbkdf2Params` (OWASP-2025 minimum: 600 000 / 210 000 iterations),
+  `Pbkdf2::hash_with()` for explicit-param derivation.
+- **PHC string format** `$pbkdf2-sha256$i=<iters>,l=<len>$<salt>$<hash>`
+  emitted by `api::hash` for PBKDF2 hashes. Parsed end-to-end by
+  `api::verify_and_upgrade`.
+- **`Backend` enum** (`Native | Fips140Required`) with `is_fips()` and
+  `fips_available_in_build()` helpers.
+- **`Policy.backend` field** + **`Policy::fips_140_pbkdf2()` preset**
+  (PBKDF2-HMAC-SHA-256, 600 000 iters, `Backend::Fips140Required`).
+- **Algorithm-drift / iteration-drift / PRF-drift detection** for
+  PBKDF2 in `api::verify_and_upgrade::needs_rehash`.
+- **Runtime refusal** in `api::hash` when:
+  - `Backend::Fips140Required` is set but primary isn't PBKDF2
+    (Argon2/bcrypt/scrypt have no FIPS-validated module anywhere).
+  - `Backend::Fips140Required` is set but the build can't satisfy it
+    (`Backend::fips_available_in_build()` returns `false`).
+- **8 PBKDF2 integration tests** in `crates/hsh/tests/test_pbkdf2.rs`
+  covering round-trip, wrong-password rejection, iteration drift, PRF
+  drift, FIPS-policy refusal of Argon2id, FIPS-policy refusal when
+  feature missing, `Backend::is_fips()`, `Policy::fips_140_pbkdf2()`
+  preset.
+- **ADR-0004 — FIPS 140-3 strategy** (`doc/adr/0004-fips-strategy.md`).
+- **`doc/FIPS.md`** — deployment guide with the "fail-closed"
+  contract, what's delivered today, three deployment options, and the
+  Argon2→PBKDF2 migration playbook.
+
+### Changed (Phase 4)
+
+- `Policy` gains required `backend: Backend` and `pbkdf2: Pbkdf2Params`
+  fields. Test / bench struct literals updated.
+- `Policy::owasp_minimum_2025()` and `rfc9106_first_recommended()` now
+  populate both new fields with sensible defaults
+  (`Backend::Native`, OWASP-2025 PBKDF2 params for legacy verification).
+- `HashAlgorithm` gets a `Pbkdf2` variant; `parse_algorithm_tag` recognises
+  `"pbkdf2"`, `"pbkdf2-sha256"`, `"pbkdf2-sha512"`.
+- `Hash::generate_hash` and `Hash::verify` route PBKDF2 through the
+  new module.
+
+### Security (Phase 4)
+
+- The Backend contract is **fail-closed**: no `hsh::api::hash` call
+  ever silently produces non-FIPS output when the caller asked for
+  FIPS. Either the caller gets a hash from a validated module, or
+  they get a typed error.
+- Custom PBKDF2 PHC encoder lives in `hsh` (not delegated to
+  RustCrypto's encoder) so the future `hsh-backend-awslc` swap can
+  intercept the derive call without changing the storage format.
+
+### Forward-compat
+
+- `fips` Cargo feature exists today but is a **no-op marker**. Enabling
+  it does nothing observable; `Backend::fips_available_in_build()`
+  remains `false`. The dedicated `hsh-backend-awslc` follow-up flips
+  this when its dependency-graph presence is detected. Documented
+  prominently to avoid misleading-marketing.
 
 ### Added (Phase 3)
 

@@ -13,7 +13,9 @@
 
 use crate::algorithms::argon2id;
 use crate::algorithms::bcrypt::BcryptParams;
+use crate::algorithms::pbkdf2::Pbkdf2Params;
 use crate::algorithms::scrypt::ScryptParams;
+use crate::backend::Backend;
 use argon2::Params as Argon2Params;
 #[cfg(feature = "pepper")]
 use std::sync::Arc;
@@ -31,6 +33,10 @@ pub enum PrimaryAlgorithm {
     Bcrypt,
     /// **Scrypt** — memory-hard, simpler parameter story than Argon2.
     Scrypt,
+    /// **PBKDF2** — the only KDF with a FIPS 140-3 validated path
+    /// (via `aws-lc-rs` behind the `fips` feature). Use this when
+    /// compliance dictates and Argon2id is unavailable.
+    Pbkdf2,
 }
 
 /// Versioned policy snapshot: the algorithm to use for new hashes plus
@@ -43,12 +49,16 @@ pub enum PrimaryAlgorithm {
 pub struct Policy {
     /// Algorithm used by [`crate::api::hash`] to mint new hashes.
     pub primary: PrimaryAlgorithm,
+    /// Crypto-validation requirement.
+    pub backend: Backend,
     /// Argon2 parameters (shared across Argon2id / Argon2i / Argon2d).
     pub argon2: Argon2Params,
     /// Bcrypt parameters.
     pub bcrypt: BcryptParams,
     /// Scrypt parameters.
     pub scrypt: ScryptParams,
+    /// PBKDF2 parameters.
+    pub pbkdf2: Pbkdf2Params,
     /// Optional server-side pepper applied before hashing. Requires
     /// the `pepper` feature.
     #[cfg(feature = "pepper")]
@@ -64,9 +74,11 @@ impl Policy {
     pub fn owasp_minimum_2025() -> Self {
         Self {
             primary: PrimaryAlgorithm::Argon2id,
+            backend: Backend::Native,
             argon2: argon2id::owasp_minimum_2025(),
             bcrypt: BcryptParams::new(10),
             scrypt: ScryptParams::default(),
+            pbkdf2: Pbkdf2Params::owasp_minimum_2025(),
             #[cfg(feature = "pepper")]
             pepper: None,
         }
@@ -77,9 +89,39 @@ impl Policy {
     pub fn rfc9106_first_recommended() -> Self {
         Self {
             primary: PrimaryAlgorithm::Argon2id,
+            backend: Backend::Native,
             argon2: argon2id::rfc9106_first_recommended(),
             bcrypt: BcryptParams::new(10),
             scrypt: ScryptParams::default(),
+            pbkdf2: Pbkdf2Params::owasp_minimum_2025(),
+            #[cfg(feature = "pepper")]
+            pepper: None,
+        }
+    }
+
+    /// FIPS 140-3 deployment preset: **PBKDF2-HMAC-SHA-256, 600 000
+    /// iterations** (OWASP-2025 minimum), with
+    /// [`Backend::Fips140Required`].
+    ///
+    /// Argon2 / bcrypt / scrypt remain present in this preset's
+    /// parameter ladder for verifying legacy hashes, but
+    /// [`crate::api::hash`] will refuse to mint new hashes under those
+    /// algorithms when `backend == Backend::Fips140Required` because
+    /// they have no FIPS-validated implementation anywhere.
+    ///
+    /// Requires the `fips` Cargo feature to actually route through
+    /// `aws-lc-rs`; without the feature, the verifier refuses to
+    /// fail open and returns an error pointing at the build
+    /// misconfiguration.
+    #[must_use]
+    pub fn fips_140_pbkdf2() -> Self {
+        Self {
+            primary: PrimaryAlgorithm::Pbkdf2,
+            backend: Backend::Fips140Required,
+            argon2: argon2id::owasp_minimum_2025(),
+            bcrypt: BcryptParams::new(10),
+            scrypt: ScryptParams::default(),
+            pbkdf2: Pbkdf2Params::owasp_minimum_2025(),
             #[cfg(feature = "pepper")]
             pepper: None,
         }

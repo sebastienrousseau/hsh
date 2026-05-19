@@ -83,6 +83,10 @@ pub mod algorithms;
 /// [`api::verify_and_upgrade`] with policy-driven rehash.
 pub mod api;
 
+/// Backend selector — declares whether the [`Policy`] requires FIPS
+/// 140-3 validated crypto.
+pub mod backend;
+
 /// Structured error type for fallible operations.
 pub mod error;
 
@@ -96,6 +100,7 @@ pub mod outcome;
 /// Versioned [`policy::Policy`] describing primary algorithm + params.
 pub mod policy;
 
+pub use backend::Backend;
 pub use error::{Error, Result};
 pub use outcome::Outcome;
 pub use policy::{Policy, PrimaryAlgorithm};

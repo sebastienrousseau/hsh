@@ -17,6 +17,7 @@ use super::hash_algorithm::HashAlgorithm;
 use crate::algorithms::{
     argon2id::{self as a2, Argon2d, Argon2i, Argon2id},
     bcrypt::Bcrypt,
+    pbkdf2::{Pbkdf2, Pbkdf2Params},
     scrypt::{Scrypt, ScryptParams},
 };
 use crate::error::{Error, Result};
@@ -186,6 +187,9 @@ impl Hash {
             "argon2d" => Argon2d::hash_password(password, salt),
             "bcrypt" => Bcrypt::hash_password(password, salt),
             "scrypt" => Scrypt::hash_password(password, salt),
+            "pbkdf2" | "pbkdf2-sha256" => {
+                Pbkdf2::hash_password(password, salt)
+            }
             other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
         }
     }
@@ -373,12 +377,26 @@ impl Hash {
                 tmp.zeroize();
                 Ok(ok)
             }
+            HashAlgorithm::Pbkdf2 => {
+                let calculated = Pbkdf2::hash_with(
+                    password,
+                    salt,
+                    Pbkdf2Params::default(),
+                )?;
+                let ok = bool::from(calculated.ct_eq(&self.hash));
+                let mut tmp = calculated;
+                tmp.zeroize();
+                Ok(ok)
+            }
         }
     }
 }
 
 fn parse_algorithm_tag(algo: &str) -> Result<HashAlgorithm> {
     match algo {
+        "pbkdf2" | "pbkdf2-sha256" | "pbkdf2-sha512" => {
+            Ok(HashAlgorithm::Pbkdf2)
+        }
         "argon2id" => Ok(HashAlgorithm::Argon2id),
         "argon2i" => Ok(HashAlgorithm::Argon2i),
         "argon2d" => Ok(HashAlgorithm::Argon2d),

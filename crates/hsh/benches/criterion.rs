@@ -39,6 +39,12 @@ fn fast_policy(primary: PrimaryAlgorithm) -> Policy {
             p: 1,
             dk_len: 32,
         },
+        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
+            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+            iterations: 1,
+            dk_len: 32,
+        },
+        backend: hsh::Backend::Native,
         #[cfg(feature = "pepper")]
         pepper: None,
     }

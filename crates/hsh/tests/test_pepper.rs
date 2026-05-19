@@ -26,6 +26,12 @@ fn fast_policy_with_pepper(pepper: Arc<dyn hsh_kms::Pepper>) -> Policy {
             p: 1,
             dk_len: 32,
         },
+        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
+            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+            iterations: 1,
+            dk_len: 32,
+        },
+        backend: hsh::Backend::Native,
         pepper: Some(pepper),
     }
 }
@@ -158,6 +164,12 @@ fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
             p: 1,
             dk_len: 32,
         },
+        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
+            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+            iterations: 1,
+            dk_len: 32,
+        },
+        backend: hsh::Backend::Native,
         pepper: None,
     };
     let legacy = api::hash(&bare_policy, "legacy user pw").unwrap();
