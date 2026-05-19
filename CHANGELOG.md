@@ -9,8 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 6 (#145) — optional general-purpose hashing primitives.
 - Phase 7 (#146) — v1.0.0 stabilisation.
+
+### Added (Phase 6)
+
+- **`crates/hsh-digest`** — new workspace member for general-purpose
+  hashing. Opens with a loud "⚠️ NOT for password storage" warning;
+  points readers at `hsh::api::hash` for that.
+- **`hsh_digest::Algorithm`** enum: `Sha256`, `Sha384`, `Sha512`
+  (FIPS 180-4), `Sha3_256`, `Sha3_384`, `Sha3_512` (FIPS 202),
+  `Blake3`. Each variant gated by its own Cargo feature.
+- **`hsh_digest::Hasher`** streaming API (`new` / `update` / `finalize`)
+  + one-shot `hsh_digest::hash(algorithm, data)` convenience.
+- **`hsh_digest::constant_time_eq`** — `subtle`-backed comparison
+  helper.
+- **`Algorithm::output_len()`** and **`Algorithm::id()`** — metadata
+  helpers for protocol code.
+- **13 KAT integration tests** in `crates/hsh-digest/tests/kat.rs`
+  against NIST CAVP (SHA-2), FIPS 202 (SHA-3), and the BLAKE3
+  project test vectors.
+- **ADR-0005 — general-hashing scope decision**
+  (`doc/adr/0005-general-hashing-scope.md`).
+
+### Forward-compat (Phase 6)
+
+- `k12` Cargo feature declared as a marker for KangarooTwelve /
+  TurboSHAKE128/256 (RFC 9861, Oct 2025) — impl in Phase 6 follow-up.
+- `ascon` Cargo feature declared as a marker for Ascon-Hash256 /
+  Ascon-XOF128 (NIST SP 800-232 final, Aug 2025) — impl in Phase 6
+  follow-up.
+
+### Non-goals (Phase 6 / ADR-0005)
+
+- No HMAC, HKDF, SipHash, or SHA-1 in `hsh-digest`. Use the
+  RustCrypto siblings (`hmac`, `hkdf`, etc.). SHA-1 specifically is
+  deprecated for all security uses.
+- No signatures / KEMs / PQ primitives. `hsh-digest` is hashes-only.
 
 ### Added (Phase 5)
 
