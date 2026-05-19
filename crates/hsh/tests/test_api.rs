@@ -22,6 +22,8 @@ mod tests {
                 p: 1,
                 dk_len: 32,
             },
+            #[cfg(feature = "pepper")]
+            pepper: None,
         }
     }
 
@@ -78,6 +80,8 @@ mod tests {
                 p: 1,
                 dk_len: 32,
             },
+            #[cfg(feature = "pepper")]
+            pepper: None,
         };
         let strong = Policy {
             primary: PrimaryAlgorithm::Argon2id,
@@ -90,6 +94,8 @@ mod tests {
                 p: 1,
                 dk_len: 32,
             },
+            #[cfg(feature = "pepper")]
+            pepper: None,
         };
 
         let stored = api::hash(&weak, "secret password").unwrap();
@@ -136,6 +142,8 @@ mod tests {
                 p: 1,
                 dk_len: 32,
             },
+            #[cfg(feature = "pepper")]
+            pepper: None,
         };
         let stored = api::hash(&policy, "secret password").unwrap();
         assert!(stored.starts_with("$2"));
@@ -164,6 +172,8 @@ mod tests {
                 p: 1,
                 dk_len: 32,
             },
+            #[cfg(feature = "pepper")]
+            pepper: None,
         };
         let argon_policy = fast_test_policy();
 

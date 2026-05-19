@@ -73,6 +73,9 @@ log        = { workspace = true }
 rand_core = { workspace = true }
 getrandom = { workspace = true }
 
+# Pepper / KMS — optional, behind the `pepper` feature.
+hsh-kms = { path = "../hsh-kms", optional = true }
+
 [dev-dependencies]
 assert_cmd = { workspace = true }
 criterion  = { workspace = true }
@@ -85,6 +88,11 @@ default = []
 # Re-export the v0.0.x stringly-typed API for one release cycle so existing
 # users can upgrade gradually. To be removed in v0.2.0.
 compat-v0_0_x = []
+
+# Enables pepper / KMS integration via the `hsh-kms` companion crate.
+# Off by default to keep the dependency surface minimal for callers that
+# don't want it.
+pepper = ["dep:hsh-kms"]
 
 [package.metadata.docs.rs]
 all-features    = true

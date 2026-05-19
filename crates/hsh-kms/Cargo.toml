@@ -1,0 +1,62 @@
+[package]
+name        = "hsh-kms"
+version     = "0.0.9"
+description = "Pepper / KMS integration for the hsh crate: HMAC-SHA-256 pepper application with versioned keys and pluggable KMS backends."
+build       = false
+
+authors.workspace       = true
+edition.workspace       = true
+rust-version.workspace  = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+categories.workspace    = true
+keywords.workspace      = true
+
+[lib]
+name = "hsh_kms"
+path = "src/lib.rs"
+
+[dependencies]
+hmac      = { workspace = true }
+sha2      = { workspace = true }
+subtle    = { workspace = true }
+zeroize   = { workspace = true }
+thiserror = { workspace = true }
+log       = { workspace = true }
+
+[dev-dependencies]
+hex = { workspace = true }
+
+[features]
+default = []
+
+# Provider stubs — feature gates compile in the per-provider module. The
+# real network-call implementations land incrementally as follow-ups;
+# today these features only enable the stub APIs so downstream users can
+# wire up their integration code against a stable shape.
+aws-kms              = []
+gcp-kms              = []
+azure-key-vault      = []
+hashicorp-vault      = []
+
+[lints.rust]
+# Mirror the strict matrix used in crates/hsh.
+unsafe_code                   = "forbid"
+missing_docs                  = "warn"
+missing_debug_implementations = "forbid"
+non_ascii_idents              = "forbid"
+unreachable_pub               = "forbid"
+dead_code                     = "deny"
+deprecated_in_future          = "deny"
+unused                        = { level = "deny", priority = -1 }
+variant_size_differences      = "deny"
+rust_2018_idioms              = { level = "deny", priority = -1 }
+rust_2021_compatibility       = { level = "deny", priority = -1 }
+future_incompatible           = { level = "deny", priority = -1 }
+trivial_casts                 = "deny"
+trivial_numeric_casts         = "deny"
+
+[package.metadata.clippy]
+warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]

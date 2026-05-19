@@ -33,14 +33,43 @@ use argon2::password_hash::{
     PasswordHash, PasswordHasher, PasswordVerifier, SaltString,
 };
 use argon2::{Algorithm, Argon2, Version};
+#[cfg(feature = "pepper")]
+use base64::{engine::general_purpose, Engine as _};
 use rand_core::OsRng;
 use scrypt::Scrypt as ScryptHasher;
+
+/// Prefix on stored hashes that have been peppered. Format:
+/// `hsh-pepper:<keyver>:<phc-or-mcf>`.
+#[cfg(feature = "pepper")]
+const PEPPER_PREFIX: &str = "hsh-pepper:";
 
 /// Hashes `password` under `policy` and returns a PHC-format string
 /// (or, for [`PrimaryAlgorithm::Bcrypt`], an MCF-format `$2b$…` string).
 ///
+/// When `policy.pepper` is `Some` (requires the `pepper` feature), the
+/// password is HMAC-SHA-256-ed with the current pepper key before being
+/// fed to the KDF, and the resulting hash is wrapped in a
+/// `hsh-pepper:<keyver>:` prefix so verification can locate the right
+/// key on the way back.
+///
 /// The salt is drawn from the OS CSPRNG.
 pub fn hash(policy: &Policy, password: &str) -> Result<String> {
+    #[cfg(feature = "pepper")]
+    if let Some(pepper) = policy.pepper.as_ref() {
+        let version = pepper.current();
+        let tag = pepper.apply(version, password.as_bytes()).map_err(
+            |e| Error::Hashing(format!("pepper apply failed: {e}")),
+        )?;
+        // KDFs accept arbitrary bytes; we base64-encode the 32-byte HMAC
+        // tag so the downstream PHC string stays UTF-8.
+        let peppered = general_purpose::STANDARD_NO_PAD.encode(tag);
+        let inner = hash_unpeppered(policy, &peppered)?;
+        return Ok(format!("{PEPPER_PREFIX}{}:{inner}", version.get()));
+    }
+    hash_unpeppered(policy, password)
+}
+
+fn hash_unpeppered(policy: &Policy, password: &str) -> Result<String> {
     match policy.primary {
         PrimaryAlgorithm::Argon2id => {
             let salt = SaltString::generate(&mut OsRng);
@@ -93,7 +122,82 @@ pub fn hash(policy: &Policy, password: &str) -> Result<String> {
 /// - **PHC strings** for scrypt (via the `scrypt` crate's
 ///   `PasswordVerifier` impl).
 /// - **MCF strings** (`$2a$…` / `$2b$…` / `$2y$…`) for bcrypt.
+/// - **Peppered** strings (`hsh-pepper:<keyver>:<inner>`) — requires
+///   the `pepper` feature and a pepper provider attached to the policy.
 pub fn verify_and_upgrade(
+    policy: &Policy,
+    password: &str,
+    stored: &str,
+) -> Result<(Outcome, Option<String>)> {
+    #[cfg(feature = "pepper")]
+    if let Some(rest) = stored.strip_prefix(PEPPER_PREFIX) {
+        let Some(pepper) = policy.pepper.as_ref() else {
+            // Stored hash is peppered but the verifier has no pepper —
+            // we can't compute the HMAC tag, so by definition we can't
+            // verify. Refuse rather than silently fail-open.
+            return Ok((Outcome::Invalid, None));
+        };
+        // Parse "<keyver>:<inner>".
+        let (ver_str, inner) = rest.split_once(':').ok_or(
+            Error::InvalidHashString("malformed pepper prefix"),
+        )?;
+        let ver_num: u32 = ver_str.parse().map_err(|_| {
+            Error::InvalidHashString("pepper keyver must be an integer")
+        })?;
+        let stored_version = hsh_kms::KeyVersion::new(ver_num);
+        let tag =
+            pepper.apply(stored_version, password.as_bytes()).map_err(
+                |e| Error::Hashing(format!("pepper apply failed: {e}")),
+            )?;
+        let peppered = general_purpose::STANDARD_NO_PAD.encode(tag);
+        // Recurse into the unpeppered path with the HMAC-derived
+        // "password". The inner Outcome carries the algorithm-level
+        // decision; we then layer rotation logic on top.
+        let (outcome, rehashed_inner) =
+            verify_and_upgrade_inner(policy, &peppered, inner)?;
+        if !outcome.is_valid() {
+            return Ok((Outcome::Invalid, None));
+        }
+        // Algorithm-level rehash already triggered, or pepper-version
+        // drift — either way, rehash with the current pepper version.
+        let current = pepper.current();
+        let needs_pepper_rehash = stored_version != current;
+        if needs_pepper_rehash || rehashed_inner.is_some() {
+            let new_phc = hash(policy, password)?;
+            return Ok((
+                Outcome::Valid { needs_rehash: true },
+                Some(new_phc),
+            ));
+        }
+        return Ok((
+            Outcome::Valid {
+                needs_rehash: false,
+            },
+            None,
+        ));
+    }
+
+    // If the policy carries a pepper but the stored hash is NOT
+    // peppered, that's a legacy entry — verify it bare and rehash
+    // under the pepper on success.
+    #[cfg(feature = "pepper")]
+    if policy.pepper.is_some() && !stored.starts_with(PEPPER_PREFIX) {
+        let (outcome, _) =
+            verify_and_upgrade_inner(policy, password, stored)?;
+        if outcome.is_valid() {
+            let new_phc = hash(policy, password)?;
+            return Ok((
+                Outcome::Valid { needs_rehash: true },
+                Some(new_phc),
+            ));
+        }
+        return Ok((Outcome::Invalid, None));
+    }
+
+    verify_and_upgrade_inner(policy, password, stored)
+}
+
+fn verify_and_upgrade_inner(
     policy: &Policy,
     password: &str,
     stored: &str,
@@ -114,7 +218,10 @@ pub fn verify_and_upgrade(
         // `$2b$10$…` cost field. For now, never trigger rehash on bcrypt
         // unless the policy has moved away from bcrypt entirely.
         if !matches!(policy.primary, PrimaryAlgorithm::Bcrypt) {
-            let new_phc = hash(policy, password)?;
+            // The outer `hash()` would re-apply pepper; for inner-only
+            // bcrypt rehash we want an unpeppered output here, which is
+            // what `hash_unpeppered` already returns.
+            let new_phc = hash_unpeppered(policy, password)?;
             return Ok((
                 Outcome::Valid { needs_rehash: true },
                 Some(new_phc),
@@ -169,7 +276,7 @@ pub fn verify_and_upgrade(
 
     let needs_rehash = needs_rehash(&parsed, algo_id, policy);
     if needs_rehash {
-        let new_phc = hash(policy, password)?;
+        let new_phc = hash_unpeppered(policy, password)?;
         Ok((Outcome::Valid { needs_rehash: true }, Some(new_phc)))
     } else {
         Ok((

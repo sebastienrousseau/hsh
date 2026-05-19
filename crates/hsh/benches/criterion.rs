@@ -39,6 +39,8 @@ fn fast_policy(primary: PrimaryAlgorithm) -> Policy {
             p: 1,
             dk_len: 32,
         },
+        #[cfg(feature = "pepper")]
+        pepper: None,
     }
 }
 

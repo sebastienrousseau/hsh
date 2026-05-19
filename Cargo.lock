@@ -439,6 +439,7 @@ dependencies = [
  "criterion",
  "getrandom 0.2.15",
  "hex",
+ "hsh-kms",
  "log",
  "password-hash",
  "proptest",
@@ -446,6 +447,19 @@ dependencies = [
  "scrypt",
  "serde",
  "serde_json",
+ "sha2",
+ "subtle",
+ "thiserror",
+ "zeroize",
+]
+
+[[package]]
+name = "hsh-kms"
+version = "0.0.9"
+dependencies = [
+ "hex",
+ "hmac",
+ "log",
  "sha2",
  "subtle",
  "thiserror",

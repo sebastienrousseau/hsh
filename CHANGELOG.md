@@ -9,7 +9,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 3 (#142) — Pepper / KMS integration.
+- Phase 4 (#143) — FIPS backend via `aws-lc-rs`.
+
+### Added (Phase 3)
+
+- **`hsh-kms`** — new workspace crate with the [`Pepper`] trait,
+  [`KeyVersion`] type, and an in-memory [`LocalPepper`] implementation
+  for tests and apps without a KMS. Pepper application is
+  `HMAC-SHA-256(key_at(version), password)` → 32-byte tag.
+- **Provider stubs** under feature flags `aws-kms`, `gcp-kms`,
+  `azure-key-vault`, `hashicorp-vault`. Each exposes a stable
+  `FetchOpts` and `fetch_pepper` shape; the network-call
+  implementations land incrementally as integration tests against
+  real cloud infrastructure get wired up.
+- **`hsh` `pepper` feature** — opt-in pepper support behind a Cargo
+  feature so non-KMS callers don't pull in `hsh-kms`.
+- **`Policy::with_pepper(Arc<dyn Pepper>)`** — attach a pepper
+  provider to a policy.
+- **Peppered storage format** — `hsh-pepper:<keyver>:<inner>` wrapper
+  on the existing PHC / MCF string. The `<keyver>` makes rotation
+  non-destructive and queryable from SQL.
+- **Rotation semantics in `api::verify_and_upgrade`** — when the
+  stored `keyver` differs from `policy.pepper.current()`, a
+  successful verify returns `Outcome::Valid { needs_rehash: true }`
+  with a freshly-peppered hash so the caller can persist it.
+- **Legacy upgrade path** — a non-peppered hash verified against a
+  pepper-enabled policy succeeds and triggers rehash under the
+  current pepper.
+- **6 pepper integration tests** in `crates/hsh/tests/test_pepper.rs`
+  covering round-trip, wrong-password rejection, refuse-without-pepper,
+  rotation rehash, legacy upgrade, and unknown-version handling.
+- **ADR-0003 — pepper key-versioning scheme**
+  (`doc/adr/0003-pepper-key-versioning.md`).
+- **`doc/KMS-INTEGRATION.md`** — end-to-end guides for AWS / GCP /
+  Azure / Vault plus a local-dev recipe and rotation playbook.
+
+### Changed (Phase 3)
+
+- `Policy` gains an optional `pepper: Option<Arc<dyn Pepper>>` field
+  behind the `pepper` feature. Struct literal construction in tests
+  needs `#[cfg(feature = "pepper")] pepper: None,`.
+
+### Security (Phase 3)
+
+- Peppered hashes verified against a policy *without* a pepper return
+  `Outcome::Invalid` rather than failing open. An attacker who can
+  forge or strip the `hsh-pepper:` prefix cannot bypass the pepper
+  check.
+- `LocalPepper` enforces a 16-byte minimum-key safety floor and
+  zeroizes all key material on drop.
 
 ### Added (Phase 2)
 

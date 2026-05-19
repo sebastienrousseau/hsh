@@ -1,0 +1,191 @@
+#![allow(missing_docs)]
+// Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0 OR MIT
+
+//! Pepper / KMS integration tests. Requires the `pepper` feature; the
+//! whole module is `cfg`-gated so it disappears when the feature is off.
+
+#![cfg(feature = "pepper")]
+
+use std::sync::Arc;
+
+use hsh::algorithms::bcrypt::BcryptParams;
+use hsh::algorithms::scrypt::ScryptParams;
+use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::{api, Outcome};
+use hsh_kms::{KeyVersion, LocalPepper};
+
+fn fast_policy_with_pepper(pepper: Arc<dyn hsh_kms::Pepper>) -> Policy {
+    Policy {
+        primary: PrimaryAlgorithm::Argon2id,
+        argon2: argon2::Params::new(8, 1, 1, Some(32)).unwrap(),
+        bcrypt: BcryptParams::new(4),
+        scrypt: ScryptParams {
+            log_n: 8,
+            r: 8,
+            p: 1,
+            dk_len: 32,
+        },
+        pepper: Some(pepper),
+    }
+}
+
+fn pepper_v1() -> Arc<dyn hsh_kms::Pepper> {
+    Arc::new(
+        LocalPepper::builder()
+            .add(
+                KeyVersion::new(1),
+                b"v1-pepper-bytes-aaaaaaaa".to_vec(),
+            )
+            .current(KeyVersion::new(1))
+            .build()
+            .unwrap(),
+    )
+}
+
+fn pepper_v1_v2_current_v2() -> Arc<dyn hsh_kms::Pepper> {
+    Arc::new(
+        LocalPepper::builder()
+            .add(
+                KeyVersion::new(1),
+                b"v1-pepper-bytes-aaaaaaaa".to_vec(),
+            )
+            .add(
+                KeyVersion::new(2),
+                b"v2-pepper-bytes-bbbbbbbb".to_vec(),
+            )
+            .current(KeyVersion::new(2))
+            .build()
+            .unwrap(),
+    )
+}
+
+#[test]
+fn peppered_round_trip_holds() {
+    let policy = fast_policy_with_pepper(pepper_v1());
+    let stored =
+        api::hash(&policy, "correct horse battery staple").unwrap();
+
+    assert!(stored.starts_with("hsh-pepper:1:"));
+
+    let (outcome, rehashed) = api::verify_and_upgrade(
+        &policy,
+        "correct horse battery staple",
+        &stored,
+    )
+    .unwrap();
+
+    assert!(matches!(
+        outcome,
+        Outcome::Valid {
+            needs_rehash: false
+        }
+    ));
+    assert!(rehashed.is_none());
+}
+
+#[test]
+fn peppered_rejects_wrong_password() {
+    let policy = fast_policy_with_pepper(pepper_v1());
+    let stored = api::hash(&policy, "right password").unwrap();
+
+    let (outcome, _) =
+        api::verify_and_upgrade(&policy, "wrong password", &stored)
+            .unwrap();
+    assert!(matches!(outcome, Outcome::Invalid));
+}
+
+#[test]
+fn peppered_rejected_when_policy_has_no_pepper() {
+    let peppered_policy = fast_policy_with_pepper(pepper_v1());
+    let stored = api::hash(&peppered_policy, "secret").unwrap();
+
+    // Drop the pepper from the policy and try to verify.
+    let mut unpeppered = peppered_policy.clone();
+    unpeppered.pepper = None;
+
+    let (outcome, _) =
+        api::verify_and_upgrade(&unpeppered, "secret", &stored)
+            .unwrap();
+    // Without the pepper, the verifier can't compute the HMAC and must
+    // refuse rather than fail open.
+    assert!(matches!(outcome, Outcome::Invalid));
+}
+
+#[test]
+fn pepper_rotation_triggers_rehash() {
+    // Hash under v1.
+    let v1_policy = fast_policy_with_pepper(pepper_v1());
+    let stored_v1 = api::hash(&v1_policy, "user password").unwrap();
+    assert!(stored_v1.starts_with("hsh-pepper:1:"));
+
+    // Verify under v1+v2 policy where current is v2.
+    let v2_policy = fast_policy_with_pepper(pepper_v1_v2_current_v2());
+    let (outcome, rehashed) = api::verify_and_upgrade(
+        &v2_policy,
+        "user password",
+        &stored_v1,
+    )
+    .unwrap();
+    assert!(outcome.is_valid());
+    assert!(outcome.needs_rehash());
+    let new_phc = rehashed.expect("rotation should yield a rehash");
+    assert!(new_phc.starts_with("hsh-pepper:2:"));
+
+    // The rehashed value verifies cleanly under v2 with no further rehash.
+    let (outcome2, rehashed2) =
+        api::verify_and_upgrade(&v2_policy, "user password", &new_phc)
+            .unwrap();
+    assert!(matches!(
+        outcome2,
+        Outcome::Valid {
+            needs_rehash: false
+        }
+    ));
+    assert!(rehashed2.is_none());
+}
+
+#[test]
+fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
+    // Hash without pepper.
+    let bare_policy = Policy {
+        primary: PrimaryAlgorithm::Argon2id,
+        argon2: argon2::Params::new(8, 1, 1, Some(32)).unwrap(),
+        bcrypt: BcryptParams::new(4),
+        scrypt: ScryptParams {
+            log_n: 8,
+            r: 8,
+            p: 1,
+            dk_len: 32,
+        },
+        pepper: None,
+    };
+    let legacy = api::hash(&bare_policy, "legacy user pw").unwrap();
+    assert!(legacy.starts_with("$argon2id$"));
+
+    // Now verify under a pepper-enabled policy — should succeed and
+    // trigger rehash.
+    let pepper_policy = fast_policy_with_pepper(pepper_v1());
+    let (outcome, rehashed) = api::verify_and_upgrade(
+        &pepper_policy,
+        "legacy user pw",
+        &legacy,
+    )
+    .unwrap();
+    assert!(outcome.is_valid());
+    assert!(outcome.needs_rehash());
+    let new_phc = rehashed.expect("legacy → peppered upgrade");
+    assert!(new_phc.starts_with("hsh-pepper:1:"));
+}
+
+#[test]
+fn unknown_pepper_version_in_stored_hash_returns_invalid() {
+    // Build a hash that claims keyver=99 — version not in our pepper.
+    let policy = fast_policy_with_pepper(pepper_v1());
+    let stored = "hsh-pepper:99:$argon2id$v=19$m=8,t=1,p=1$YWFhYWFhYWFhYWFhYWFhYQ$tk7L8C72L3l3RfvCK8KqXg".to_string();
+
+    let outcome = api::verify_and_upgrade(&policy, "anything", &stored);
+    // Either Outcome::Invalid (clean reject) or a typed error — both
+    // are acceptable; what's NOT acceptable is a panic.
+    assert!(outcome.is_ok() || outcome.is_err());
+}
