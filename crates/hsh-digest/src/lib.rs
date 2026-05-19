@@ -6,7 +6,7 @@
 //!
 //! **⚠️ This crate is NOT for password storage.** Hashing passwords
 //! requires a memory-hard / iteration-hard KDF (Argon2id, scrypt,
-//! bcrypt, PBKDF2). For that, use [`hsh::api::hash`] from the `hsh`
+//! bcrypt, PBKDF2). For that, use `hsh::api::hash` from the `hsh`
 //! crate, not the primitives here.
 //!
 //! Use `hsh-digest` when you need a standard cryptographic digest for

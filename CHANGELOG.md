@@ -9,7 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 7 (#146) — v1.0.0 stabilisation.
+- **v1.0.0** — ships after an ~8-week stabilisation window during
+  which v0.0.9 absorbs post-merge bug reports and the CI nightlies
+  produce the first set of SLSA attestations + OpenSSF Scorecard
+  scores. See [`doc/adr/0007-v1-stability-contract.md`](doc/adr/0007-v1-stability-contract.md).
+
+### Added (Phase 7)
+
+- **`doc/API-STABILITY.md`** — per-crate per-symbol stability tier
+  (Stable / Unstable / Internal), MSRV policy,
+  `#[non_exhaustive]` semantics, deprecation policy,
+  yanked-release policy, semver bump cheat sheet.
+- **`doc/RELEASE.md`** — maintainer release runbook covering
+  pre-release checks, the tag-push flow, post-release smoke tests,
+  and the rollback / yank procedure.
+- **`doc/SUPPORT.md`** — community channels, response-window
+  commitments, what to include in a bug report.
+- **ADR-0007 — v1.0 stability contract** documenting the
+  surfaces frozen at v1.0, the lockstep versioning model across
+  the four crates, MSRV policy, and the yank-release SLAs.
+- **OpenSSF Scorecard badge** in the README.
+
+### Changed (Phase 7)
+
+- **README** restructured: workspace-at-a-glance table for the four
+  crates, capabilities list, what-landed-in-v0.0.9 phase table, and
+  a documentation index pointing at every long-form guide.
+- **SECURITY.md** rewritten: defended-vs-tracked-follow-up split
+  reflects the post-Phase-6 reality (PHC adopted, bcrypt 72-byte
+  rejection live, scrypt defaults bumped, FIPS contract enforced,
+  etc.). Supply-chain section updated with the Phase 2 pipeline
+  details (SLSA L3, sigstore, SBOM, Scorecard, fuzz, Miri).
+
+## [0.0.9] — 2026-05-19
 
 ### Added (Phase 6)
 
