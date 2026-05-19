@@ -1,0 +1,11 @@
+---
+source: crates/hsh-cli/tests/snapshots.rs
+expression: stdout
+snapshot_kind: text
+---
+format: phc
+algorithm: argon2id
+params[1]: v=19
+params[2]: m=19456,t=2,p=1
+segment[3]: c2FsdHNhbHRzYWx0
+hash_b64: ZJG8Sl9MhEd84QPshSeWLNVnPLBPp9DiOhcPjT0bDqQ

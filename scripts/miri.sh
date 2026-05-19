@@ -19,13 +19,18 @@ MODE="${1:-focused}"
 case "$MODE" in
 focused)
     # test_properties uses proptest, which reads `current_dir()` for
-    # the failure-persistence file path; that requires `-Zmiri-disable-isolation`
-    # (set in the calling workflow / Makefile). Restrict the focused
-    # suite to test_api, which is fast under Miri.
+    # the failure-persistence file path; that requires
+    # `-Zmiri-disable-isolation` (set in the calling workflow /
+    # Makefile). We restrict the focused suite to the surface that
+    # exercises the largest fraction of dependency `unsafe` blocks:
+    # `test_api` (argon2 / scrypt / bcrypt verify), `test_pepper`
+    # (hmac + sha2 + subtle round-trip), and `test_backend_policy`
+    # (PHC parser + FIPS dispatch).
     cargo +nightly miri test \
         -p hsh \
         --test test_api \
-        --test test_backend_policy
+        --test test_backend_policy \
+        --test test_pepper --features pepper
     ;;
 full)
     # Full Miri sweep. Excludes tests that require getrandom or rely on

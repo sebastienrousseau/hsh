@@ -28,7 +28,8 @@ zeroize   = { workspace = true }
 thiserror = { workspace = true }
 
 [dev-dependencies]
-hex = { workspace = true }
+hex      = { workspace = true }
+proptest = { workspace = true }
 
 [features]
 # Sensible defaults — the SHA-2 family is the bedrock of every modern

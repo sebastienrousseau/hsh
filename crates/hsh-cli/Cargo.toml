@@ -20,6 +20,13 @@ categories              = ["authentication", "command-line-utilities", "cryptogr
 name = "hsh"
 path = "src/main.rs"
 
+[dev-dependencies]
+# Snapshot testing for the CLI's human-readable output.
+# `insta` is the standard tool — the snapshots live in
+# `crates/hsh-cli/tests/snapshots/` and are reviewed via
+# `cargo insta review` locally.
+insta = { version = "1.40", default-features = false, features = ["yaml"] }
+
 [dependencies]
 hsh        = { version = "0.0.9", path = "../hsh" }
 hsh-kms    = { version = "0.0.9", path = "../hsh-kms", optional = true }

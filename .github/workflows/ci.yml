@@ -51,8 +51,16 @@ jobs:
         uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
         with:
           tool: cargo-llvm-cov
-      - name: Generate coverage
-        run: cargo llvm-cov --workspace --all-features --lcov --output-path lcov.info
+      - name: Generate coverage + enforce threshold
+        # --fail-under-lines is the gate: the build fails if line
+        # coverage drops below the floor. Pinned to 80 % to give the
+        # current ~94 % a sensible buffer; ratchet up as the suite
+        # grows. Branch coverage isn't fail-under-able under
+        # cargo-llvm-cov stable yet — tracked in the upstream issue.
+        run: |
+          cargo llvm-cov --workspace --all-features --lcov \
+            --fail-under-lines 80 \
+            --output-path lcov.info
       - name: Upload to Codecov
         uses: codecov/codecov-action@75cd11691c0faa626561e295848008c8a7dddffe # v5.5.4
         with:

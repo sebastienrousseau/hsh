@@ -1,0 +1,36 @@
+---
+source: crates/hsh-cli/tests/snapshots.rs
+expression: stdout
+snapshot_kind: text
+---
+Verify a candidate password against a stored hash
+
+Usage: hsh verify [OPTIONS] --stored <STORED>
+
+Options:
+  -H, --stored <STORED>
+          Stored hash string (PHC / MCF / hsh-pepper:…)
+          
+          [env: HSH_STORED=]
+
+      --json
+          Emit machine-readable JSON instead of plain text
+
+      --policy <POLICY>
+          Preset policy to apply for rehash detection
+          
+          [default: owasp]
+
+          Possible values:
+          - owasp:   OWASP-2025 minimum (Argon2id, m=19456, t=2, p=1)
+          - rfc9106: RFC 9106 §4 first-recommended (Argon2id, m=2^21, t=1, p=4)
+          - fips:    Hardened FIPS profile (PBKDF2-HMAC-SHA-256, 600k iters,
+            Backend::Fips140Required — requires a FIPS-capable build)
+
+      --password <PASSWORD>
+          Password (insecure: leaves password in shell history)
+          
+          [env: HSH_PASSWORD]
+
+  -h, --help
+          Print help (see a summary with '-h')
