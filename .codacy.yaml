@@ -1,0 +1,57 @@
+# Codacy configuration.
+#
+# Repository docs (READMEs, CHANGELOG, ADRs) intentionally use the
+# Noyalib documentation standard which centres logos with HTML
+# wrappers, uses badge shields, and runs prose lines well past
+# 80 characters. The markdownlint rules below would fire on every
+# Noyalib-style README, so they're disabled at the repository
+# level rather than per-file.
+
+---
+engines:
+  markdownlint:
+    enabled: true
+    exclude_paths:
+      # Boilerplate; we don't gate on prose-style in fixtures or
+      # generated artefacts.
+      - "crates/*/tests/**"
+      - "crates/*/examples/**"
+      - "crates/*/benches/**"
+      - "fuzz/**"
+      - "pkg/**"
+      - "target/**"
+      - "doc/adr/**"
+      - "TEMPLATE.md"
+    rules:
+      # MD013 — Line length. We wrap at ~72 columns for body prose;
+      # tables, code blocks, and badge rows naturally exceed 80.
+      MD013: false
+      # MD033 — Inline HTML. We use <p align="center">, <img>, and
+      # badge anchors for the README header block. Same convention
+      # noyalib uses; consistent with the project's documentation
+      # standard.
+      MD033: false
+      # MD041 — First line in a file should be a top-level heading.
+      # Our READMEs lead with a centred logo + name + tagline block
+      # before the H1, identical to noyalib.
+      MD041: false
+      # MD024 — No duplicate headings. CHANGELOG entries reuse the
+      # same H3s (Added / Changed / Fixed / Removed) across releases
+      # by design (Keep a Changelog 1.1.0).
+      MD024: false
+      # MD036 — No emphasis instead of heading. README badge rows
+      # and the "Back to top" footer use emphasis for visual hierarchy.
+      MD036: false
+
+exclude_paths:
+  # Files / trees Codacy shouldn't scan at all (binary fixtures,
+  # generated artefacts, third-party submodule contents).
+  - "target/**"
+  - "fuzz/corpus/**"
+  - "fuzz/artifacts/**"
+  - "**/*.lock"
+  - "**/*.svg"
+  - "**/*.png"
+  - "pkg/homebrew/Formula/**"
+  - "pkg/scoop/**"
+  - "pkg/debian/changelog"
