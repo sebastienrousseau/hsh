@@ -142,3 +142,47 @@ fn local_pepper_builder_rejects_current_not_in_keyset() {
         .build();
     assert!(matches!(r, Err(PepperError::UnknownVersion(_))));
 }
+
+// ---------------------------------------------------------------- Pepper trait
+// These three relocated from the historical inline `mod tests` in src/lib.rs.
+// CodeQL's `rust/hard-coded-cryptographic-value` heuristic flagged the
+// fixture byte-literals reaching `Pepper::apply` from inside `src/`;
+// `tests/` is covered by the path-exclusion in `.github/codeql/codeql-config.yml`.
+fn fixture() -> LocalPepper {
+    LocalPepper::builder()
+        .add(KeyVersion::new(1), key32("v1"))
+        .add(KeyVersion::new(2), key32("v2"))
+        .current(KeyVersion::new(2))
+        .build()
+        .unwrap()
+}
+
+#[test]
+fn pepper_apply_returns_32_bytes() {
+    let p = fixture();
+    let tag = p
+        .apply(KeyVersion::new(1), b"deterministic-test-input")
+        .unwrap();
+    assert_eq!(tag.len(), 32);
+}
+
+#[test]
+fn pepper_different_versions_produce_different_tags() {
+    let p = fixture();
+    let a = p
+        .apply(KeyVersion::new(1), b"deterministic-test-input")
+        .unwrap();
+    let b = p
+        .apply(KeyVersion::new(2), b"deterministic-test-input")
+        .unwrap();
+    assert_ne!(a, b);
+}
+
+#[test]
+fn pepper_unknown_version_errors() {
+    let p = fixture();
+    let err = p
+        .apply(KeyVersion::new(99), b"deterministic-test-input")
+        .unwrap_err();
+    assert!(matches!(err, PepperError::UnknownVersion(_)));
+}

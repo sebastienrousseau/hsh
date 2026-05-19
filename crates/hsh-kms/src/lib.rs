@@ -271,77 +271,11 @@ impl LocalPepperBuilder {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    // Test-only fixture bytes; never a real password or pepper. Kept
-    // as a function so CodeQL's `rust/hard-coded-cryptographic-value`
-    // heuristic doesn't see a byte-literal flowing directly into a
-    // `Pepper::apply` argument.
-    fn test_input() -> &'static [u8] {
-        b"deterministic-test-input"
-    }
-
-    fn fixture() -> LocalPepper {
-        LocalPepper::builder()
-            .add(
-                KeyVersion::new(1),
-                b"v1-pepper-bytes-aaaaaaaa".to_vec(),
-            )
-            .add(
-                KeyVersion::new(2),
-                b"v2-pepper-bytes-bbbbbbbb".to_vec(),
-            )
-            .current(KeyVersion::new(2))
-            .build()
-            .unwrap()
-    }
-
-    #[test]
-    fn apply_returns_32_bytes() {
-        let p = fixture();
-        let tag = p.apply(KeyVersion::new(1), test_input()).unwrap();
-        assert_eq!(tag.len(), 32);
-    }
-
-    #[test]
-    fn different_versions_produce_different_tags() {
-        let p = fixture();
-        let a = p.apply(KeyVersion::new(1), test_input()).unwrap();
-        let b = p.apply(KeyVersion::new(2), test_input()).unwrap();
-        assert_ne!(a, b);
-    }
-
-    #[test]
-    fn unknown_version_errors() {
-        let p = fixture();
-        let err =
-            p.apply(KeyVersion::new(99), test_input()).unwrap_err();
-        assert!(matches!(err, PepperError::UnknownVersion(_)));
-    }
-
-    #[test]
-    fn current_is_highest_when_not_set() {
-        let p = LocalPepper::builder()
-            .add(KeyVersion::new(1), b"key-1-aaaaaaaaaaaaa".to_vec())
-            .add(KeyVersion::new(7), b"key-7-bbbbbbbbbbbbb".to_vec())
-            .build()
-            .unwrap();
-        assert_eq!(p.current(), KeyVersion::new(7));
-    }
-
-    #[test]
-    fn short_keys_rejected() {
-        let r = LocalPepper::builder()
-            .add(KeyVersion::new(1), b"too-short".to_vec())
-            .build();
-        assert!(matches!(r, Err(PepperError::KeyTooShort { .. })));
-    }
-
-    #[test]
-    fn empty_keyset_rejected() {
-        let r = LocalPepper::builder().build();
-        assert!(matches!(r, Err(PepperError::EmptyKeyset)));
-    }
-}
+// Note: the historical `#[cfg(test)] mod tests { ... }` block lived
+// here and exercised LocalPepper / KeyVersion / PepperError through
+// the public surface. CodeQL's `rust/hard-coded-cryptographic-value`
+// heuristic flagged the test fixtures (deterministic byte literals
+// passed to `Pepper::apply`) because inline tests in `src/` aren't
+// caught by the path-exclusion config that covers `tests/`. The
+// tests moved to `crates/hsh-kms/tests/coverage.rs` for that reason;
+// no test was deleted, only relocated.
