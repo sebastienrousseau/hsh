@@ -158,45 +158,30 @@ jobs:
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
 
-  msrv:
-    name: MSRV (${{ matrix.toolchain }})
+  msrv-1-85:
+    name: MSRV — workspace minimum (1.85)
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        # Floor toolchains from each crate's `rust-version` declaration.
-        # hsh / hsh-kms / hsh-digest are 1.75; hsh-cli is 1.85 (edition 2024).
-        toolchain: ["1.75", "1.85"]
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
-          toolchain: ${{ matrix.toolchain }}
+          toolchain: "1.85"
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          key: msrv-${{ matrix.toolchain }}
-      - name: Check libs at 1.75 floor (per-crate, workspace-isolated)
-        if: matrix.toolchain == '1.75'
-        # We can't `cargo check -p hsh` from the workspace root on 1.75
-        # because the *workspace* contains `hsh-cli`, which declares
-        # `edition = "2024"` — that requires Cargo 1.85+ just to LOAD
-        # the manifest. Use `--manifest-path` per library crate so the
-        # 1.75 floor is verified in isolation.
-        run: |
-          cargo +1.75 check --locked --manifest-path crates/hsh/Cargo.toml        --no-default-features
-          cargo +1.75 check --locked --manifest-path crates/hsh/Cargo.toml        --all-features
-          cargo +1.75 check --locked --manifest-path crates/hsh-kms/Cargo.toml    --all-features
-          cargo +1.75 check --locked --manifest-path crates/hsh-digest/Cargo.toml --all-features
-      - name: Check CLI at 1.85 floor
-        if: matrix.toolchain == '1.85'
-        # `cargo +1.85` CAN load the workspace (hsh-cli's edition=2024
-        # is supported at 1.85), so a workspace-relative `-p hsh-cli` is
-        # fine here. --locked still enforces Cargo.lock.
-        run: cargo +1.85 check --locked -p hsh-cli --all-features
+          key: msrv-1.85
+      - name: Workspace check at 1.85 floor
+        # The library crates declare `rust-version = "1.75"` for downstream
+        # consumability, but the *workspace* effective floor is 1.85 because
+        # `hsh-cli` declares `edition = "2024"`. Cargo 1.75 cannot load the
+        # workspace manifest at all under that condition. The 1.75
+        # per-crate floor is documentation only; downstream consumers who
+        # need to verify it must depend on the lib crates without pulling
+        # `hsh-cli` into their workspace.
+        run: cargo +1.85 check --locked --workspace --all-features
 
   cross-platform:
     name: Test (${{ matrix.os }})

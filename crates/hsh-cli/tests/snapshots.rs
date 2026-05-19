@@ -78,20 +78,29 @@ fn inspect_bcrypt_mcf_format() {
 // `hsh --help` — top-level usage block.
 // Locks in the subcommand listing so a CLI restructure can't ship
 // without a deliberate snapshot review.
+//
+// Unix-only: clap's `--help` output on Windows differs in the program
+// path it prints (e.g. \"hsh.exe\" vs \"hsh\") and in incidental
+// ANSI-handling, so the snapshot would never match a POSIX baseline.
+// The non-help snapshot tests above (`inspect <fixture>`) still run
+// on every OS — they test our own format, not clap's.
 // ---------------------------------------------------------------------------
 
+#[cfg(unix)]
 #[test]
 fn help_top_level_layout() {
     let stdout = run_check_stdout(&["--help"]);
     insta::assert_snapshot!("help_top_level", stdout);
 }
 
+#[cfg(unix)]
 #[test]
 fn help_hash_subcommand_layout() {
     let stdout = run_check_stdout(&["hash", "--help"]);
     insta::assert_snapshot!("help_hash", stdout);
 }
 
+#[cfg(unix)]
 #[test]
 fn help_verify_subcommand_layout() {
     let stdout = run_check_stdout(&["verify", "--help"]);
