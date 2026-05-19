@@ -38,15 +38,5 @@ default = []
 pepper  = ["hsh/pepper", "dep:hsh-kms"]
 fips    = ["hsh/fips"]
 
-[lints.rust]
-unsafe_code                   = "forbid"
-missing_docs                  = "warn"
-missing_debug_implementations = "forbid"
-non_ascii_idents              = "forbid"
-unreachable_pub               = "forbid"
-dead_code                     = "deny"
-deprecated_in_future          = "deny"
-unused                        = { level = "deny", priority = -1 }
-
-[package.metadata.clippy]
-warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]
+[lints]
+workspace = true

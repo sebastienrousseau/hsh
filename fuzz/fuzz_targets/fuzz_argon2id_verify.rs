@@ -1,4 +1,5 @@
 #![no_main]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 //! Argon2id verify path: arbitrary password against a fixed valid
 //! reference hash must never panic and must return `Outcome::Invalid`
 //! when the candidate is not the reference plaintext.
@@ -9,18 +10,23 @@ use std::sync::OnceLock;
 const REFERENCE_PASSWORD: &str = "fuzz-reference-pw-do-not-match";
 
 fn weak_test_policy() -> hsh::Policy {
-    hsh::Policy {
-        primary: hsh::PrimaryAlgorithm::Argon2id,
-        argon2: argon2::Params::new(8, 1, 1, Some(32))
-            .expect("test params"),
-        bcrypt: hsh::algorithms::bcrypt::BcryptParams::new(4),
-        scrypt: hsh::algorithms::scrypt::ScryptParams {
+    hsh::policy::PolicyBuilder::from_preset(&hsh::Policy::owasp_minimum_2025())
+        .primary(hsh::PrimaryAlgorithm::Argon2id)
+        .argon2(argon2::Params::new(8, 1, 1, Some(32)).expect("test params"))
+        .bcrypt(hsh::algorithms::bcrypt::BcryptParams::new(4))
+        .scrypt(hsh::algorithms::scrypt::ScryptParams {
             log_n: 8,
             r: 8,
             p: 1,
             dk_len: 32,
-        },
-    }
+        })
+        .pbkdf2(hsh::algorithms::pbkdf2::Pbkdf2Params {
+            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+            iterations: 1,
+            dk_len: 32,
+        })
+        .build()
+        .expect("weak test policy")
 }
 
 fn reference_hash() -> &'static str {
@@ -45,3 +51,4 @@ fuzz_target!(|data: &[u8]| {
         assert!(!outcome.is_valid(), "unexpected match for {candidate:?}");
     }
 });
+

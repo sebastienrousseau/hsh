@@ -41,6 +41,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   etc.). Supply-chain section updated with the Phase 2 pipeline
   details (SLSA L3, sigstore, SBOM, Scorecard, fuzz, Miri).
 
+### Added (Phase 7 hygiene follow-up)
+
+- **`Policy::builder()`** / **`PolicyBuilder`** — fluent
+  construction with `PolicyBuilder::new` (blank slate, requires
+  primary) and `PolicyBuilder::from_preset(&Policy)` (override
+  selected fields).
+- **`Policy` accessor methods** — `primary()`, `backend()`,
+  `argon2_params()`, `bcrypt_params()`, `scrypt_params()`,
+  `pbkdf2_params()`, `has_pepper()`, `to_builder()`.
+- **`PolicyBuilder::no_pepper()`** — explicit removal of an
+  attached pepper provider.
+- **`Error::InvalidPolicy(&'static str)`** — surfaced by
+  `PolicyBuilder::build()` when a required field is missing.
+- **Workspace-level `[workspace.lints.rust]`** + **`[workspace.lints.clippy]`**
+  — single source of truth for lint config; per-crate
+  `[lints] workspace = true` inherits. Pedantic / nursery / cargo
+  groups added at warn; `clippy::unwrap_used` + `expect_used`
+  added at warn (allowed in tests / benches / examples / fuzz via
+  per-file `#![allow(...)]`).
+- **`cargo-hack` feature-permutation CI job** — checks every
+  feature combination across the workspace on each PR.
+- **`cargo public-api` diff CI job** — surfaces public-API
+  additions / removals on each PR (advisory; pairs with the
+  semver bump policy in `doc/API-STABILITY.md`).
+
+### Changed (Phase 7 hygiene follow-up)
+
+- **`Policy` fields are now `pub(crate)`.** Construction via the
+  presets / `PolicyBuilder` is the only supported public path.
+  Reading the fields uses the new accessor methods. Per
+  `doc/API-STABILITY.md`, `Policy`'s struct shape was already
+  flagged Unstable; this change tightens that promise.
+- **`Hash::new_argon2i`** is now gated behind the
+  `compat-v0_0_x` Cargo feature. Slated for removal in v0.2.0.
+
+### Roadmap notes
+
+- Pedantic warnings remain advisory — CI surfaces them but doesn't
+  fail on them (per the Makefile's `-D warnings` is scoped to the
+  base rust lints).
+- A small number of pedantic warnings against the lib code itself
+  (collect-then-join, `cast_possible_truncation` in the CLI's
+  `calibrate`) are tracked for a hygiene PR in v0.0.10.
+
 ## [0.0.9] — 2026-05-19
 
 ### Added (Phase 6)

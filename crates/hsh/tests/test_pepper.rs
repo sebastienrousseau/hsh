@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 // Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
@@ -10,30 +11,37 @@
 use std::sync::Arc;
 
 use hsh::algorithms::bcrypt::BcryptParams;
+use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
-use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 use hsh::{api, Outcome};
 use hsh_kms::{KeyVersion, LocalPepper};
 
-fn fast_policy_with_pepper(pepper: Arc<dyn hsh_kms::Pepper>) -> Policy {
-    Policy {
-        primary: PrimaryAlgorithm::Argon2id,
-        argon2: argon2::Params::new(8, 1, 1, Some(32)).unwrap(),
-        bcrypt: BcryptParams::new(4),
-        scrypt: ScryptParams {
+fn fast_test_policy() -> Policy {
+    PolicyBuilder::from_preset(&Policy::owasp_minimum_2025())
+        .primary(PrimaryAlgorithm::Argon2id)
+        .argon2(argon2::Params::new(8, 1, 1, Some(32)).unwrap())
+        .bcrypt(BcryptParams::new(4))
+        .scrypt(ScryptParams {
             log_n: 8,
             r: 8,
             p: 1,
             dk_len: 32,
-        },
-        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
-            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+        })
+        .pbkdf2(Pbkdf2Params {
+            prf: Prf::Sha256,
             iterations: 1,
             dk_len: 32,
-        },
-        backend: hsh::Backend::Native,
-        pepper: Some(pepper),
-    }
+        })
+        .build()
+        .expect("fast test policy")
+}
+
+fn fast_policy_with_pepper(pepper: Arc<dyn hsh_kms::Pepper>) -> Policy {
+    PolicyBuilder::from_preset(&fast_test_policy())
+        .pepper(pepper)
+        .build()
+        .expect("fast peppered policy")
 }
 
 fn pepper_v1() -> Arc<dyn hsh_kms::Pepper> {
@@ -107,8 +115,10 @@ fn peppered_rejected_when_policy_has_no_pepper() {
     let stored = api::hash(&peppered_policy, "secret").unwrap();
 
     // Drop the pepper from the policy and try to verify.
-    let mut unpeppered = peppered_policy.clone();
-    unpeppered.pepper = None;
+    let unpeppered = PolicyBuilder::from_preset(&peppered_policy)
+        .no_pepper()
+        .build()
+        .unwrap();
 
     let (outcome, _) =
         api::verify_and_upgrade(&unpeppered, "secret", &stored)
@@ -154,24 +164,7 @@ fn pepper_rotation_triggers_rehash() {
 #[test]
 fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
     // Hash without pepper.
-    let bare_policy = Policy {
-        primary: PrimaryAlgorithm::Argon2id,
-        argon2: argon2::Params::new(8, 1, 1, Some(32)).unwrap(),
-        bcrypt: BcryptParams::new(4),
-        scrypt: ScryptParams {
-            log_n: 8,
-            r: 8,
-            p: 1,
-            dk_len: 32,
-        },
-        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
-            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
-            iterations: 1,
-            dk_len: 32,
-        },
-        backend: hsh::Backend::Native,
-        pepper: None,
-    };
+    let bare_policy = fast_test_policy();
     let legacy = api::hash(&bare_policy, "legacy user pw").unwrap();
     assert!(legacy.starts_with("$argon2id$"));
 

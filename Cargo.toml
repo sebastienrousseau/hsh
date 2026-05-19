@@ -64,6 +64,96 @@ clap_complete = "4.5"
 anyhow        = "1.0"
 rpassword     = "7.3"
 
+[workspace.lints.rust]
+# Forbid — security-critical
+unsafe_code                   = "forbid"
+missing_debug_implementations = "forbid"
+non_ascii_idents              = "forbid"
+unreachable_pub               = "forbid"
+
+# Warn
+missing_docs                  = "warn"
+missing_copy_implementations  = "warn"
+unstable_features             = "warn"
+unused_extern_crates          = "warn"
+unused_results                = "warn"
+
+# Deny
+dead_code                     = "deny"
+deprecated_in_future          = "deny"
+ellipsis_inclusive_range_patterns = "deny"
+explicit_outlives_requirements    = "deny"
+future_incompatible           = { level = "deny", priority = -1 }
+keyword_idents                = { level = "deny", priority = -1 }
+macro_use_extern_crate        = "deny"
+meta_variable_misuse          = "deny"
+noop_method_call              = "deny"
+rust_2018_idioms              = { level = "deny", priority = -1 }
+rust_2021_compatibility       = { level = "deny", priority = -1 }
+single_use_lifetimes          = "deny"
+trivial_casts                 = "deny"
+trivial_numeric_casts         = "deny"
+unused                        = { level = "deny", priority = -1 }
+unused_features               = "deny"
+unused_import_braces          = "deny"
+unused_labels                 = "deny"
+unused_lifetimes              = "deny"
+unused_macro_rules            = "deny"
+unused_qualifications         = "deny"
+variant_size_differences      = "deny"
+
+[workspace.lints.clippy]
+# Pedantic / nursery / cargo groups at warn — these are advisory.
+# CI runs `cargo clippy -- -D warnings` for the BASE lints (above),
+# while pedantic/nursery findings show up but don't fail the build
+# (Cargo treats the cli-level -D warnings as an additive promotion).
+all                     = { level = "warn", priority = -1 }
+pedantic                = { level = "warn", priority = -1 }
+nursery                 = { level = "warn", priority = -1 }
+cargo                   = { level = "warn", priority = -1 }
+
+# Explicit must-warns.
+unwrap_used             = "warn"
+expect_used             = "warn"
+
+# Allow specific pedantic lints that are too noisy at the
+# workspace-wide level.
+module_name_repetitions  = "allow"
+missing_errors_doc       = "allow"
+missing_panics_doc       = "allow"
+must_use_candidate       = "allow"
+multiple_crate_versions  = "allow"
+cargo_common_metadata    = "allow"
+needless_pass_by_value   = "allow"
+return_self_not_must_use = "allow"
+similar_names            = "allow"
+too_many_lines           = "allow"
+items_after_statements   = "allow"
+redundant_closure_for_method_calls = "allow"
+implicit_hasher          = "allow"
+# Documentation pedantry that fires on every prose paragraph.
+doc_markdown                       = "allow"
+doc_lazy_continuation              = "allow"
+# Style preferences we don't enforce workspace-wide.
+missing_const_for_fn               = "allow"
+struct_field_names                 = "allow"
+struct_excessive_bools             = "allow"
+result_large_err                   = "allow"
+significant_drop_tightening        = "allow"
+# Nursery preview lints that produce noise without obvious wins.
+option_if_let_else                 = "allow"
+or_fun_call                        = "allow"
+use_self                           = "allow"
+redundant_pub_crate                = "allow"
+inconsistent_struct_constructor    = "allow"
+trivially_copy_pass_by_ref         = "allow"
+needless_collect                   = "allow"
+unused_self                        = "allow"
+# Test code uses unwrap/expect freely; these warn at the workspace
+# level but per-test-file `#![allow(...)]` silences them where
+# legitimate.
+unused_async                       = "allow"
+
 [profile.dev]
 codegen-units    = 256
 debug            = true

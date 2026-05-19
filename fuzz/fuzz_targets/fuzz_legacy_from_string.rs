@@ -1,4 +1,5 @@
 #![no_main]
+#![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 //! Legacy `Hash::from_string` parser must never panic on arbitrary input.
 //! This is the pre-PHC 6-part dollar-delimited format that we retain
 //! for backwards compatibility.

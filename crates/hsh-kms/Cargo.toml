@@ -41,22 +41,5 @@ gcp-kms              = []
 azure-key-vault      = []
 hashicorp-vault      = []
 
-[lints.rust]
-# Mirror the strict matrix used in crates/hsh.
-unsafe_code                   = "forbid"
-missing_docs                  = "warn"
-missing_debug_implementations = "forbid"
-non_ascii_idents              = "forbid"
-unreachable_pub               = "forbid"
-dead_code                     = "deny"
-deprecated_in_future          = "deny"
-unused                        = { level = "deny", priority = -1 }
-variant_size_differences      = "deny"
-rust_2018_idioms              = { level = "deny", priority = -1 }
-rust_2021_compatibility       = { level = "deny", priority = -1 }
-future_incompatible           = { level = "deny", priority = -1 }
-trivial_casts                 = "deny"
-trivial_numeric_casts         = "deny"
-
-[package.metadata.clippy]
-warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]
+[lints]
+workspace = true

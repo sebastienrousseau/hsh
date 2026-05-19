@@ -87,6 +87,10 @@ impl Hash {
     ///
     /// Verify-only for legacy hashes — Argon2i is **not** recommended for
     /// new password hashes. Prefer [`Hash::new_argon2id`].
+    ///
+    /// **Available only with the `compat-v0_0_x` feature.** Slated for
+    /// removal in v0.2.0 per the API stability contract.
+    #[cfg(feature = "compat-v0_0_x")]
     #[deprecated(
         since = "0.0.9",
         note = "Argon2i is verify-only — use Hash::new_argon2id for new hashes."

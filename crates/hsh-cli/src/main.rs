@@ -1,4 +1,5 @@
 // Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 //! `hsh` — command-line companion for the `hsh` library.

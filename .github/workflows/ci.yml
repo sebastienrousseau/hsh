@@ -28,3 +28,43 @@ jobs:
     with:
       type: rust
       redirect-crate: hsh
+
+  feature-checks:
+    name: Feature permutations (cargo-hack)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-hack
+      - name: Check feature powerset
+        # `--no-dev-deps` skips features that only exist for dev to keep
+        # the matrix size sane; `--exclude-features` skips the FIPS marker
+        # since enabling it without a real backend changes no behaviour.
+        run: cargo hack check --workspace --feature-powerset --no-dev-deps --exclude-features fips
+
+  public-api:
+    name: Public API diff vs main
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+      - name: Install cargo-public-api
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-public-api
+      - name: Diff public API
+        # Advisory only — flags additions/removals for reviewer attention.
+        # A breaking removal must be paired with a semver-major intent
+        # per doc/API-STABILITY.md.
+        run: |
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh || true
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true

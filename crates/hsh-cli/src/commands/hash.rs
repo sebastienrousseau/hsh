@@ -26,7 +26,7 @@ pub(crate) fn run(args: HashArgs, json: bool) -> Result<()> {
                     "algorithm",
                     &serde_json::Value::String(format!(
                         "{:?}",
-                        policy.primary
+                        policy.primary()
                     )),
                 ),
             ],

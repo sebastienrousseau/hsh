@@ -4,18 +4,26 @@
 //! Versioned `Policy` describing the primary algorithm and per-algorithm
 //! parameters used by the high-level [`crate::api`] surface.
 //!
-//! Presets:
+//! Construct a policy in one of three ways:
 //!
-//! - [`Policy::owasp_minimum_2025`] — sensible web-app default
-//!   (Argon2id, `m = 19 456 KiB`, `t = 2`, `p = 1`).
-//! - [`Policy::rfc9106_first_recommended`] — security-critical servers
-//!   with ample memory (Argon2id, `m = 2^21`, `t = 1`, `p = 4`).
+//! 1. A **preset** for the common case — [`Policy::owasp_minimum_2025`],
+//!    [`Policy::rfc9106_first_recommended`], [`Policy::fips_140_pbkdf2`].
+//! 2. The **builder** for explicit configuration —
+//!    `PolicyBuilder::new` starting from scratch, or
+//!    `PolicyBuilder::from_preset` starting from a preset and
+//!    overriding select fields.
+//! 3. Combinator methods on a `Policy` for one-off overrides —
+//!    `Policy::with_pepper` (requires the `pepper` feature).
+//!
+//! Fields are non-public; adding new ones is a non-breaking change
+//! per `doc/API-STABILITY.md`.
 
 use crate::algorithms::argon2id;
 use crate::algorithms::bcrypt::BcryptParams;
 use crate::algorithms::pbkdf2::Pbkdf2Params;
 use crate::algorithms::scrypt::ScryptParams;
 use crate::backend::Backend;
+use crate::error::Error;
 use argon2::Params as Argon2Params;
 #[cfg(feature = "pepper")]
 use std::sync::Arc;
@@ -23,8 +31,9 @@ use std::sync::Arc;
 /// Which algorithm a [`Policy`] uses for *new* hashes.
 ///
 /// Verification accepts any of the supported algorithms (Argon2i/d/id,
-/// bcrypt, scrypt) regardless of the policy's primary.
+/// bcrypt, scrypt, PBKDF2) regardless of the policy's primary.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[non_exhaustive]
 pub enum PrimaryAlgorithm {
     /// **Argon2id** — recommended; the only sensible default for
     /// new password hashes per RFC 9106 §4.
@@ -42,27 +51,20 @@ pub enum PrimaryAlgorithm {
 /// Versioned policy snapshot: the algorithm to use for new hashes plus
 /// the parameter ladders for every supported variant.
 ///
-/// When compiled with the `pepper` feature, [`Policy::pepper`] carries
-/// an optional [`hsh_kms::Pepper`] provider that the high-level API
-/// applies transparently via HMAC-SHA-256 before delegating to the KDF.
+/// Construct via [`Policy::owasp_minimum_2025`],
+/// [`Policy::rfc9106_first_recommended`], [`Policy::fips_140_pbkdf2`],
+/// or [`PolicyBuilder`]. Internal fields are non-public; use the
+/// accessor methods for introspection.
 #[derive(Clone, Debug)]
 pub struct Policy {
-    /// Algorithm used by [`crate::api::hash`] to mint new hashes.
-    pub primary: PrimaryAlgorithm,
-    /// Crypto-validation requirement.
-    pub backend: Backend,
-    /// Argon2 parameters (shared across Argon2id / Argon2i / Argon2d).
-    pub argon2: Argon2Params,
-    /// Bcrypt parameters.
-    pub bcrypt: BcryptParams,
-    /// Scrypt parameters.
-    pub scrypt: ScryptParams,
-    /// PBKDF2 parameters.
-    pub pbkdf2: Pbkdf2Params,
-    /// Optional server-side pepper applied before hashing. Requires
-    /// the `pepper` feature.
+    pub(crate) primary: PrimaryAlgorithm,
+    pub(crate) backend: Backend,
+    pub(crate) argon2: Argon2Params,
+    pub(crate) bcrypt: BcryptParams,
+    pub(crate) scrypt: ScryptParams,
+    pub(crate) pbkdf2: Pbkdf2Params,
     #[cfg(feature = "pepper")]
-    pub pepper: Option<Arc<dyn hsh_kms::Pepper>>,
+    pub(crate) pepper: Option<Arc<dyn hsh_kms::Pepper>>,
 }
 
 impl Policy {
@@ -71,6 +73,8 @@ impl Policy {
     /// - **Argon2id**: `m = 19 456 KiB (19 MiB)`, `t = 2`, `p = 1`
     /// - **Bcrypt**: `cost = 10`, no pre-hash
     /// - **Scrypt**: `N = 2^17`, `r = 8`, `p = 1`
+    /// - **PBKDF2**: `iters = 600 000`, `dk_len = 32`
+    #[must_use]
     pub fn owasp_minimum_2025() -> Self {
         Self {
             primary: PrimaryAlgorithm::Argon2id,
@@ -86,6 +90,7 @@ impl Policy {
 
     /// RFC 9106 §4 first-recommended for Argon2id: `m = 2^21 (2 GiB)`,
     /// `t = 1`, `p = 4`. Bcrypt and scrypt fall back to OWASP-2025.
+    #[must_use]
     pub fn rfc9106_first_recommended() -> Self {
         Self {
             primary: PrimaryAlgorithm::Argon2id,
@@ -108,11 +113,6 @@ impl Policy {
     /// [`crate::api::hash`] will refuse to mint new hashes under those
     /// algorithms when `backend == Backend::Fips140Required` because
     /// they have no FIPS-validated implementation anywhere.
-    ///
-    /// Requires the `fips` Cargo feature to actually route through
-    /// `aws-lc-rs`; without the feature, the verifier refuses to
-    /// fail open and returns an error pointing at the build
-    /// misconfiguration.
     #[must_use]
     pub fn fips_140_pbkdf2() -> Self {
         Self {
@@ -124,6 +124,56 @@ impl Policy {
             pbkdf2: Pbkdf2Params::owasp_minimum_2025(),
             #[cfg(feature = "pepper")]
             pepper: None,
+        }
+    }
+
+    /// Returns the primary algorithm new hashes are minted under.
+    #[must_use]
+    pub const fn primary(&self) -> PrimaryAlgorithm {
+        self.primary
+    }
+
+    /// Returns the crypto-validation requirement.
+    #[must_use]
+    pub const fn backend(&self) -> Backend {
+        self.backend
+    }
+
+    /// Returns a reference to the Argon2 parameter set.
+    #[must_use]
+    pub const fn argon2_params(&self) -> &Argon2Params {
+        &self.argon2
+    }
+
+    /// Returns the bcrypt parameter set.
+    #[must_use]
+    pub const fn bcrypt_params(&self) -> BcryptParams {
+        self.bcrypt
+    }
+
+    /// Returns the scrypt parameter set.
+    #[must_use]
+    pub const fn scrypt_params(&self) -> ScryptParams {
+        self.scrypt
+    }
+
+    /// Returns the PBKDF2 parameter set.
+    #[must_use]
+    pub const fn pbkdf2_params(&self) -> Pbkdf2Params {
+        self.pbkdf2
+    }
+
+    /// Returns whether a pepper provider is attached. Always `false`
+    /// without the `pepper` feature.
+    #[must_use]
+    pub fn has_pepper(&self) -> bool {
+        #[cfg(feature = "pepper")]
+        {
+            self.pepper.is_some()
+        }
+        #[cfg(not(feature = "pepper"))]
+        {
+            false
         }
     }
 
@@ -144,6 +194,13 @@ impl Policy {
         self
     }
 
+    /// Returns a [`PolicyBuilder`] seeded with the fields of this
+    /// policy, suitable for forking + overriding select values.
+    #[must_use]
+    pub fn to_builder(&self) -> PolicyBuilder {
+        PolicyBuilder::from_preset(self)
+    }
+
     /// Returns `true` if `stored_params` are at least as strong as the
     /// current policy's Argon2 params. Used by [`crate::api::verify_and_upgrade`]
     /// to decide whether a successful verify should trigger a rehash.
@@ -161,5 +218,148 @@ impl Policy {
 impl Default for Policy {
     fn default() -> Self {
         Self::owasp_minimum_2025()
+    }
+}
+
+/// Fluent builder for [`Policy`].
+///
+/// Construct via [`PolicyBuilder::new`] for a blank slate (in which
+/// case [`PolicyBuilder::build`] requires at least `primary`), or via
+/// [`PolicyBuilder::from_preset`] to start from one of the presets and
+/// override individual fields.
+///
+/// ## Example
+///
+/// ```
+/// use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
+///
+/// let policy = PolicyBuilder::from_preset(&Policy::owasp_minimum_2025())
+///     .primary(PrimaryAlgorithm::Pbkdf2)
+///     .build()
+///     .expect("valid policy");
+///
+/// assert_eq!(policy.primary(), PrimaryAlgorithm::Pbkdf2);
+/// ```
+#[derive(Clone, Debug, Default)]
+pub struct PolicyBuilder {
+    primary: Option<PrimaryAlgorithm>,
+    backend: Option<Backend>,
+    argon2: Option<Argon2Params>,
+    bcrypt: Option<BcryptParams>,
+    scrypt: Option<ScryptParams>,
+    pbkdf2: Option<Pbkdf2Params>,
+    #[cfg(feature = "pepper")]
+    pepper: Option<Arc<dyn hsh_kms::Pepper>>,
+}
+
+impl PolicyBuilder {
+    /// Starts a blank builder. [`build`](Self::build) will error if at
+    /// least the primary algorithm isn't set.
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Seeds the builder from an existing policy so individual fields
+    /// can be overridden without re-listing the others.
+    #[must_use]
+    pub fn from_preset(policy: &Policy) -> Self {
+        Self {
+            primary: Some(policy.primary),
+            backend: Some(policy.backend),
+            argon2: Some(policy.argon2.clone()),
+            bcrypt: Some(policy.bcrypt),
+            scrypt: Some(policy.scrypt),
+            pbkdf2: Some(policy.pbkdf2),
+            #[cfg(feature = "pepper")]
+            pepper: policy.pepper.clone(),
+        }
+    }
+
+    /// Sets the primary algorithm new hashes are minted under.
+    #[must_use]
+    pub fn primary(mut self, primary: PrimaryAlgorithm) -> Self {
+        self.primary = Some(primary);
+        self
+    }
+
+    /// Sets the crypto-validation requirement (FIPS / Native).
+    #[must_use]
+    pub fn backend(mut self, backend: Backend) -> Self {
+        self.backend = Some(backend);
+        self
+    }
+
+    /// Overrides the Argon2 parameter set.
+    #[must_use]
+    pub fn argon2(mut self, params: Argon2Params) -> Self {
+        self.argon2 = Some(params);
+        self
+    }
+
+    /// Overrides the bcrypt parameter set.
+    #[must_use]
+    pub fn bcrypt(mut self, params: BcryptParams) -> Self {
+        self.bcrypt = Some(params);
+        self
+    }
+
+    /// Overrides the scrypt parameter set.
+    #[must_use]
+    pub fn scrypt(mut self, params: ScryptParams) -> Self {
+        self.scrypt = Some(params);
+        self
+    }
+
+    /// Overrides the PBKDF2 parameter set.
+    #[must_use]
+    pub fn pbkdf2(mut self, params: Pbkdf2Params) -> Self {
+        self.pbkdf2 = Some(params);
+        self
+    }
+
+    /// Attaches a pepper provider. Requires the `pepper` feature.
+    #[cfg(feature = "pepper")]
+    #[must_use]
+    pub fn pepper(
+        mut self,
+        provider: Arc<dyn hsh_kms::Pepper>,
+    ) -> Self {
+        self.pepper = Some(provider);
+        self
+    }
+
+    /// Removes any attached pepper provider. Requires the `pepper`
+    /// feature.
+    #[cfg(feature = "pepper")]
+    #[must_use]
+    pub fn no_pepper(mut self) -> Self {
+        self.pepper = None;
+        self
+    }
+
+    /// Finalises the builder into a [`Policy`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidPolicy`] if the builder was started
+    /// from [`new`](Self::new) without calling [`primary`](Self::primary).
+    pub fn build(self) -> Result<Policy, Error> {
+        Ok(Policy {
+            primary: self.primary.ok_or(Error::InvalidPolicy(
+                "primary algorithm required",
+            ))?,
+            backend: self.backend.unwrap_or_default(),
+            argon2: self
+                .argon2
+                .unwrap_or_else(argon2id::owasp_minimum_2025),
+            bcrypt: self
+                .bcrypt
+                .unwrap_or_else(|| BcryptParams::new(10)),
+            scrypt: self.scrypt.unwrap_or_default(),
+            pbkdf2: self.pbkdf2.unwrap_or_default(),
+            #[cfg(feature = "pepper")]
+            pepper: self.pepper,
+        })
     }
 }

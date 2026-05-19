@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 // Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
@@ -7,29 +8,27 @@
 use hsh::algorithms::bcrypt::BcryptParams;
 use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
-use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 use hsh::{api, Backend, Outcome};
 
 fn fast_pbkdf2_policy() -> Policy {
-    Policy {
-        primary: PrimaryAlgorithm::Pbkdf2,
-        backend: Backend::Native,
-        argon2: argon2::Params::new(8, 1, 1, Some(32)).unwrap(),
-        bcrypt: BcryptParams::new(4),
-        scrypt: ScryptParams {
+    PolicyBuilder::from_preset(&Policy::owasp_minimum_2025())
+        .primary(PrimaryAlgorithm::Pbkdf2)
+        .argon2(argon2::Params::new(8, 1, 1, Some(32)).unwrap())
+        .bcrypt(BcryptParams::new(4))
+        .scrypt(ScryptParams {
             log_n: 8,
             r: 8,
             p: 1,
             dk_len: 32,
-        },
-        pbkdf2: Pbkdf2Params {
+        })
+        .pbkdf2(Pbkdf2Params {
             prf: Prf::Sha256,
             iterations: 1_000, // fast for tests; OWASP-2025 = 600_000
             dk_len: 32,
-        },
-        #[cfg(feature = "pepper")]
-        pepper: None,
-    }
+        })
+        .build()
+        .expect("fast PBKDF2 policy")
 }
 
 #[test]
@@ -70,8 +69,14 @@ fn pbkdf2_iteration_drift_triggers_rehash() {
     let weak = fast_pbkdf2_policy(); // 1_000 iters
     let stored = api::hash(&weak, "user pw").unwrap();
 
-    let mut strong = fast_pbkdf2_policy();
-    strong.pbkdf2.iterations = 10_000;
+    let strong = PolicyBuilder::from_preset(&fast_pbkdf2_policy())
+        .pbkdf2(Pbkdf2Params {
+            prf: Prf::Sha256,
+            iterations: 10_000,
+            dk_len: 32,
+        })
+        .build()
+        .unwrap();
 
     let (outcome, rehashed) =
         api::verify_and_upgrade(&strong, "user pw", &stored).unwrap();
@@ -87,8 +92,15 @@ fn pbkdf2_prf_drift_triggers_rehash() {
     let sha256_policy = fast_pbkdf2_policy();
     let stored = api::hash(&sha256_policy, "user pw").unwrap();
 
-    let mut sha512_policy = fast_pbkdf2_policy();
-    sha512_policy.pbkdf2.prf = Prf::Sha512;
+    let sha512_policy =
+        PolicyBuilder::from_preset(&fast_pbkdf2_policy())
+            .pbkdf2(Pbkdf2Params {
+                prf: Prf::Sha512,
+                iterations: 1_000,
+                dk_len: 32,
+            })
+            .build()
+            .unwrap();
 
     let (outcome, rehashed) =
         api::verify_and_upgrade(&sha512_policy, "user pw", &stored)
@@ -104,8 +116,11 @@ fn pbkdf2_prf_drift_triggers_rehash() {
 fn fips_policy_refuses_to_mint_argon2id() {
     // Construct a FIPS policy but with Argon2id as primary — that's
     // an internal contradiction the API must refuse.
-    let mut bad_policy = Policy::fips_140_pbkdf2();
-    bad_policy.primary = PrimaryAlgorithm::Argon2id;
+    let bad_policy =
+        PolicyBuilder::from_preset(&Policy::fips_140_pbkdf2())
+            .primary(PrimaryAlgorithm::Argon2id)
+            .build()
+            .unwrap();
 
     let err = api::hash(&bad_policy, "user pw").unwrap_err();
     assert!(
@@ -134,7 +149,14 @@ fn backend_is_fips_round_trips() {
 #[test]
 fn policy_fips_140_pbkdf2_uses_pbkdf2_primary() {
     let policy = Policy::fips_140_pbkdf2();
-    assert!(matches!(policy.primary, PrimaryAlgorithm::Pbkdf2));
-    assert!(policy.backend.is_fips());
-    assert_eq!(policy.pbkdf2.iterations, 600_000);
+    assert!(matches!(policy.primary(), PrimaryAlgorithm::Pbkdf2));
+    assert!(policy.backend().is_fips());
+    assert_eq!(policy.pbkdf2_params().iterations, 600_000);
+}
+
+#[test]
+fn policy_builder_requires_primary_when_blank() {
+    // PolicyBuilder::new() with no primary should refuse to build.
+    let err = PolicyBuilder::new().build().unwrap_err();
+    assert!(matches!(err, hsh::Error::InvalidPolicy(_)));
 }

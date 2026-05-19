@@ -43,6 +43,11 @@ pub enum Error {
     #[error("verification failed: {0}")]
     Verification(&'static str),
 
+    /// The [`crate::policy::PolicyBuilder`] could not produce a valid
+    /// [`crate::Policy`] — typically because a required field was missing.
+    #[error("invalid policy: {0}")]
+    InvalidPolicy(&'static str),
+
     /// Generic I/O or codec error (base64 decode, UTF-8, JSON).
     #[error(transparent)]
     Decode(#[from] DecodeError),

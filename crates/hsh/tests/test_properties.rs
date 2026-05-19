@@ -1,4 +1,5 @@
 #![allow(missing_docs)]
+#![allow(clippy::unwrap_used, clippy::expect_used)]
 // Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
@@ -9,34 +10,32 @@
 //! between inputs and outputs.
 
 use hsh::algorithms::bcrypt::BcryptParams;
+use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
-use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 use hsh::{api, Outcome};
 use proptest::prelude::*;
 
 /// A weaker policy used only by tests so the proptest runs finish in
 /// reasonable wall time. **Do not use in production.**
 fn fast_test_policy(primary: PrimaryAlgorithm) -> Policy {
-    Policy {
-        primary,
-        argon2: argon2::Params::new(8, 1, 1, Some(32))
-            .expect("test params"),
-        bcrypt: BcryptParams::new(4),
-        scrypt: ScryptParams {
+    PolicyBuilder::from_preset(&Policy::owasp_minimum_2025())
+        .primary(primary)
+        .argon2(argon2::Params::new(8, 1, 1, Some(32)).unwrap())
+        .bcrypt(BcryptParams::new(4))
+        .scrypt(ScryptParams {
             log_n: 8,
             r: 8,
             p: 1,
             dk_len: 32,
-        },
-        pbkdf2: hsh::algorithms::pbkdf2::Pbkdf2Params {
-            prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+        })
+        .pbkdf2(Pbkdf2Params {
+            prf: Prf::Sha256,
             iterations: 1,
             dk_len: 32,
-        },
-        backend: hsh::Backend::Native,
-        #[cfg(feature = "pepper")]
-        pepper: None,
-    }
+        })
+        .build()
+        .expect("fast test policy")
 }
 
 /// Passwords are any printable ASCII between 8 and 72 bytes (the safe

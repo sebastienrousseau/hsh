@@ -15,7 +15,7 @@ use crate::io::print_kv;
 use hsh::algorithms::bcrypt::BcryptParams;
 use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
-use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 
 const PROBE_PASSWORD: &str = "calibration-probe-1234567890";
 
@@ -28,10 +28,13 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
             // Ladder over memory cost (KiB), holding t=2, p=1.
             for m in [4_096u32, 8_192, 19_456, 32_768, 65_536, 131_072]
             {
-                let mut policy = Policy::owasp_minimum_2025();
-                policy.primary = PrimaryAlgorithm::Argon2id;
-                policy.argon2 =
-                    argon2::Params::new(m, 2, 1, Some(32)).unwrap();
+                let policy = PolicyBuilder::from_preset(
+                    &Policy::owasp_minimum_2025(),
+                )
+                .primary(PrimaryAlgorithm::Argon2id)
+                .argon2(argon2::Params::new(m, 2, 1, Some(32)).unwrap())
+                .build()
+                .unwrap();
                 let took = time_hash(&policy);
                 consider(
                     &mut best,
@@ -42,9 +45,13 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
         }
         AlgoArg::Bcrypt => {
             for cost in 4u32..=14 {
-                let mut policy = Policy::owasp_minimum_2025();
-                policy.primary = PrimaryAlgorithm::Bcrypt;
-                policy.bcrypt = BcryptParams::new(cost);
+                let policy = PolicyBuilder::from_preset(
+                    &Policy::owasp_minimum_2025(),
+                )
+                .primary(PrimaryAlgorithm::Bcrypt)
+                .bcrypt(BcryptParams::new(cost))
+                .build()
+                .unwrap();
                 let took = time_hash(&policy);
                 consider(
                     &mut best,
@@ -55,14 +62,18 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
         }
         AlgoArg::Scrypt => {
             for log_n in 8u8..=17 {
-                let mut policy = Policy::owasp_minimum_2025();
-                policy.primary = PrimaryAlgorithm::Scrypt;
-                policy.scrypt = ScryptParams {
+                let policy = PolicyBuilder::from_preset(
+                    &Policy::owasp_minimum_2025(),
+                )
+                .primary(PrimaryAlgorithm::Scrypt)
+                .scrypt(ScryptParams {
                     log_n,
                     r: 8,
                     p: 1,
                     dk_len: 32,
-                };
+                })
+                .build()
+                .unwrap();
                 let took = time_hash(&policy);
                 consider(
                     &mut best,
@@ -76,13 +87,17 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 10_000u32, 50_000, 100_000, 200_000, 400_000, 600_000,
                 1_000_000,
             ] {
-                let mut policy = Policy::owasp_minimum_2025();
-                policy.primary = PrimaryAlgorithm::Pbkdf2;
-                policy.pbkdf2 = Pbkdf2Params {
+                let policy = PolicyBuilder::from_preset(
+                    &Policy::owasp_minimum_2025(),
+                )
+                .primary(PrimaryAlgorithm::Pbkdf2)
+                .pbkdf2(Pbkdf2Params {
                     prf: Prf::Sha256,
                     iterations: iters,
                     dk_len: 32,
-                };
+                })
+                .build()
+                .unwrap();
                 let took = time_hash(&policy);
                 consider(
                     &mut best,

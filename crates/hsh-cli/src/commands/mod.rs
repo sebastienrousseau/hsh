@@ -11,7 +11,7 @@ pub(crate) mod rehash;
 pub(crate) mod verify;
 
 use crate::cli::{AlgoArg, PresetPolicy};
-use hsh::policy::{Policy, PrimaryAlgorithm};
+use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 
 /// Resolves a [`Policy`] from the `--policy` preset + optional
 /// `--algorithm` override.
@@ -19,23 +19,27 @@ pub(crate) fn resolve_policy(
     preset: PresetPolicy,
     algorithm: Option<AlgoArg>,
 ) -> Policy {
-    let mut policy = match preset {
+    let preset_policy = match preset {
         PresetPolicy::Owasp => Policy::owasp_minimum_2025(),
         PresetPolicy::Rfc9106 => Policy::rfc9106_first_recommended(),
         PresetPolicy::Fips => Policy::fips_140_pbkdf2(),
     };
-    if let Some(algo) = algorithm {
-        policy.primary = match algo {
-            AlgoArg::Argon2id => PrimaryAlgorithm::Argon2id,
-            // Argon2i/d are verify-only, but we let the CLI ask for them
-            // — `hsh::api::hash` will reject if not appropriate.
-            AlgoArg::Argon2i | AlgoArg::Argon2d => {
-                PrimaryAlgorithm::Argon2id
-            }
-            AlgoArg::Bcrypt => PrimaryAlgorithm::Bcrypt,
-            AlgoArg::Scrypt => PrimaryAlgorithm::Scrypt,
-            AlgoArg::Pbkdf2 => PrimaryAlgorithm::Pbkdf2,
-        };
-    }
-    policy
+    let Some(algo) = algorithm else {
+        return preset_policy;
+    };
+    let primary = match algo {
+        AlgoArg::Argon2id => PrimaryAlgorithm::Argon2id,
+        // Argon2i/d are verify-only, but we let the CLI ask for them
+        // — `hsh::api::hash` will reject if not appropriate.
+        AlgoArg::Argon2i | AlgoArg::Argon2d => {
+            PrimaryAlgorithm::Argon2id
+        }
+        AlgoArg::Bcrypt => PrimaryAlgorithm::Bcrypt,
+        AlgoArg::Scrypt => PrimaryAlgorithm::Scrypt,
+        AlgoArg::Pbkdf2 => PrimaryAlgorithm::Pbkdf2,
+    };
+    PolicyBuilder::from_preset(&preset_policy)
+        .primary(primary)
+        .build()
+        .expect("builder seeded from preset must build")
 }
