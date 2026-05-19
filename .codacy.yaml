@@ -47,4 +47,4 @@ exclude_paths:
   - "CONTRIBUTING.md"
   - "SECURITY.md"
   - "AUTHORS.md"
-  - "doc/**/*.md"
+  - "doc/**"
