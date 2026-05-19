@@ -72,7 +72,7 @@ non_ascii_idents              = "forbid"
 unreachable_pub               = "forbid"
 
 # Warn
-missing_docs                  = "warn"
+missing_docs                  = "deny"
 missing_copy_implementations  = "warn"
 unstable_features             = "warn"
 unused_extern_crates          = "warn"

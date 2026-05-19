@@ -26,7 +26,7 @@ pub(crate) fn resolve_password(
     }
     let mut buf = String::new();
     use std::io::BufRead;
-    std::io::stdin()
+    let _bytes_read = std::io::stdin()
         .lock()
         .read_line(&mut buf)
         .context("reading password from stdin")?;
