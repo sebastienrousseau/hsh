@@ -1,6 +1,6 @@
 <!-- markdownlint-disable MD033 MD041 -->
 
-<img src="https://kura.pro/hsh/images/logos/hsh.svg"
+<img src="https://cloudcdn.pro/hsh/v1/logos/hsh.svg"
 alt="Hash (HSH) logo" width="261" align="right" />
 
 <!-- markdownlint-enable MD033 MD041 -->

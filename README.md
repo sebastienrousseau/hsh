@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://kura.pro/hsh/images/logos/hsh.svg" alt="Hash (HSH) logo" width="128" />
+  <img src="https://cloudcdn.pro/hsh/v1/logos/hsh.svg" alt="Hash (HSH) logo" width="128" />
 </p>
 
 <h1 align="center">Hash (HSH)</h1>

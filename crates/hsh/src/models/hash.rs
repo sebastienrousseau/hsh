@@ -3,31 +3,29 @@
 
 //! Core `Hash` type for storing and verifying password hashes.
 //!
-//! ## Phase 0 hardening (v0.0.9)
-//!
-//! - **S1**: verify paths use [`subtle::ConstantTimeEq`] for the bytes
-//!   comparison, eliminating the prefix-by-prefix timing side-channel.
-//! - **S3**: `hash`, `salt`, and any password material are wiped from memory
-//!   on drop via [`zeroize::ZeroizeOnDrop`]; the fields are no longer `pub`.
-//! - **S7**: every fallible operation returns [`crate::error::Error`].
-//! - All `println!` of hashes / salts / passwords during verification has
-//!   been removed; the old code logged secrets to stdout.
-//!
-//! Phase 1 (issue #140) replaces this struct with a PHC-string-format
-//! design built on the RustCrypto `password-hash` trait.
+//! Built on the RustCrypto stack (Phase 1):
+//! - Argon2 family via the [`argon2`] crate, with Argon2id as the
+//!   recommended default per RFC 9106 §4.
+//! - Bcrypt with the explicit 72-byte safety rail (CVE-2025-22228 class).
+//! - Scrypt with configurable parameters; default is the OWASP-2025
+//!   minimum (`N = 2^17`).
+//! - Salts generated from [`getrandom`] (OS CSPRNG).
+//! - Verification is constant-time everywhere via [`subtle`].
+//! - Secret material is zeroed on drop via [`zeroize`].
 
 use super::hash_algorithm::HashAlgorithm;
-use crate::algorithms;
+use crate::algorithms::{
+    argon2id::{self as a2, Argon2d, Argon2i, Argon2id},
+    bcrypt::Bcrypt,
+    scrypt::{Scrypt, ScryptParams},
+};
 use crate::error::{Error, Result};
 use crate::models::hash_algorithm::HashingAlgorithm;
-use algorithms::{argon2i::Argon2i, bcrypt::Bcrypt, scrypt::Scrypt};
-use argon2rs::argon2i_simple;
+use ::argon2::Algorithm as Argon2Algorithm;
 use base64::{engine::general_purpose, Engine as _};
-use scrypt::scrypt;
 use serde::{Deserialize, Serialize};
 use std::{fmt, str::FromStr};
 use subtle::ConstantTimeEq;
-use vrd::random::Random;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// A type alias for a salt.
@@ -56,80 +54,82 @@ pub struct Hash {
     hash: Vec<u8>,
     /// The salt used for hashing — zeroed on drop.
     salt: Salt,
-    /// The hash algorithm used. `HashAlgorithm` carries no secret, so
-    /// zeroing it would be a no-op anyway; skipped to avoid requiring a
-    /// `Zeroize` impl on the enum.
+    /// The hash algorithm used. Carries no secret, so skipped from
+    /// the zeroize derive to avoid requiring a `Zeroize` impl on
+    /// the enum.
     #[zeroize(skip)]
     algorithm: HashAlgorithm,
 }
 
 impl Hash {
-    /// Creates a new `Hash` instance using Argon2i algorithm for password hashing.
+    /// Creates a new `Hash` using **Argon2id** — the recommended variant.
     ///
     /// # Example
     ///
     /// ```
     /// use hsh::models::hash::{Hash, Salt};
     ///
-    /// let password = "my_password";
-    /// let salt: Salt = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    ///
-    /// let _ = Hash::new_argon2i(password, salt);
+    /// let salt: Salt = vec![b'a'; 16];
+    /// let _ = Hash::new_argon2id("correct horse", salt);
     /// ```
+    pub fn new_argon2id(password: &str, salt: Salt) -> Result<Self> {
+        let salt_str = std::str::from_utf8(&salt)?;
+        let calculated = Argon2id::hash_password(password, salt_str)?;
+        Ok(Self {
+            hash: calculated,
+            salt,
+            algorithm: HashAlgorithm::Argon2id,
+        })
+    }
+
+    /// Creates a new `Hash` using **Argon2i**.
+    ///
+    /// Verify-only for legacy hashes — Argon2i is **not** recommended for
+    /// new password hashes. Prefer [`Hash::new_argon2id`].
+    #[deprecated(
+        since = "0.0.9",
+        note = "Argon2i is verify-only — use Hash::new_argon2id for new hashes."
+    )]
     pub fn new_argon2i(password: &str, salt: Salt) -> Result<Self> {
         let salt_str = std::str::from_utf8(&salt)?;
-        let calculated_hash =
-            argon2i_simple(password, salt_str).to_vec();
-
-        HashBuilder::new()
-            .hash(calculated_hash)
-            .salt(salt)
-            .algorithm(HashAlgorithm::Argon2i)
-            .build()
+        let calculated = Argon2i::hash_password(password, salt_str)?;
+        Ok(Self {
+            hash: calculated,
+            salt,
+            algorithm: HashAlgorithm::Argon2i,
+        })
     }
 
-    /// Creates a new `Hash` instance using Bcrypt algorithm for password hashing.
+    /// Creates a new `Hash` using Bcrypt at the given `cost`.
     ///
-    /// # Example
-    ///
-    /// ```
-    /// use hsh::models::hash::Hash;
-    ///
-    /// let _ = Hash::new_bcrypt("my_password", 4);
-    /// ```
+    /// Returns [`Error::InvalidPassword`] if the password exceeds 72
+    /// bytes — use [`crate::algorithms::bcrypt::BcryptParams::with_prehash`]
+    /// for explicit handling of longer inputs.
     pub fn new_bcrypt(password: &str, cost: u32) -> Result<Self> {
-        let hashed_password = bcrypt::hash(password, cost)
-            .map_err(|e| Error::Hashing(e.to_string()))?;
-
-        HashBuilder::new()
-            .hash(hashed_password.into_bytes())
-            .salt(Vec::new())
-            .algorithm(HashAlgorithm::Bcrypt)
-            .build()
+        use crate::algorithms::bcrypt::{
+            BcryptParams, PrehashAlgorithm,
+        };
+        let params = BcryptParams {
+            cost,
+            prehash: PrehashAlgorithm::None,
+        };
+        let hashed = Bcrypt::hash_with(password, params)?;
+        Ok(Self {
+            hash: hashed,
+            salt: Vec::new(),
+            algorithm: HashAlgorithm::Bcrypt,
+        })
     }
 
-    /// Creates a new `Hash` instance using Scrypt algorithm for password hashing.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use hsh::models::hash::{Hash, Salt};
-    ///
-    /// let password = "my_password";
-    /// let salt: Salt = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-    ///
-    /// let _ = Hash::new_scrypt(password, salt);
-    /// ```
+    /// Creates a new `Hash` using Scrypt with OWASP-2025 default params.
     pub fn new_scrypt(password: &str, salt: Salt) -> Result<Self> {
         let salt_str = std::str::from_utf8(&salt)?;
-        let calculated_hash =
-            Scrypt::hash_password(password, salt_str)?;
-
-        HashBuilder::new()
-            .hash(calculated_hash)
-            .salt(salt)
-            .algorithm(HashAlgorithm::Scrypt)
-            .build()
+        let calculated = Scrypt::hash_password(password, salt_str)?;
+        Ok(Self {
+            hash: calculated,
+            salt,
+            algorithm: HashAlgorithm::Scrypt,
+        })
     }
 
     /// Returns the hashing algorithm used by this hash.
@@ -147,10 +147,10 @@ impl Hash {
         })
     }
 
-    /// Parses a serialized hash string in the legacy `$algo$...$hash` form.
+    /// Parses the legacy `$algo$...$hash` serialized form.
     ///
-    /// **Note:** this is **not** PHC-compliant. Phase 1 (issue #159) replaces
-    /// this with `password_hash::PasswordHashString`.
+    /// **Not PHC-compliant** — Phase 1C (issue #159) replaces this with
+    /// `password_hash::PasswordHashString`.
     pub fn from_string(hash_str: &str) -> Result<Self> {
         let parts: Vec<&str> = hash_str.split('$').collect();
         if parts.len() != 6 {
@@ -171,59 +171,63 @@ impl Hash {
         })
     }
 
-    /// Generates a fresh hash for `password` with the given `salt` and
-    /// algorithm tag.
+    /// Generates a raw hash for `password` with the given `salt` and
+    /// algorithm tag. Returns the raw bytes only; for the storable form
+    /// build a `Hash` and call [`Hash::to_string_representation`] or
+    /// (Phase 1C) serialize as PHC.
     pub fn generate_hash(
         password: &str,
         salt: &str,
         algo: &str,
     ) -> Result<Vec<u8>> {
         match algo {
+            "argon2id" => Argon2id::hash_password(password, salt),
             "argon2i" => Argon2i::hash_password(password, salt),
+            "argon2d" => Argon2d::hash_password(password, salt),
             "bcrypt" => Bcrypt::hash_password(password, salt),
             "scrypt" => Scrypt::hash_password(password, salt),
             other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
         }
     }
 
-    /// Generates a random alphanumeric string of length `len`.
-    ///
-    /// **Note:** this uses `vrd::random::Random` for backwards compatibility.
-    /// Phase 1 (issue #162) switches salt generation to `OsRng`.
-    pub fn generate_random_string(len: usize) -> String {
-        let mut rng = Random::default();
-        let chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        (0..len)
-            .map(|_| {
-                chars
-                    .chars()
-                    .nth(rng.random_range(0, chars.len() as u32)
-                        as usize)
-                    .unwrap()
-            })
-            .collect()
+    /// Generates a random alphanumeric string of length `len` from the OS
+    /// CSPRNG. Suitable for human-readable Argon2 salts.
+    pub fn generate_random_string(len: usize) -> Result<String> {
+        const CHARS: &[u8] =
+            b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        let mut raw = vec![0u8; len];
+        getrandom::getrandom(&mut raw).map_err(|e| {
+            Error::Hashing(format!("OS RNG failed: {e}"))
+        })?;
+
+        let s: String = raw
+            .into_iter()
+            .map(|b| CHARS[usize::from(b) % CHARS.len()] as char)
+            .collect();
+        Ok(s)
     }
 
-    /// Generates a salt suitable for the named algorithm.
+    /// Generates a salt suitable for the named algorithm using the OS
+    /// CSPRNG. Returns a UTF-8 string ready for storage.
     pub fn generate_salt(algo: &str) -> Result<String> {
-        let mut rng = Random::default();
         match algo {
-            "argon2i" => Ok(Self::generate_random_string(16)),
+            "argon2id" | "argon2i" | "argon2d" => {
+                Self::generate_random_string(16)
+            }
             "bcrypt" => {
-                let salt: Vec<u8> = rng.bytes(16);
-                let salt_array: [u8; 16] =
-                    salt.try_into().map_err(|_| {
-                        Error::InvalidSalt("expected 16 bytes")
-                    })?;
-                Ok(general_purpose::STANDARD.encode(salt_array))
+                let mut raw = [0u8; 16];
+                getrandom::getrandom(&mut raw).map_err(|e| {
+                    Error::Hashing(format!("OS RNG failed: {e}"))
+                })?;
+                Ok(general_purpose::STANDARD.encode(raw))
             }
             "scrypt" => {
-                let salt: Vec<u8> = rng.bytes(32);
-                let salt_array: [u8; 32] =
-                    salt.try_into().map_err(|_| {
-                        Error::InvalidSalt("expected 32 bytes")
-                    })?;
-                Ok(general_purpose::STANDARD.encode(salt_array))
+                let mut raw = [0u8; 32];
+                getrandom::getrandom(&mut raw).map_err(|e| {
+                    Error::Hashing(format!("OS RNG failed: {e}"))
+                })?;
+                Ok(general_purpose::STANDARD.encode(raw))
             }
             other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
         }
@@ -240,6 +244,9 @@ impl Hash {
     }
 
     /// Builds a `Hash` from a `password`, `salt`, and algorithm tag.
+    ///
+    /// Recognised tags: `"argon2id"` (recommended), `"argon2i"`,
+    /// `"argon2d"`, `"bcrypt"`, `"scrypt"`.
     pub fn new(password: &str, salt: &str, algo: &str) -> Result<Self> {
         if password.len() < 8 {
             return Err(Error::InvalidPassword(
@@ -276,7 +283,7 @@ impl Hash {
         &self.salt
     }
 
-    /// Sets the hash bytes.
+    /// Sets the hash bytes, zeroing the previous buffer first.
     pub fn set_hash(&mut self, hash: &[u8]) {
         self.hash.zeroize();
         self.hash = hash.to_vec();
@@ -296,18 +303,18 @@ impl Hash {
         Ok(())
     }
 
-    /// Sets the salt bytes.
+    /// Sets the salt bytes, zeroing the previous buffer first.
     pub fn set_salt(&mut self, salt: &[u8]) {
         self.salt.zeroize();
         self.salt = salt.to_vec();
     }
 
-    /// Converts the hash to a `salt:hex` debug string. **Not PHC.**
+    /// Returns a non-PHC `salt:hex` debug string.
     pub fn to_string_representation(&self) -> String {
         let hash_str = self
             .hash
             .iter()
-            .map(|b| format!("{:02x}", b))
+            .map(|b| format!("{b:02x}"))
             .collect::<Vec<String>>()
             .join("");
         format!("{}:{}", String::from_utf8_lossy(&self.salt), hash_str)
@@ -316,42 +323,54 @@ impl Hash {
     /// Verifies `password` against this hash.
     ///
     /// **Constant-time:** the byte comparison uses
-    /// [`subtle::ConstantTimeEq`] so timing does not leak how much of the
-    /// candidate matched. The bcrypt path delegates to the `bcrypt` crate,
-    /// which also uses `subtle` internally.
+    /// [`subtle::ConstantTimeEq`]. The bcrypt path delegates to the
+    /// `bcrypt` crate, which also uses `subtle` internally.
     ///
-    /// Returns `Ok(true)` if the password matches, `Ok(false)` if it does
-    /// not, or an [`Error`] if the stored material is malformed.
+    /// Returns `Ok(true)` for a match, `Ok(false)` for a mismatch, or an
+    /// [`Error`] if the stored material is malformed.
     pub fn verify(&self, password: &str) -> Result<bool> {
         let salt = std::str::from_utf8(&self.salt)?;
 
         match self.algorithm {
-            HashAlgorithm::Argon2i => {
-                let calculated_hash =
-                    argon2i_simple(password, salt).to_vec();
-                Ok(bool::from(calculated_hash.ct_eq(&self.hash)))
-            }
+            HashAlgorithm::Argon2id => a2::verify(
+                Argon2Algorithm::Argon2id,
+                a2::owasp_minimum_2025(),
+                password,
+                salt,
+                &self.hash,
+            ),
+            HashAlgorithm::Argon2i => a2::verify(
+                Argon2Algorithm::Argon2i,
+                a2::owasp_minimum_2025(),
+                password,
+                salt,
+                &self.hash,
+            ),
+            HashAlgorithm::Argon2d => a2::verify(
+                Argon2Algorithm::Argon2d,
+                a2::owasp_minimum_2025(),
+                password,
+                salt,
+                &self.hash,
+            ),
             HashAlgorithm::Bcrypt => {
-                let hash_str = std::str::from_utf8(&self.hash)?;
-                bcrypt::verify(password, hash_str).map_err(|_| {
-                    Error::Verification("bcrypt verify failed")
-                })
+                use crate::algorithms::bcrypt::PrehashAlgorithm;
+                let stored_str = std::str::from_utf8(&self.hash)?;
+                Bcrypt::verify(
+                    password,
+                    stored_str,
+                    PrehashAlgorithm::None,
+                )
             }
             HashAlgorithm::Scrypt => {
-                let scrypt_params = scrypt::Params::new(14, 8, 1, 64)
-                    .map_err(|e| {
-                    Error::InvalidParameter(e.to_string())
-                })?;
-                let mut output = [0u8; 64];
-                scrypt(
-                    password.as_bytes(),
-                    salt.as_bytes(),
-                    &scrypt_params,
-                    &mut output,
-                )
-                .map_err(|e| Error::Hashing(e.to_string()))?;
-                let ok = bool::from(output.ct_eq(&self.hash));
-                output.zeroize();
+                let calculated = Scrypt::hash_with(
+                    password,
+                    salt,
+                    ScryptParams::default(),
+                )?;
+                let ok = bool::from(calculated.ct_eq(&self.hash));
+                let mut tmp = calculated;
+                tmp.zeroize();
                 Ok(ok)
             }
         }
@@ -360,7 +379,9 @@ impl Hash {
 
 fn parse_algorithm_tag(algo: &str) -> Result<HashAlgorithm> {
     match algo {
+        "argon2id" => Ok(HashAlgorithm::Argon2id),
         "argon2i" => Ok(HashAlgorithm::Argon2i),
+        "argon2d" => Ok(HashAlgorithm::Argon2d),
         "bcrypt" => Ok(HashAlgorithm::Bcrypt),
         "scrypt" => Ok(HashAlgorithm::Scrypt),
         other => Err(Error::UnsupportedAlgorithm(other.to_owned())),
@@ -375,7 +396,7 @@ impl fmt::Display for Hash {
 
 impl fmt::Display for HashAlgorithm {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

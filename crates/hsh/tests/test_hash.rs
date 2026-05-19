@@ -9,12 +9,12 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn test_new_argon2i() {
+    fn test_new_argon2id() {
         let password = "password123";
         let salt: Salt = vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-        let hash = Hash::new_argon2i(password, salt.clone()).unwrap();
+        let hash = Hash::new_argon2id(password, salt.clone()).unwrap();
         assert_eq!(hash.salt(), salt.as_slice());
-        assert_eq!(hash.algorithm(), HashAlgorithm::Argon2i);
+        assert_eq!(hash.algorithm(), HashAlgorithm::Argon2id);
     }
 
     #[test]

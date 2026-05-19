@@ -20,14 +20,14 @@ mod tests {
     }
 
     #[test]
-    fn test_hash_algorithm_enum() {
-        let argon2i = HashAlgorithm::Argon2i;
-        let bcrypt = HashAlgorithm::Bcrypt;
-        let scrypt = HashAlgorithm::Scrypt;
-
-        assert_eq!(argon2i as i32, 0);
-        assert_eq!(bcrypt as i32, 1);
-        assert_eq!(scrypt as i32, 2);
+    fn test_hash_algorithm_enum_round_trip_via_display() {
+        // The variant order is an implementation detail; we test that the
+        // Display form (used in error messages and PHC strings) is stable.
+        assert_eq!(format!("{}", HashAlgorithm::Argon2id), "Argon2id");
+        assert_eq!(format!("{}", HashAlgorithm::Argon2i), "Argon2i");
+        assert_eq!(format!("{}", HashAlgorithm::Argon2d), "Argon2d");
+        assert_eq!(format!("{}", HashAlgorithm::Bcrypt), "Bcrypt");
+        assert_eq!(format!("{}", HashAlgorithm::Scrypt), "Scrypt");
     }
 
     #[test]

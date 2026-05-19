@@ -1,11 +1,23 @@
-// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
-/// The `argon2i` module contains the Argon2i password hashing algorithm.
-pub mod argon2i;
+//! Password hashing algorithm wrappers built on the RustCrypto stack.
 
-/// The `bcrypt` module contains the Bcrypt password hashing algorithm.
+/// Argon2 family — `Argon2id` (recommended), `Argon2i`, `Argon2d`.
+pub mod argon2id;
+
+/// Re-export of the Argon2i marker for backwards compatibility with the
+/// v0.0.x module layout. Deprecated — use [`argon2id::Argon2id`] instead.
+pub mod argon2i {
+    #[deprecated(
+        since = "0.0.9",
+        note = "Argon2i is verify-only for legacy hashes — use `crate::algorithms::argon2id::Argon2id` for new hashes."
+    )]
+    pub use super::argon2id::Argon2i;
+}
+
+/// Bcrypt with the 72-byte safety rail enforced.
 pub mod bcrypt;
 
-/// The `scrypt` module contains the Scrypt password hashing algorithm.
+/// Scrypt with configurable parameters (default = OWASP-2025 minimum).
 pub mod scrypt;

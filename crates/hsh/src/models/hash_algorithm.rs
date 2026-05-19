@@ -1,14 +1,14 @@
-// Copyright © 2023-2024 Hash (HSH) library. All rights reserved.
+// Copyright © 2023-2026 Hash (HSH) library contributors. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 OR MIT
 
 use crate::error::Result;
 use serde::{Deserialize, Serialize};
 
-/// Represents the different algorithms available for password hashing.
+/// The supported password hashing algorithms.
 ///
-/// This enum is used to specify which hashing algorithm should be used
-/// when creating a new hashed password.
-///
+/// `Argon2id` is the recommended default per RFC 9106 §4. Argon2i is
+/// retained for verifying legacy hashes; Argon2d is exposed for
+/// completeness but rarely the right choice for password hashing.
 #[derive(
     Clone,
     Copy,
@@ -21,57 +21,38 @@ use serde::{Deserialize, Serialize};
     Serialize,
     Deserialize,
 )]
+#[non_exhaustive]
 pub enum HashAlgorithm {
-    /// Argon2i - A memory-hard password hashing algorithm.
-    ///
-    /// Resistant against various types of attacks, including:
-    /// - GPU-based attacks
-    /// - Side-channel attacks
-    ///
-    /// Incorporates multiple parameters to deter attackers:
-    /// - Memory usage
-    /// - Parallelism
-    /// - Time cost
+    /// **Argon2id** — recommended for new password hashes
+    /// (RFC 9106 §4 — hybrid of Argon2i + Argon2d).
+    Argon2id,
+
+    /// **Argon2i** — verify-only for legacy hashes. Has known
+    /// time–memory trade-off attacks when used standalone for password
+    /// hashing; do not use for new hashes.
     Argon2i,
 
-    /// Bcrypt - A widely used, computationally intensive password hashing algorithm.
-    ///
-    /// Features:
-    /// - Based on the Blowfish encryption cipher
-    /// - Uses key stretching technique
-    /// - Time-consuming and resource-intensive, which makes it resistant to cracking
+    /// **Argon2d** — exposed for completeness; vulnerable to
+    /// side-channel attacks. Not recommended for password hashing.
+    Argon2d,
+
+    /// **Bcrypt** — Blowfish-based KDF. 72-byte input ceiling enforced
+    /// by [`crate::algorithms::bcrypt`].
     Bcrypt,
 
-    /// Scrypt - A memory-hard password hashing algorithm designed for resistance to brute-force attacks.
-    ///
-    /// Features:
-    /// - Consumes a large amount of memory
-    /// - Makes parallelized attacks difficult and costly
+    /// **Scrypt** — memory-hard KDF. Default params follow OWASP-2025
+    /// (`N = 2^17`, `r = 8`, `p = 1`).
     Scrypt,
 }
 
-/// Represents a generic hashing algorithm.
+/// Generic password-hashing trait.
 ///
-/// The `HashingAlgorithm` trait defines a common interface for hashing algorithms.
-/// Implementing this trait for different hashing algorithms ensures that they can be used
-/// interchangeably for hashing passwords.
-///
-/// The primary consumer of this trait is the `Hash` struct, which uses it to handle the hashing
-/// logic in a decoupled and extendable manner.
+/// The primary consumer is [`crate::models::hash::Hash`], which uses it
+/// to dispatch to a concrete algorithm.
 pub trait HashingAlgorithm {
-    /// Hashes a given password using a specific salt.
+    /// Hashes a plaintext `password` using a specific `salt`.
     ///
-    /// Given a plaintext `password` and a `salt`, this method returns a hashed representation
-    /// of the password. The hashing algorithm used is determined by the implementing type.
-    ///
-    /// # Parameters
-    ///
-    /// - `password`: The plaintext password to be hashed.
-    /// - `salt`: A cryptographic salt to prevent rainbow table attacks.
-    ///
-    /// # Returns
-    ///
-    /// Returns the hashed password as a vector of bytes, or an
-    /// [`Error`](crate::error::Error) describing the failure.
+    /// Returns the raw hash bytes, or a [`crate::error::Error`]
+    /// describing the failure.
     fn hash_password(password: &str, salt: &str) -> Result<Vec<u8>>;
 }

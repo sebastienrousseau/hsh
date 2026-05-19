@@ -9,7 +9,75 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Planned
 
-- Phase 1 (#140) — RustCrypto traits-based core refactor + PHC string format.
+- Phase 2 (#141) — Operational hardening: fuzz/, Miri, SLSA L3 release.
+
+### Added (Phase 1)
+
+- **`hsh::api::hash`** and **`hsh::api::verify_and_upgrade`** — the
+  high-level enterprise surface that serialises hashes in the PHC string
+  format and signals when a successful verify should trigger a re-hash
+  under the current policy.
+- **`hsh::Policy`** with `owasp_minimum_2025()` and
+  `rfc9106_first_recommended()` presets.
+- **`hsh::Outcome::{Valid { needs_rehash }, Invalid}`** for verification
+  results.
+- **`HashAlgorithm::Argon2id`** and `HashAlgorithm::Argon2d` variants;
+  the enum is now `#[non_exhaustive]`.
+- **`Hash::new_argon2id`** — recommended Argon2 constructor.
+- **`crate::algorithms::bcrypt::BcryptParams`** with explicit
+  `PrehashAlgorithm::{None, Sha256}` opt-in.
+- **`crate::algorithms::scrypt::ScryptParams`** with `log_n`/`r`/`p`/
+  `dk_len` fields; default = OWASP-2025 minimum (`N = 2^17`).
+- **`compat-v0_0_x`** feature flag (currently a no-op marker; will gate
+  the v0.0.x shim in a future release).
+- Phase 1 test suite (`tests/test_api.rs`, `tests/test_argon2id.rs`).
+
+### Changed (Phase 1)
+
+- **S2/#156 — Argon2id is the recommended default.** New code should use
+  `Hash::new_argon2id` or `api::hash` with
+  `Policy::owasp_minimum_2025()`. `Hash::new_argon2i` is
+  `#[deprecated(since = "0.0.9")]` and verify-only.
+- **S4/#157 — Scrypt parameters are configurable.** Default is OWASP-2025
+  (`N = 2^17, r = 8, p = 1, dk_len = 64`).
+- **S5/#158 — Bcrypt rejects inputs > 72 bytes by default.** Opt into a
+  pre-hash via `BcryptParams::with_prehash(PrehashAlgorithm::Sha256)` to
+  handle longer inputs explicitly.
+- **S8/#161 — Argon2 backend is now the maintained RustCrypto `argon2`
+  crate.** `argon2rs` (last released 2017) and its dependencies (`dtt`,
+  transitively-imported `vrd`) are removed.
+- **S9/#162 — Salts come from `getrandom`** (OS CSPRNG) only. `vrd`
+  removed from `[dependencies]`.
+
+### Removed (Phase 1)
+
+- **#163 — `crate::macros`.** The 498-line module of utility macros
+  (`hsh_max`, `hsh_min`, `hsh_vec`, `hsh_split`, `hsh_join`, `hsh_assert`,
+  `hsh_contains`, `hsh_parse`, `hsh_print`, `random_string`, `new_hash!`,
+  `generate_hash!`, `hash_length!`, `match_algo!`, `to_str_error!`)
+  has been deleted. None of these belonged in a cryptographic library.
+
+### Security (Phase 1)
+
+- **S6/#159 (partial)** — PHC string format adoption via
+  `password_hash::PasswordHash` for verification of Argon2id / Argon2i /
+  Argon2d / scrypt, and MCF detection for bcrypt. The legacy
+  `Hash::from_string` 6-part dollar-delimited form is still present for
+  backwards compatibility but no longer used by the high-level API.
+- **#160** — `api::verify_and_upgrade` returns
+  `(Outcome, Option<new_phc>)` so the caller can persist a re-hash
+  whenever the stored algorithm or Argon2 parameters fall below the
+  current `Policy`.
+
+### Roadmap notes left in code
+
+- Scrypt PHC hashing via `api::hash` currently uses the scrypt crate's
+  built-in default params; custom-param PHC is tracked as a Phase 1
+  follow-up (the raw-bytes path via `Scrypt::hash_with` already supports
+  configurable params).
+- Bcrypt cost-factor introspection for auto-rehash is a Phase 1
+  follow-up — today's verify accepts the stored cost without comparing
+  against `policy.bcrypt.cost`.
 
 ## [0.0.9] — 2026-05-19
 

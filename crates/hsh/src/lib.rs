@@ -70,7 +70,7 @@
 
 #![doc(
     html_favicon_url = "https://kura.pro/hsh/images/favicon.ico",
-    html_logo_url = "https://kura.pro/hsh/images/logos/hsh.svg",
+    html_logo_url = "https://cloudcdn.pro/hsh/v1/logos/hsh.svg",
     html_root_url = "https://docs.rs/hsh"
 )]
 #![crate_name = "hsh"]
@@ -79,17 +79,26 @@
 /// Password hashing algorithm wrappers.
 pub mod algorithms;
 
+/// High-level enterprise API — PHC-format hashing and
+/// [`api::verify_and_upgrade`] with policy-driven rehash.
+pub mod api;
+
 /// Structured error type for fallible operations.
 pub mod error;
-
-/// Convenience macros.
-pub mod macros;
 
 /// Core data models — [`models::hash::Hash`] and the
 /// [`models::hash_algorithm::HashAlgorithm`] enum.
 pub mod models;
 
+/// Verification [`outcome::Outcome`] reported by [`api::verify_and_upgrade`].
+pub mod outcome;
+
+/// Versioned [`policy::Policy`] describing primary algorithm + params.
+pub mod policy;
+
 pub use error::{Error, Result};
+pub use outcome::Outcome;
+pub use policy::{Policy, PrimaryAlgorithm};
 
 /// Library entry point used by the `hsh` binary.
 pub fn run() -> Result<()> {

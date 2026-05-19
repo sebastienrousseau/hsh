@@ -51,21 +51,27 @@ name = "hsh"
 path = "examples/hsh.rs"
 
 [dependencies]
-# Security primitives (Phase 0 hot-fixes)
+# Security primitives
 subtle    = { workspace = true }
 zeroize   = { workspace = true }
 thiserror = { workspace = true }
 
-# Algorithms (current — Phase 1 will swap argon2rs → argon2 RustCrypto)
-argon2rs   = { workspace = true }
+# Algorithms — RustCrypto stack
+argon2        = { workspace = true }
+bcrypt        = { workspace = true }
+scrypt        = { workspace = true }
+sha2          = { workspace = true }
+password-hash = { workspace = true }
+
+# Encoding / serde
 base64     = { workspace = true }
-bcrypt     = { workspace = true }
-scrypt     = { workspace = true }
 serde      = { workspace = true }
 serde_json = { workspace = true }
 log        = { workspace = true }
-dtt        = { workspace = true }
-vrd        = { workspace = true }
+
+# RNG
+rand_core = { workspace = true }
+getrandom = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }
@@ -73,6 +79,10 @@ criterion  = { workspace = true }
 
 [features]
 default = []
+
+# Re-export the v0.0.x stringly-typed API for one release cycle so existing
+# users can upgrade gradually. To be removed in v0.2.0.
+compat-v0_0_x = []
 
 [package.metadata.docs.rs]
 all-features    = true
