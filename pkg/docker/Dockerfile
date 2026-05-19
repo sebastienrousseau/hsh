@@ -20,7 +20,7 @@ RUN apk add --no-cache musl-dev
 WORKDIR /src
 COPY . .
 RUN cargo build --release --bin hsh \
-    --target $(uname -m)-unknown-linux-musl
+    --target "$(uname -m)-unknown-linux-musl"
 
 FROM gcr.io/distroless/static-debian12:nonroot
 LABEL org.opencontainers.image.title="hsh"
