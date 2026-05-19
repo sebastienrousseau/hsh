@@ -65,13 +65,23 @@ pub struct Hash {
 impl Hash {
     /// Creates a new `Hash` using **Argon2id** — the recommended variant.
     ///
-    /// # Example
+    /// # Errors
     ///
-    /// ```
+    /// Returns [`Error::Decode`] if `salt` is not valid UTF-8, or
+    /// [`Error::Hashing`] if the underlying `argon2` crate rejects the
+    /// parameters (output buffer too small, salt too short, etc.).
+    ///
+    /// # Examples
+    ///
+    /// ```rust
     /// use hsh::models::hash::{Hash, Salt};
     ///
-    /// let salt: Salt = vec![b'a'; 16];
-    /// let _ = Hash::new_argon2id("correct horse", salt);
+    /// # fn main() -> Result<(), hsh::Error> {
+    /// let salt: Salt = b"abcdefghijklmnop".to_vec();
+    /// let h = Hash::new_argon2id("correct horse battery staple", salt)?;
+    /// assert!(!h.hash().is_empty());
+    /// # Ok(())
+    /// # }
     /// ```
     pub fn new_argon2id(password: &str, salt: Salt) -> Result<Self> {
         let salt_str = std::str::from_utf8(&salt)?;
@@ -107,9 +117,14 @@ impl Hash {
 
     /// Creates a new `Hash` using Bcrypt at the given `cost`.
     ///
+    /// # Errors
+    ///
     /// Returns [`Error::InvalidPassword`] if the password exceeds 72
-    /// bytes — use [`crate::algorithms::bcrypt::BcryptParams::with_prehash`]
-    /// for explicit handling of longer inputs.
+    /// bytes (the bcrypt input limit — CVE-2025-22228 class) and the
+    /// safety rail is engaged. Use
+    /// [`crate::algorithms::bcrypt::BcryptParams::with_prehash`] for
+    /// explicit handling of longer inputs. Returns [`Error::Hashing`]
+    /// if the underlying `bcrypt` crate reports a primitive failure.
     pub fn new_bcrypt(password: &str, cost: u32) -> Result<Self> {
         use crate::algorithms::bcrypt::{
             BcryptParams, PrehashAlgorithm,
@@ -127,6 +142,13 @@ impl Hash {
     }
 
     /// Creates a new `Hash` using Scrypt with OWASP-2025 default params.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Decode`] if `salt` is not valid UTF-8, or
+    /// [`Error::Hashing`] if the underlying `scrypt` crate rejects the
+    /// parameter set (output buffer too small, `N` not a power of two,
+    /// etc.).
     pub fn new_scrypt(password: &str, salt: Salt) -> Result<Self> {
         let salt_str = std::str::from_utf8(&salt)?;
         let calculated = Scrypt::hash_password(password, salt_str)?;
@@ -143,6 +165,12 @@ impl Hash {
     }
 
     /// Builds a `Hash` from existing hash bytes and an algorithm tag.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::UnsupportedAlgorithm`] if `algo` is not one of
+    /// the recognised tags (`argon2id`, `argon2i`, `argon2d`, `bcrypt`,
+    /// `scrypt`, `pbkdf2`, `pbkdf2-sha256`, `pbkdf2-sha512`).
     pub fn from_hash(hash: &[u8], algo: &str) -> Result<Self> {
         let algorithm = parse_algorithm_tag(algo)?;
         Ok(Hash {
@@ -154,8 +182,18 @@ impl Hash {
 
     /// Parses the legacy `$algo$...$hash` serialized form.
     ///
-    /// **Not PHC-compliant** — Phase 1C (issue #159) replaces this with
-    /// `password_hash::PasswordHashString`.
+    /// **Not PHC-compliant** — kept for backwards compatibility with
+    /// pre-0.0.9 stored hashes. New code should round-trip through
+    /// [`crate::api::hash`] / [`crate::api::verify_and_upgrade`] which
+    /// emit RustCrypto-compatible PHC strings.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidHashString`] if the string doesn't have
+    /// the expected six `$`-separated fields,
+    /// [`Error::UnsupportedAlgorithm`] if the algorithm tag isn't
+    /// recognised, or [`Error::Decode`] if the trailing base64 hash
+    /// field is malformed.
     pub fn from_string(hash_str: &str) -> Result<Self> {
         let parts: Vec<&str> = hash_str.split('$').collect();
         if parts.len() != 6 {
@@ -177,9 +215,16 @@ impl Hash {
     }
 
     /// Generates a raw hash for `password` with the given `salt` and
-    /// algorithm tag. Returns the raw bytes only; for the storable form
-    /// build a `Hash` and call [`Hash::to_string_representation`] or
-    /// (Phase 1C) serialize as PHC.
+    /// algorithm tag. Returns the raw bytes only; for the storable
+    /// form build a `Hash` and call [`Hash::to_string_representation`],
+    /// or use [`crate::api::hash`] for the modern PHC-formatted output.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::UnsupportedAlgorithm`] for an unrecognised tag,
+    /// or any [`Error`] variant the underlying primitive emits — see
+    /// the per-algorithm `hash_with` documentation in
+    /// [`crate::algorithms`].
     pub fn generate_hash(
         password: &str,
         salt: &str,
@@ -200,8 +245,16 @@ impl Hash {
         }
     }
 
-    /// Generates a random alphanumeric string of length `len` from the OS
-    /// CSPRNG. Suitable for human-readable Argon2 salts.
+    /// Generates a random alphanumeric string of length `len` from the
+    /// OS CSPRNG ([`getrandom::getrandom`]). Suitable for human-readable
+    /// Argon2 salts.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Hashing`] if [`getrandom::getrandom`] fails —
+    /// in practice this only happens when the OS entropy source isn't
+    /// available (very early boot, hardened sandbox without
+    /// `/dev/urandom`).
     pub fn generate_random_string(len: usize) -> Result<String> {
         const CHARS: &[u8] =
             b"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
@@ -223,6 +276,12 @@ impl Hash {
 
     /// Generates a salt suitable for the named algorithm using the OS
     /// CSPRNG. Returns a UTF-8 string ready for storage.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::UnsupportedAlgorithm`] if `algo` isn't one of
+    /// `"argon2id"`, `"argon2i"`, `"argon2d"`, `"bcrypt"`, or
+    /// `"scrypt"`; [`Error::Hashing`] if the OS CSPRNG fails.
     pub fn generate_salt(algo: &str) -> Result<String> {
         match algo {
             "argon2id" | "argon2i" | "argon2d" => {
@@ -267,7 +326,14 @@ impl Hash {
     /// Builds a `Hash` from a `password`, `salt`, and algorithm tag.
     ///
     /// Recognised tags: `"argon2id"` (recommended), `"argon2i"`,
-    /// `"argon2d"`, `"bcrypt"`, `"scrypt"`.
+    /// `"argon2d"`, `"bcrypt"`, `"scrypt"`, `"pbkdf2"`,
+    /// `"pbkdf2-sha256"`, `"pbkdf2-sha512"`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidPassword`] if `password.len() < 8`,
+    /// [`Error::UnsupportedAlgorithm`] for an unknown tag, or any
+    /// [`Error`] variant the underlying primitive emits.
     pub fn new(password: &str, salt: &str, algo: &str) -> Result<Self> {
         if password.len() < 8 {
             return Err(Error::InvalidPassword(
@@ -284,11 +350,22 @@ impl Hash {
     }
 
     /// Parses a JSON string into a [`struct@Hash`].
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Decode`] wrapping a `serde_json::Error` if the
+    /// input isn't a valid serialised `Hash`.
     pub fn parse(input: &str) -> Result<Self> {
         Ok(serde_json::from_str(input)?)
     }
 
     /// Extracts the algorithm marker from a legacy serialized hash string.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidHashString`] if there's no `$`-delimited
+    /// algorithm field, or [`Error::UnsupportedAlgorithm`] if the field
+    /// is present but unrecognised.
     pub fn parse_algorithm(hash_str: &str) -> Result<HashAlgorithm> {
         let parts: Vec<&str> = hash_str.split('$').collect();
         if parts.len() < 2 {
@@ -311,7 +388,13 @@ impl Hash {
     }
 
     /// Re-hashes `password` with `salt` under `algo` and replaces the
-    /// stored hash.
+    /// stored hash. The previous buffer is zeroized before replacement.
+    ///
+    /// # Errors
+    ///
+    /// Returns any [`Error`] variant that [`Self::generate_hash`] may
+    /// emit (`UnsupportedAlgorithm` for an unknown tag, or any
+    /// primitive-level failure from the underlying KDF).
     pub fn set_password(
         &mut self,
         password: &str,
@@ -490,8 +573,12 @@ impl HashBuilder {
         self
     }
 
-    /// Consumes the builder and returns the `Hash`, erroring if any
-    /// required field is missing.
+    /// Consumes the builder and returns the `Hash`.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidHashString`] if any of `hash`, `salt`,
+    /// or `algorithm` weren't set.
     pub fn build(self) -> Result<Hash> {
         match (self.hash, self.salt, self.algorithm) {
             (Some(hash), Some(salt), Some(algorithm)) => Ok(Hash {

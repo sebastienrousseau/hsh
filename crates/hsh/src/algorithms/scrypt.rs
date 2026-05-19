@@ -50,6 +50,12 @@ impl Default for ScryptParams {
 impl ScryptParams {
     /// Converts to the underlying `scrypt::Params`, surfacing parameter
     /// validation errors.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidParameter`] if `log_n`, `r`, `p`, or
+    /// `dk_len` violates scrypt's constraints (e.g. `log_n` outside
+    /// `1..64`, or `r * p > 1 << 30`).
     pub fn to_native(self) -> Result<Params> {
         Params::new(self.log_n, self.r, self.p, self.dk_len)
             .map_err(|e| Error::InvalidParameter(e.to_string().into()))

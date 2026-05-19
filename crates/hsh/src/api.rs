@@ -60,9 +60,10 @@ const PEPPER_PREFIX: &str = "hsh-pepper:";
 /// Returns [`Error::InvalidParameter`] if the policy declares
 /// [`Backend::Fips140Required`] but the build can't satisfy it, or if
 /// the primary algorithm is not the only FIPS-routed KDF (PBKDF2).
-/// Returns [`Error::Hashing`] (with a
-/// [`HashingErrorKind`](crate::error::HashingErrorKind) discriminant)
-/// if the underlying primitive rejects the input.
+/// Returns [`Error::Hashing`] (with a [`HashingErrorKind`]
+/// discriminant) if the underlying primitive rejects the input.
+///
+/// [`HashingErrorKind`]: crate::error::HashingErrorKind
 ///
 /// # Examples
 ///
