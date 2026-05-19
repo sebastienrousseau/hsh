@@ -20,9 +20,13 @@ concurrency:
   group: fuzz-${{ github.ref }}
   cancel-in-progress: false   # never cancel an in-flight fuzz batch
 
+permissions: {}
+
 jobs:
   fuzz:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -34,20 +38,24 @@ jobs:
           - fuzz_legacy_from_string
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          persist-credentials: false
 
       - name: Skip if dispatch picked a different target
         if: github.event_name == 'workflow_dispatch' && inputs.target != '' && inputs.target != matrix.target
         run: echo "skipping ${{ matrix.target }}" && exit 0
 
       - name: Install nightly Rust
-        uses: dtolnay/rust-toolchain@nightly
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: nightly
 
       - name: Install cargo-fuzz
         run: cargo install --locked cargo-fuzz
 
       - name: Cache fuzz target build
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           workspaces: fuzz
 
@@ -66,7 +74,7 @@ jobs:
 
       - name: Upload crash artefacts
         if: failure() || always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: fuzz-artifacts-${{ matrix.target }}
           path: fuzz/artifacts/

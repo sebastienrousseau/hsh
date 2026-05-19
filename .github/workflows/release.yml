@@ -23,15 +23,18 @@ jobs:
   # ---------------------------------------------------------------------
   quality-gate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
+          toolchain: stable
           components: rustfmt, clippy
       - name: Cache cargo registry / target
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: fmt
         run: cargo fmt --all --check
       - name: clippy
@@ -49,11 +52,13 @@ jobs:
   verify-version:
     runs-on: ubuntu-latest
     needs: quality-gate
+    permissions:
+      contents: read
     outputs:
       version: ${{ steps.extract.outputs.version }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Extract tag version
         id: extract
         run: |
@@ -75,11 +80,15 @@ jobs:
   sbom:
     runs-on: ubuntu-latest
     needs: verify-version
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
       - name: Install cargo-about
         run: cargo install --locked cargo-about
       - name: Generate plain-text NOTICE
@@ -93,7 +102,7 @@ jobs:
       - name: Cargo tree manifest
         run: cargo tree --workspace --all-features --no-default-features > artifacts/CARGO-TREE.txt || true
       - name: Upload SBOM artefacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sbom
           path: artifacts/
@@ -114,11 +123,13 @@ jobs:
       attestations: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
       - name: Cache
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Build release artefact
         run: |
           mkdir -p artifacts
@@ -127,11 +138,11 @@ jobs:
             || echo "no binary — library-only release"
           (cd artifacts && find . -type f -exec sha256sum {} +) > artifacts/SHA256SUMS || true
       - name: Generate SLSA build provenance
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
         with:
           subject-path: artifacts/
       - name: Install cosign
-        uses: sigstore/cosign-installer@v3
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
       - name: Keyless sign every artefact
         run: |
           for f in artifacts/*; do
@@ -139,7 +150,7 @@ jobs:
             cosign sign-blob --yes --output-signature "${f}.sig" --output-certificate "${f}.pem" "$f"
           done
       - name: Upload signed artefacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: signed-artefacts
           path: artifacts/
@@ -151,11 +162,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [verify-version, attest]
     environment: crates-io
+    permissions:
+      contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
       - name: Cargo publish
         run: cargo publish --token "${CARGO_REGISTRY_TOKEN}" -p hsh
         env:
