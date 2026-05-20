@@ -43,9 +43,13 @@ single-char-binding-names-threshold = 4
 # ---------------------------------------------------------------------------
 disallowed-methods = [
     # Forbid every constructor of a non-CSPRNG. Use `getrandom::OsRng`.
-    { path = "rand::thread_rng",        reason = "use getrandom::OsRng — non-crypto RNGs must never feed a salt" },
-    { path = "rand::random",            reason = "use getrandom::OsRng" },
-    { path = "fastrand::Rng::new",      reason = "non-crypto RNG; use getrandom::OsRng" },
+    # NB: `rand::*` are not in our dep graph today — kept here as a
+    # forward guard if a future contributor accidentally pulls `rand` in.
+    # `allow-invalid = true` silences the "path not reachable" clippy
+    # warning while still failing the lint if the function ever appears.
+    { path = "rand::thread_rng",        reason = "use getrandom::OsRng — non-crypto RNGs must never feed a salt", allow-invalid = true },
+    { path = "rand::random",            reason = "use getrandom::OsRng", allow-invalid = true },
+    { path = "fastrand::Rng::new",      reason = "non-crypto RNG; use getrandom::OsRng", allow-invalid = true },
 
     # `String::leak` is rarely what you want and never what you want in
     # a library that handles passwords.
