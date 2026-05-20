@@ -162,8 +162,8 @@ jobs:
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
 
-  msrv-1-85:
-    name: MSRV — workspace minimum (1.85)
+  msrv-1-88:
+    name: MSRV — workspace minimum (1.88)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -173,19 +173,19 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
-          toolchain: "1.85"
+          toolchain: "1.88"
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          key: msrv-1.85
-      - name: Workspace check at 1.85 floor
-        # The library crates declare `rust-version = "1.75"` for downstream
-        # consumability, but the *workspace* effective floor is 1.85 because
-        # `hsh-cli` declares `edition = "2024"`. Cargo 1.75 cannot load the
-        # workspace manifest at all under that condition. The 1.75
-        # per-crate floor is documentation only; downstream consumers who
-        # need to verify it must depend on the lib crates without pulling
-        # `hsh-cli` into their workspace.
-        run: cargo +1.85 check --locked --workspace --all-features
+          key: msrv-1.88
+      - name: Workspace check at 1.88 floor
+        # The *workspace* effective floor is 1.88:
+        # - `hsh-cli` uses edition = "2024" (needs Cargo 1.85+).
+        # - The `rpassword` 7.5+ dep uses `let` chains (stable in 1.88).
+        # The library crates declare `rust-version = "1.75"` for
+        # downstream consumability (documentation only — downstream
+        # consumers depend on the lib crates without pulling `hsh-cli`
+        # into their workspace, so they keep the 1.75 floor).
+        run: cargo +1.88 check --locked --workspace --all-features
 
   cross-platform:
     name: Test (${{ matrix.os }})

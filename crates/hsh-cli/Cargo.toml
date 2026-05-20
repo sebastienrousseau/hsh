@@ -6,7 +6,10 @@ description = "Command-line companion for the `hsh` password-hashing library: ha
 # CLI gets the modern edition; the lib stays on 2021 / MSRV 1.75 so it
 # remains broadly consumable.
 edition       = "2024"
-rust-version  = "1.85"
+# Bumped from 1.85 → 1.88 because the `rpassword` 7.5+ dep started
+# using let chains (stable in 1.88). The lib crates' 1.75 floor is
+# unaffected because they don't pull rpassword.
+rust-version  = "1.88"
 
 authors.workspace       = true
 license.workspace       = true
