@@ -1,0 +1,35 @@
+{{!--
+  Handlebars template for cargo-about. Produces NOTICE.md.
+
+  Format mirrors the FOSSology / SPDX style: one section per
+  unique license, listing every crate that ships under it,
+  followed by the license text itself.
+
+  Generated from `cargo about generate -c about.toml about.hbs`.
+--}}
+NOTICE
+======
+
+This file lists every third-party crate `hsh` redistributes in its
+compiled binaries, grouped by license. Generated from the workspace
+`Cargo.lock` by `cargo about generate`.
+
+The licenses that appear here are limited to the accept-list in
+`about.toml`. Run `make sbom` to regenerate after a dep change.
+
+{{#each licenses as |license|}}
+## {{license.name}} ({{license.id}})
+
+The following crates are licensed under {{license.id}}:
+
+{{#each license.used_by}}
+- **{{this.crate.name}} {{this.crate.version}}** — {{#if this.crate.description}}{{this.crate.description}}{{/if}}
+{{/each}}
+
+### License text
+
+```
+{{license.text}}
+```
+
+{{/each}}
