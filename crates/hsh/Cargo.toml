@@ -79,10 +79,14 @@ getrandom = { workspace = true }
 hsh-kms = { version = "0.0.9", path = "../hsh-kms", optional = true }
 
 [dev-dependencies]
-assert_cmd = { workspace = true }
-criterion  = { workspace = true }
-proptest   = { workspace = true }
-hex        = { workspace = true }
+assert_cmd   = { workspace = true }
+criterion    = { workspace = true }
+proptest     = { workspace = true }
+hex          = { workspace = true }
+# Re-exported from `argon2` / `scrypt` already as a runtime dep; we
+# add it here explicitly so the helper tests in tests/test_api_helpers.rs
+# can construct `PasswordHash` values directly.
+password-hash = { workspace = true }
 
 [features]
 default = []

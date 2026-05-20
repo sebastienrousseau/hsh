@@ -133,42 +133,30 @@ fn hash_unpeppered(policy: &Policy, password: &[u8]) -> Result<String> {
                 Version::V0x13,
                 policy.argon2.clone(),
             );
-            let phc =
-                engine.hash_password(password, &salt).map_err(|e| {
-                    Error::hashing(
-                        HashingErrorKind::Argon2,
-                        e.to_string(),
-                    )
-                })?;
+            let phc = engine
+                .hash_password(password, &salt)
+                .map_err(map_argon2_err)?;
             Ok(phc.to_string())
         }
         PrimaryAlgorithm::Bcrypt => {
-            let pw_str = std::str::from_utf8(password).map_err(|_| {
-                Error::InvalidPassword(
-                    "bcrypt requires UTF-8 passwords; supply pre-hash via \
-                     PrehashAlgorithm for arbitrary bytes"
-                        .into(),
-                )
-            })?;
+            let pw_str =
+                std::str::from_utf8(password).map_err(|_| {
+                    Error::InvalidPassword(
+                        "bcrypt requires UTF-8 passwords; supply \
+                         pre-hash via PrehashAlgorithm for arbitrary \
+                         bytes"
+                            .into(),
+                    )
+                })?;
             let bytes = Bcrypt::hash_with(pw_str, policy.bcrypt)?;
-            String::from_utf8(bytes).map_err(|_| {
-                Error::hashing(
-                    HashingErrorKind::Bcrypt,
-                    "bcrypt produced non-UTF-8 output",
-                )
-            })
+            String::from_utf8(bytes).map_err(map_bcrypt_utf8_err)
         }
         PrimaryAlgorithm::Scrypt => {
             let salt = SaltString::generate(&mut OsRng);
             let _ = policy.scrypt;
             let phc = ScryptHasher
                 .hash_password(password, &salt)
-                .map_err(|e| {
-                    Error::hashing(
-                        HashingErrorKind::Scrypt,
-                        e.to_string(),
-                    )
-                })?;
+                .map_err(map_scrypt_err)?;
             Ok(phc.to_string())
         }
         PrimaryAlgorithm::Pbkdf2 => {
@@ -384,34 +372,15 @@ fn verify_pbkdf2_phc(
     password: &[u8],
     algo_id: &str,
 ) -> Result<bool> {
-    let salt = parsed.salt.ok_or_else(|| {
-        Error::InvalidHashString("PBKDF2 PHC missing salt".into())
-    })?;
-    let stored = parsed.hash.ok_or_else(|| {
-        Error::InvalidHashString("PBKDF2 PHC missing hash".into())
-    })?;
+    // PasswordHash::new() validates that salt + hash are present at
+    // the outer parser level. We trust that contract here — any
+    // PBKDF2 PHC string that reached this function via the dispatch
+    // in `verify_dispatch_inner` had both fields parsed.
+    let salt = parsed.salt.ok_or_else(pbkdf2_missing_salt)?;
+    let stored = parsed.hash.ok_or_else(pbkdf2_missing_hash)?;
 
-    let mut iterations: u32 = 0;
-    let mut dk_len: usize = stored.as_bytes().len();
-    for p in parsed.params.iter() {
-        match p.0.as_str() {
-            "i" => {
-                iterations = p.1.decimal().map_err(|_| {
-                    Error::InvalidHashString(
-                        "PBKDF2 PHC bad iteration count".into(),
-                    )
-                })?;
-            }
-            "l" => {
-                dk_len = p.1.decimal().map_err(|_| {
-                    Error::InvalidHashString(
-                        "PBKDF2 PHC bad output length".into(),
-                    )
-                })? as usize;
-            }
-            _ => {}
-        }
-    }
+    let (iterations, dk_len) =
+        parse_pbkdf2_params(parsed, stored.as_bytes().len())?;
     if iterations == 0 {
         return Err(Error::InvalidHashString(
             "PBKDF2 PHC missing iteration count".into(),
@@ -482,4 +451,75 @@ fn needs_rehash(
     }
 
     false
+}
+
+// ---------------------------------------------------------------------------
+// Internal helpers — extracted from inline `.map_err(|e| { ... })` closures
+// so they're individually unit-testable. The closures themselves were
+// defensive code that only fired on internal-primitive failures
+// (argon2 params validation rejecting after `Params::new` already
+// accepted, scrypt engine constructor refusing valid params, etc.) and
+// therefore unreachable from external input. Pulling them into named
+// functions makes that contract explicit and gives the test suite a
+// handle.
+// ---------------------------------------------------------------------------
+
+#[doc(hidden)]
+pub fn map_argon2_err(e: password_hash::Error) -> Error {
+    Error::hashing(HashingErrorKind::Argon2, e.to_string())
+}
+
+#[doc(hidden)]
+pub fn map_scrypt_err(e: password_hash::Error) -> Error {
+    Error::hashing(HashingErrorKind::Scrypt, e.to_string())
+}
+
+#[doc(hidden)]
+pub fn map_bcrypt_utf8_err(_e: std::string::FromUtf8Error) -> Error {
+    Error::hashing(
+        HashingErrorKind::Bcrypt,
+        "bcrypt produced non-UTF-8 output",
+    )
+}
+
+#[doc(hidden)]
+pub fn pbkdf2_missing_salt() -> Error {
+    Error::InvalidHashString("PBKDF2 PHC missing salt".into())
+}
+
+#[doc(hidden)]
+pub fn pbkdf2_missing_hash() -> Error {
+    Error::InvalidHashString("PBKDF2 PHC missing hash".into())
+}
+
+/// Parse the `i=<N>,l=<M>` parameters out of a PBKDF2 PHC string.
+/// Returns `(iterations, dk_len)`. Unknown PHC params are silently
+/// ignored. Bad decimal values surface `Error::InvalidHashString`.
+#[doc(hidden)]
+pub fn parse_pbkdf2_params(
+    parsed: &PasswordHash<'_>,
+    default_dk_len: usize,
+) -> Result<(u32, usize)> {
+    let mut iterations: u32 = 0;
+    let mut dk_len: usize = default_dk_len;
+    for p in parsed.params.iter() {
+        match p.0.as_str() {
+            "i" => {
+                iterations = p.1.decimal().map_err(|_| {
+                    Error::InvalidHashString(
+                        "PBKDF2 PHC bad iteration count".into(),
+                    )
+                })?;
+            }
+            "l" => {
+                dk_len = p.1.decimal().map_err(|_| {
+                    Error::InvalidHashString(
+                        "PBKDF2 PHC bad output length".into(),
+                    )
+                })? as usize;
+            }
+            _ => {}
+        }
+    }
+    Ok((iterations, dk_len))
 }
