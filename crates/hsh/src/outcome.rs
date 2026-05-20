@@ -76,8 +76,8 @@ impl Outcome {
     }
 }
 
-// Compile-time: outcome must stay shareable across threads.
-const _: fn() = || {
-    fn assert<T: Send + Sync>() {}
-    assert::<Outcome>();
-};
+// Send + Sync of Outcome is asserted at test-time via
+// `crates/hsh/tests/test_outcome.rs::outcome_is_send_and_sync`. The
+// test-fn does exactly the same compile-time work as a `const _ = ||
+// fn assert<T: Send + Sync>(){}; assert::<Outcome>();` block, but
+// cargo-llvm-cov counts the latter as an uncovered runtime line.

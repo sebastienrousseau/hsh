@@ -286,3 +286,28 @@ fn verify_pbkdf2_via_from_hash() {
     assert!(h.verify(pw).unwrap());
     assert!(!h.verify("wrong").unwrap());
 }
+
+#[test]
+fn verify_argon2d_via_from_hash() {
+    // Cover the HashAlgorithm::Argon2d verify branch.
+    let pw = "pw1234";
+    let salt = "abcdefghijklmnop";
+    let bytes = Hash::generate_hash(pw, salt, "argon2d").unwrap();
+    let mut h = Hash::from_hash(&[], "argon2d").unwrap();
+    h.set_hash(&bytes);
+    h.set_salt(salt.as_bytes());
+    assert!(h.verify(pw).unwrap());
+    assert!(!h.verify("wrong").unwrap());
+}
+
+#[test]
+fn verify_argon2i_via_from_hash() {
+    let pw = "pw1234";
+    let salt = "abcdefghijklmnop";
+    let bytes = Hash::generate_hash(pw, salt, "argon2i").unwrap();
+    let mut h = Hash::from_hash(&[], "argon2i").unwrap();
+    h.set_hash(&bytes);
+    h.set_salt(salt.as_bytes());
+    assert!(h.verify(pw).unwrap());
+    assert!(!h.verify("wrong").unwrap());
+}

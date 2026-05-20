@@ -435,6 +435,102 @@ fn completions_emit_elvish_script() {
 }
 
 // ---------------------------------------------------------------------------
+// inspect: hsh-pepper: prefix branch in commands/inspect.rs
+// ---------------------------------------------------------------------------
+
+#[test]
+fn inspect_handles_hsh_pepper_prefix() {
+    let output = hsh()
+        .args([
+            "inspect",
+            "hsh-pepper:1:$argon2id$v=19$m=8,t=1,p=1$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdGRlc3RkZXN0ZGVzdGRlc3RkZXN0",
+        ])
+        .output()
+        .expect("inspect peppered");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("hsh-pepper"));
+    assert!(stdout.contains("keyver"));
+}
+
+#[test]
+fn inspect_pepper_json_branch() {
+    let output = hsh()
+        .args([
+            "--json",
+            "inspect",
+            "hsh-pepper:1:$argon2id$v=19$m=8,t=1,p=1$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdGRlc3RkZXN0ZGVzdGRlc3RkZXN0",
+        ])
+        .output()
+        .expect("inspect peppered json");
+    assert!(output.status.success());
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+    assert_eq!(json["format"], "hsh-pepper");
+    assert_eq!(json["keyver"], "1");
+}
+
+#[test]
+fn inspect_rejects_malformed_pepper_prefix() {
+    let output = hsh()
+        .args(["inspect", "hsh-pepper:no-colon-separator"])
+        .output()
+        .expect("inspect malformed pepper");
+    assert!(!output.status.success());
+}
+
+// ---------------------------------------------------------------------------
+// rehash: wrong-password JSON output branch
+// ---------------------------------------------------------------------------
+
+#[test]
+fn rehash_json_on_wrong_password_emits_valid_json() {
+    let stored = pipe_hash(
+        "rehash bad json",
+        &["hash", "--algorithm", "scrypt"],
+    );
+    let stored = stored.trim();
+
+    let mut child = hsh()
+        .args(["--json", "rehash", "-H", stored])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn rehash-bad-json");
+    {
+        let stdin = child.stdin.as_mut().expect("stdin");
+        let _ = stdin.write_all(b"wrong-pw\n");
+    }
+    let output = child.wait_with_output().expect("wait");
+    assert_eq!(output.status.code(), Some(1));
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+    assert_eq!(json["valid"], serde_json::Value::Bool(false));
+}
+
+// ---------------------------------------------------------------------------
+// io: --password flag direct (bypasses stdin)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn hash_via_password_flag_direct() {
+    let output = hsh()
+        .args([
+            "hash",
+            "--password",
+            "via-flag",
+            "--algorithm",
+            "scrypt",
+        ])
+        .output()
+        .expect("hash via flag");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(!stdout.trim().is_empty());
+}
+
+// ---------------------------------------------------------------------------
 // `--json` form on every read subcommand to exercise the JSON branches.
 // ---------------------------------------------------------------------------
 
