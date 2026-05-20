@@ -4,7 +4,7 @@
   <img src="https://cloudcdn.pro/hsh/v1/logos/hsh.svg" alt="Hash (HSH) logo" width="128" />
 </p>
 
-<h1 align="center">Hash (HSH)</h1>
+# Hash (HSH)
 
 <p align="center">
   A multi-algorithm password hashing library for Rust with PHC string
@@ -24,6 +24,8 @@
 </p>
 
 ---
+
+<a id="contents"></a>
 
 ## Contents
 
@@ -137,32 +139,34 @@ fn main() -> Result<(), hsh::Error> {
     let policy = Policy::owasp_minimum_2025();
     let stored = api::hash(&policy, "correct horse battery staple")?;
 
-    let (outcome, rehashed) = api::verify_and_upgrade(
+    let outcome = api::verify_and_upgrade(
         &policy,
         "correct horse battery staple",
         &stored,
     )?;
 
     match outcome {
-        Outcome::Valid { needs_rehash: true } => {
-            // Policy drifted; persist `rehashed.unwrap()` to keep
-            // stored material at the current bar.
+        Outcome::Valid { rehashed: Some(new_phc) } => {
+            // Policy drifted; persist `new_phc` to keep stored
+            // material at the current bar.
+            let _ = new_phc;
         }
-        Outcome::Valid { .. } => { /* OK */ }
+        Outcome::Valid { rehashed: None } => { /* OK */ }
         Outcome::Invalid => { /* deny */ }
     }
     Ok(())
 }
 ```
 
-The CLI shape is the same three verbs:
+The CLI surface mirrors the library — six verbs:
 
 ```bash
 echo -n "correct horse battery staple" | hsh hash --algorithm argon2id
-echo -n "correct horse battery staple" | hsh verify -H '$argon2id$v=19$m=19456,t=2,p=1$…'
-hsh inspect    '$argon2id$v=19$m=19456,t=2,p=1$…'
-hsh calibrate  --algorithm argon2id --target-ms 500
-hsh completions zsh > ~/.zsh/functions/_hsh
+echo -n "correct horse battery staple" | hsh verify  -H '$argon2id$v=19$m=19456,t=2,p=1$…'
+echo -n "correct horse battery staple" | hsh rehash  -H '$argon2id$v=19$m=19456,t=2,p=1$…'
+hsh inspect      '$argon2id$v=19$m=19456,t=2,p=1$…'
+hsh calibrate    --algorithm argon2id --target-ms 500
+hsh completions  zsh > ~/.zsh/functions/_hsh
 ```
 
 ---
@@ -361,7 +365,7 @@ table below groups the inventory by capability theme.
 | :--- | :--- |
 | **Foundation** | Cargo workspace; per-crate MSRV (1.75 lib / 1.85 CLI); `#![forbid(unsafe_code)]` workspace-wide ([ADR-0006](doc/adr/0006-zero-unsafe-policy.md)) |
 | **Algorithms** | Argon2id (RFC 9106), Argon2i / Argon2d (verify-only legacy), bcrypt (with 72-byte safety rail), scrypt (RFC 7914), PBKDF2-HMAC-SHA-256 / SHA-512 (RFC 8018) |
-| **General hashing** | `hsh-digest` ships SHA-256 / 384 / 512, SHA3-256 / 384 / 512, BLAKE3-256; KangarooTwelve / TurboSHAKE (RFC 9861) and Ascon-Hash256 / Ascon-XOF128 (NIST SP 800-232) are stubbed for Phase 6 follow-up |
+| **General hashing** | `hsh-digest` ships SHA-256 / 384 / 512, SHA3-256 / 384 / 512, BLAKE3-256; KangarooTwelve / TurboSHAKE (per [RFC 9861][rfc9861], published Oct 2025) and Ascon-Hash256 / Ascon-XOF128 (per [NIST SP 800-232][sp800232], finalised Aug 2025) are *published standards* whose Rust implementations are currently stubbed — implementation tracked as a Phase 6 follow-up |
 | **Storage formats** | PHC strings for Argon2id / scrypt / PBKDF2; MCF (`$2b$…`) for bcrypt; bespoke `hsh-pepper:<keyver>:<inner>` wrapper for peppered hashes |
 | **Verify + auto-rehash** | Algorithm drift, parameter drift, PBKDF2-PRF drift, and pepper-version drift all trigger rehash on next successful verify |
 | **Pepper integration** | `hsh-kms` with `Pepper` trait, `LocalPepper`, and four KMS provider stubs (AWS KMS, GCP Cloud KMS, Azure Key Vault, HashiCorp Vault Transit) |
@@ -446,8 +450,8 @@ application needs.
 | `sha2` *(default)* | `hsh-digest` | `sha2` | SHA-256 / 384 / 512 | `crates/hsh-digest/README.md` |
 | `sha3` *(default)* | `hsh-digest` | `sha3` | SHA3-256 / 384 / 512 | `crates/hsh-digest/README.md` |
 | `blake3` *(default)* | `hsh-digest` | `blake3` | BLAKE3-256 | `crates/hsh-digest/README.md` |
-| `k12` | `hsh-digest` | *(future)* `k12` | KangarooTwelve / TurboSHAKE128/256 (RFC 9861, Oct 2025) — stub | [Capabilities](#capabilities-in-v009) |
-| `ascon` | `hsh-digest` | *(future)* `ascon-hash` | Ascon-Hash256 / Ascon-XOF128 (NIST SP 800-232 final, Aug 2025) — stub | [Capabilities](#capabilities-in-v009) |
+| `k12` | `hsh-digest` | *(future)* `k12` | KangarooTwelve / TurboSHAKE128/256 — standard published as [RFC 9861][rfc9861] (Oct 2025); Rust impl stubbed | [Capabilities](#capabilities-in-v009) |
+| `ascon` | `hsh-digest` | *(future)* `ascon-hash` | Ascon-Hash256 / Ascon-XOF128 — standard finalised as [NIST SP 800-232][sp800232] (Aug 2025); Rust impl stubbed | [Capabilities](#capabilities-in-v009) |
 
 ```toml
 # Example: peppered password hashing with AWS KMS backend
@@ -470,16 +474,13 @@ and are organised into three groups:
 | `verify_owasp_2025` | `api::verify_and_upgrade` cost at the same parameters |
 | `fast_params` | Same shape with non-production parameters used by tests / fuzz / proptest |
 
-Headline numbers — _placeholder; fill in after running
-`cargo bench --bench benchmark` on your reference host_:
-
-| Operation | Algorithm | OWASP-2025 params | Median | Notes |
-| --- | --- | ---: | ---: | --- |
-| `api::hash` | Argon2id | `m=19 456 KiB`, `t=2`, `p=1` | **TBD ms** | _Reference host: Apple M4 / aarch64_ |
-| `api::hash` | bcrypt | `cost=10` | **TBD ms** | _Reference host: Apple M4 / aarch64_ |
-| `api::hash` | scrypt | `N=2^17`, `r=8`, `p=1` | **TBD ms** | _Reference host: Apple M4 / aarch64_ |
-| `api::hash` | PBKDF2-SHA256 | `iters=600 000` | **TBD ms** | _Reference host: Apple M4 / aarch64_ |
-| `api::verify_and_upgrade` | Argon2id | as above | **TBD ms** | _Reference host: Apple M4 / aarch64_ |
+Headline numbers are host-specific and evaluated **locally** via
+`cargo bench --bench benchmark`. The README intentionally does *not*
+ship pinned numbers — they would mislead readers running on a
+different CPU / memory tier. See [`doc/BENCHMARKS.md`](doc/BENCHMARKS.md)
+for the maintainer's reference-host measurement methodology and
+historical numbers; see `hsh calibrate` below for a one-command
+host-specific parameter suggestion.
 
 Reproduce:
 
@@ -795,5 +796,8 @@ Dual-licensed under
 [MIT](https://opensource.org/licenses/MIT), at your option.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for release history.
+
+[rfc9861]: https://datatracker.ietf.org/doc/html/rfc9861
+[sp800232]: https://csrc.nist.gov/pubs/sp/800/232/final
 
 <p align="right"><a href="#contents">Back to Top</a></p>
