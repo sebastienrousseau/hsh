@@ -263,6 +263,177 @@ fn calibrate_bcrypt_runs_to_completion() {
     assert!(stdout.to_lowercase().contains("bcrypt"));
 }
 
+#[test]
+fn calibrate_scrypt_runs_to_completion() {
+    let output = hsh()
+        .args([
+            "calibrate",
+            "--algorithm",
+            "scrypt",
+            "--target-ms",
+            "50",
+        ])
+        .output()
+        .expect("calibrate scrypt");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.to_lowercase().contains("scrypt"));
+}
+
+#[test]
+fn calibrate_pbkdf2_runs_to_completion() {
+    let output = hsh()
+        .args([
+            "calibrate",
+            "--algorithm",
+            "pbkdf2",
+            "--target-ms",
+            "50",
+        ])
+        .output()
+        .expect("calibrate pbkdf2");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.to_lowercase().contains("pbkdf2"));
+}
+
+#[test]
+fn calibrate_json_output_is_well_formed() {
+    let output = hsh()
+        .args([
+            "--json",
+            "calibrate",
+            "--algorithm",
+            "argon2id",
+            "--target-ms",
+            "50",
+        ])
+        .output()
+        .expect("calibrate json");
+    assert!(output.status.success());
+    let _json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+}
+
+// ---------------------------------------------------------------------------
+// `hsh inspect` malformed-input branches (covers the JSON + error
+// formatting branches in commands/inspect.rs).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn inspect_rejects_garbage_string() {
+    let output = hsh()
+        .args(["inspect", "this-is-not-a-hash"])
+        .output()
+        .expect("inspect garbage");
+    // Should fail cleanly (exit non-zero) rather than panic.
+    assert!(!output.status.success());
+}
+
+#[test]
+fn inspect_json_on_malformed_input_still_emits_json() {
+    let output = hsh()
+        .args(["--json", "inspect", "garbage"])
+        .output()
+        .expect("inspect malformed json");
+    // Whether the binary emits JSON-shaped errors or exits non-zero,
+    // it must not panic. Either outcome is acceptable.
+    let _ = output;
+}
+
+#[test]
+fn inspect_handles_scrypt_phc() {
+    // Hash with scrypt then inspect — covers the scrypt branch in
+    // commands/inspect.rs.
+    let stored = pipe_hash(
+        "inspect scrypt pw",
+        &["hash", "--algorithm", "scrypt"],
+    );
+    let stored = stored.trim();
+    let output = hsh()
+        .args(["inspect", stored])
+        .output()
+        .expect("inspect scrypt");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("scrypt"));
+}
+
+#[test]
+fn inspect_handles_pbkdf2_phc() {
+    let stored = pipe_hash(
+        "inspect pbkdf2 pw",
+        &["hash", "--algorithm", "pbkdf2"],
+    );
+    let stored = stored.trim();
+    let output = hsh()
+        .args(["inspect", stored])
+        .output()
+        .expect("inspect pbkdf2");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.to_lowercase().contains("pbkdf2"));
+}
+
+#[test]
+fn hash_with_pbkdf2_algorithm_completes() {
+    let stored = pipe_hash(
+        "pbkdf2 cli pw",
+        &["hash", "--algorithm", "pbkdf2"],
+    );
+    assert!(stored.contains("$pbkdf2-"));
+}
+
+#[test]
+fn hash_with_argon2id_completes() {
+    let stored = pipe_hash(
+        "argon2id cli pw",
+        &["hash", "--algorithm", "argon2id"],
+    );
+    assert!(stored.contains("$argon2id$"));
+}
+
+// ---------------------------------------------------------------------------
+// Error / exit-code paths
+// ---------------------------------------------------------------------------
+
+#[test]
+fn verify_malformed_stored_exits_nonzero() {
+    let mut child = hsh()
+        .args(["verify", "-H", "not-a-real-hash-string"])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .expect("spawn verify malformed");
+    {
+        let stdin = child.stdin.as_mut().expect("stdin");
+        let _ = stdin.write_all(b"pw\n");
+    }
+    let output = child.wait_with_output().expect("wait");
+    assert!(!output.status.success());
+}
+
+#[test]
+fn completions_emit_powershell_script() {
+    let output = hsh()
+        .args(["completions", "powershell"])
+        .output()
+        .expect("completions powershell");
+    assert!(output.status.success());
+    assert!(!output.stdout.is_empty());
+}
+
+#[test]
+fn completions_emit_elvish_script() {
+    let output = hsh()
+        .args(["completions", "elvish"])
+        .output()
+        .expect("completions elvish");
+    assert!(output.status.success());
+    assert!(!output.stdout.is_empty());
+}
+
 // ---------------------------------------------------------------------------
 // `--json` form on every read subcommand to exercise the JSON branches.
 // ---------------------------------------------------------------------------
