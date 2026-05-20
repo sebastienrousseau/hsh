@@ -8,8 +8,6 @@
 //! - `1` — invalid (wrong password).
 //! - `2` — error (malformed input, policy mismatch).
 
-use std::process::ExitCode;
-
 use anyhow::{Context, Result};
 
 use crate::cli::VerifyArgs;
@@ -56,9 +54,4 @@ pub(crate) fn run(args: VerifyArgs, json: bool) -> Result<()> {
         std::process::exit(1);
     }
     Ok(())
-}
-
-#[allow(dead_code)]
-fn _exit_marker() -> ExitCode {
-    ExitCode::SUCCESS
 }

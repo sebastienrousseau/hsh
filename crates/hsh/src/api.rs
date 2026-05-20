@@ -418,12 +418,20 @@ fn verify_pbkdf2_phc(
         ));
     }
 
+    // Defensive: the caller filters algo_id to one of the two known
+    // tags, but a typed return is preferred over `unreachable!()` so
+    // future callers can't accidentally trip an abort.
+    let prf = match algo_id {
+        "pbkdf2-sha256" => Prf::Sha256,
+        "pbkdf2-sha512" => Prf::Sha512,
+        other => {
+            return Err(Error::UnsupportedAlgorithm(
+                other.to_owned().into(),
+            ));
+        }
+    };
     let params = Pbkdf2Params {
-        prf: match algo_id {
-            "pbkdf2-sha256" => Prf::Sha256,
-            "pbkdf2-sha512" => Prf::Sha512,
-            _ => unreachable!("caller filters algo_id"),
-        },
+        prf,
         iterations,
         dk_len,
     };

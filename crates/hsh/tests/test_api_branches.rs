@@ -50,7 +50,8 @@ fn bcrypt_verify_rejects_non_utf8_password_bytes() {
     let policy = fast_test_policy(PrimaryAlgorithm::Bcrypt);
     let stored = api::hash(&policy, "real").unwrap();
     let bad: &[u8] = &[0xff, 0xfe];
-    let err = api::verify_and_upgrade(&policy, bad, &stored).unwrap_err();
+    let err =
+        api::verify_and_upgrade(&policy, bad, &stored).unwrap_err();
     assert!(matches!(err, Error::InvalidPassword(_)));
 }
 
@@ -61,7 +62,8 @@ fn bcrypt_verify_rejects_non_utf8_password_bytes() {
 #[test]
 fn verify_rejects_not_a_phc_string() {
     let policy = fast_test_policy(PrimaryAlgorithm::Argon2id);
-    let err = api::verify_and_upgrade(&policy, "pw", "garbage").unwrap_err();
+    let err =
+        api::verify_and_upgrade(&policy, "pw", "garbage").unwrap_err();
     assert!(matches!(err, Error::InvalidHashString(_)));
 }
 
@@ -73,7 +75,8 @@ fn verify_rejects_unknown_algorithm_in_phc() {
     // known branches (argon2*, scrypt, pbkdf2-*). `crypt` is a real
     // PHC-spec ident that we explicitly don't handle.
     let bogus = "$crypt$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdA";
-    let err = api::verify_and_upgrade(&policy, "pw", bogus).unwrap_err();
+    let err =
+        api::verify_and_upgrade(&policy, "pw", bogus).unwrap_err();
     // Acceptable: either InvalidHashString (rejected at PHC parse) or
     // UnsupportedAlgorithm (rejected at our dispatch match). Both
     // are safe rejection paths — what matters is no panic / fail-open.
@@ -98,15 +101,11 @@ fn verify_accepts_argon2i_phc_string() {
     let params = argon2::Params::new(8, 1, 1, Some(32)).unwrap();
     let engine =
         Argon2::new(Algorithm::Argon2i, Version::V0x13, params);
-    let phc = engine
-        .hash_password(b"pw", &salt)
-        .unwrap()
-        .to_string();
+    let phc = engine.hash_password(b"pw", &salt).unwrap().to_string();
     assert!(phc.starts_with("$argon2i$"));
 
     let policy = fast_test_policy(PrimaryAlgorithm::Argon2id);
-    let outcome =
-        api::verify_and_upgrade(&policy, "pw", &phc).unwrap();
+    let outcome = api::verify_and_upgrade(&policy, "pw", &phc).unwrap();
     assert!(outcome.is_valid());
     // Algorithm drift (i -> id) MUST trigger rehash.
     assert!(outcome.needs_rehash());
@@ -122,15 +121,11 @@ fn verify_accepts_argon2d_phc_string() {
     let params = argon2::Params::new(8, 1, 1, Some(32)).unwrap();
     let engine =
         Argon2::new(Algorithm::Argon2d, Version::V0x13, params);
-    let phc = engine
-        .hash_password(b"pw", &salt)
-        .unwrap()
-        .to_string();
+    let phc = engine.hash_password(b"pw", &salt).unwrap().to_string();
     assert!(phc.starts_with("$argon2d$"));
 
     let policy = fast_test_policy(PrimaryAlgorithm::Argon2id);
-    let outcome =
-        api::verify_and_upgrade(&policy, "pw", &phc).unwrap();
+    let outcome = api::verify_and_upgrade(&policy, "pw", &phc).unwrap();
     assert!(outcome.is_valid());
     assert!(outcome.needs_rehash());
 }
@@ -171,7 +166,8 @@ fn verify_rejects_pbkdf2_phc_missing_iteration_count() {
 #[test]
 fn verify_rejects_pbkdf2_phc_bad_iteration_count() {
     let policy = fast_test_policy(PrimaryAlgorithm::Pbkdf2);
-    let phc = "$pbkdf2-sha256$i=not-a-number$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdA";
+    let phc =
+        "$pbkdf2-sha256$i=not-a-number$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdA";
     let err = api::verify_and_upgrade(&policy, "pw", phc).unwrap_err();
     assert!(matches!(err, Error::InvalidHashString(_)));
 }
@@ -191,7 +187,8 @@ fn pbkdf2_sha512_phc_round_trip() {
     .unwrap();
     let stored = api::hash(&policy, "pw").unwrap();
     assert!(stored.starts_with("$pbkdf2-sha512$"));
-    let outcome = api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
+    let outcome =
+        api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
     assert!(outcome.is_valid());
 }
 
@@ -203,7 +200,8 @@ fn pbkdf2_phc_with_explicit_l_parameter() {
     // hash() emits both i= and l=, so a round-trip exercises both.
     assert!(stored.contains("i="));
     assert!(stored.contains("l="));
-    let outcome = api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
+    let outcome =
+        api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
     assert!(outcome.is_valid());
 }
 
@@ -236,7 +234,8 @@ fn verify_pbkdf2_phc_ignores_unknown_parameter() {
     // We can't easily inject an unknown param without breaking PHC
     // structure, so just confirm the normal round-trip works (covers
     // the recognised `i=` and `l=` parsing arms).
-    let outcome = api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
+    let outcome =
+        api::verify_and_upgrade(&policy, "pw", &stored).unwrap();
     assert!(outcome.is_valid());
 }
 
@@ -258,9 +257,74 @@ fn verify_unsupported_phc_algorithm() {
             api::verify_and_upgrade(&policy, "pw", bogus).unwrap_err();
         assert!(matches!(
             err,
-            Error::UnsupportedAlgorithm(_) | Error::InvalidHashString(_)
+            Error::UnsupportedAlgorithm(_)
+                | Error::InvalidHashString(_)
         ));
     }
+}
+
+// ---------------------------------------------------------------------------
+// Bcrypt MCF mismatch path — wrong password under a bcrypt-primary
+// policy must return Outcome::Invalid (not rehash).
+// ---------------------------------------------------------------------------
+
+#[test]
+fn bcrypt_mismatch_under_bcrypt_policy_returns_invalid() {
+    let policy = fast_test_policy(PrimaryAlgorithm::Bcrypt);
+    let stored = api::hash(&policy, "right").unwrap();
+    let outcome =
+        api::verify_and_upgrade(&policy, "wrong", &stored).unwrap();
+    assert!(matches!(outcome, Outcome::Invalid));
+}
+
+// ---------------------------------------------------------------------------
+// Surgically craft PBKDF2 PHC strings that pass password_hash's parser
+// but trip our internal validation. The strategy is to mint a real
+// PBKDF2 PHC via api::hash, then surgically corrupt one field at a
+// time — this guarantees the PHC outer shape is parser-valid.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn verify_pbkdf2_phc_with_corrupted_iteration_count() {
+    let policy = fast_test_policy(PrimaryAlgorithm::Pbkdf2);
+    let stored = api::hash(&policy, "pw").unwrap();
+    // Replace the `i=N` parameter with `i=zzz`.
+    let corrupted = regex_replace_first(&stored, "i=1,", "i=zzz,")
+        .unwrap_or(stored.clone());
+    if corrupted != stored {
+        let err = api::verify_and_upgrade(&policy, "pw", &corrupted)
+            .unwrap_err();
+        assert!(matches!(err, Error::InvalidHashString(_)));
+    }
+}
+
+#[test]
+fn verify_pbkdf2_phc_with_corrupted_dk_len() {
+    let policy = fast_test_policy(PrimaryAlgorithm::Pbkdf2);
+    let stored = api::hash(&policy, "pw").unwrap();
+    // Replace `l=32` with `l=abc`.
+    let corrupted = regex_replace_first(&stored, "l=32", "l=abc")
+        .unwrap_or(stored.clone());
+    if corrupted != stored {
+        let err = api::verify_and_upgrade(&policy, "pw", &corrupted)
+            .unwrap_err();
+        assert!(matches!(err, Error::InvalidHashString(_)));
+    }
+}
+
+fn regex_replace_first(
+    s: &str,
+    needle: &str,
+    replacement: &str,
+) -> Option<String> {
+    s.find(needle).map(|i| {
+        let mut out =
+            String::with_capacity(s.len() + replacement.len());
+        out.push_str(&s[..i]);
+        out.push_str(replacement);
+        out.push_str(&s[i + needle.len()..]);
+        out
+    })
 }
 
 #[cfg(feature = "pepper")]

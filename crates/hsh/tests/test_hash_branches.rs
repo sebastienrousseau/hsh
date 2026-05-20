@@ -74,15 +74,20 @@ fn hash_length_matches_hash_bytes() {
 
 #[test]
 fn generate_hash_supports_pbkdf2_alias() {
-    let bytes = Hash::generate_hash("pw1234", "abcdefghijklmnop", "pbkdf2").unwrap();
+    let bytes =
+        Hash::generate_hash("pw1234", "abcdefghijklmnop", "pbkdf2")
+            .unwrap();
     assert!(!bytes.is_empty());
 }
 
 #[test]
 fn generate_hash_supports_pbkdf2_sha256_alias() {
-    let bytes =
-        Hash::generate_hash("pw1234", "abcdefghijklmnop", "pbkdf2-sha256")
-            .unwrap();
+    let bytes = Hash::generate_hash(
+        "pw1234",
+        "abcdefghijklmnop",
+        "pbkdf2-sha256",
+    )
+    .unwrap();
     assert!(!bytes.is_empty());
 }
 
@@ -155,7 +160,8 @@ fn set_password_rehashes_in_place() {
 #[test]
 fn from_string_rejects_wrong_field_count() {
     // Fewer than 6 $-separated fields.
-    let err = Hash::from_string("$argon2id$not-enough-fields").unwrap_err();
+    let err =
+        Hash::from_string("$argon2id$not-enough-fields").unwrap_err();
     assert!(matches!(err, Error::InvalidHashString(_)));
 }
 
@@ -192,13 +198,15 @@ fn from_hash_constructs_with_known_tag() {
 
 #[test]
 fn from_hash_rejects_unknown_tag() {
-    let err = Hash::from_hash(&[0xCC; 32], "not-a-real-algo").unwrap_err();
+    let err =
+        Hash::from_hash(&[0xCC; 32], "not-a-real-algo").unwrap_err();
     assert!(matches!(err, Error::UnsupportedAlgorithm(_)));
 }
 
 #[test]
 fn parse_round_trips_serialised_hash() {
-    let original = Hash::new_argon2id("pw1234", SALT_16.to_vec()).unwrap();
+    let original =
+        Hash::new_argon2id("pw1234", SALT_16.to_vec()).unwrap();
     let json = serde_json::to_string(&original).unwrap();
     let back = Hash::parse(&json).unwrap();
     assert_eq!(original.hash(), back.hash());

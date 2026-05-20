@@ -75,7 +75,8 @@ fn hashing_error_kind_display_covers_every_variant() {
 
 #[test]
 fn hashing_error_constructor_threads_kind_and_detail() {
-    let e = Error::hashing(HashingErrorKind::Argon2, "memory cost too low");
+    let e =
+        Error::hashing(HashingErrorKind::Argon2, "memory cost too low");
     let rendered = format!("{e}");
     assert!(rendered.contains("argon2"));
     assert!(rendered.contains("memory cost too low"));
@@ -94,7 +95,8 @@ fn hashing_error_accepts_owned_string() {
 fn hashing_error_display_format_is_kind_colon_detail() {
     // HashingError is #[non_exhaustive] — go through the Error::hashing
     // constructor, then unwrap the inner via pattern match.
-    let outer = Error::hashing(HashingErrorKind::Scrypt, "invalid log_n");
+    let outer =
+        Error::hashing(HashingErrorKind::Scrypt, "invalid log_n");
     let Error::Hashing(inner) = outer else {
         unreachable!("constructor returns Error::Hashing variant");
     };
@@ -161,12 +163,10 @@ fn error_decode_is_transparent_to_inner() {
 #[test]
 fn from_utf8_error_wraps_into_decode_utf8() {
     // std::str::from_utf8 on an invalid byte sequence.
-    let err = std::str::from_utf8(&[0xff, 0xfe]).unwrap_err();
+    let bad: Vec<u8> = vec![0xff, 0xfe];
+    let err = std::str::from_utf8(&bad).unwrap_err();
     let hsh_err: Error = err.into();
-    assert!(matches!(
-        hsh_err,
-        Error::Decode(DecodeError::Utf8(_))
-    ));
+    assert!(matches!(hsh_err, Error::Decode(DecodeError::Utf8(_))));
 }
 
 #[test]
@@ -174,27 +174,22 @@ fn from_base64_decode_error_wraps_into_decode_base64() {
     use base64::{engine::general_purpose, Engine as _};
     let err = general_purpose::STANDARD.decode("@@@").unwrap_err();
     let hsh_err: Error = err.into();
-    assert!(matches!(
-        hsh_err,
-        Error::Decode(DecodeError::Base64(_))
-    ));
+    assert!(matches!(hsh_err, Error::Decode(DecodeError::Base64(_))));
 }
 
 #[test]
 fn from_serde_json_error_wraps_into_decode_json() {
     let err = serde_json::from_str::<i32>("{").unwrap_err();
     let hsh_err: Error = err.into();
-    assert!(matches!(
-        hsh_err,
-        Error::Decode(DecodeError::Json(_))
-    ));
+    assert!(matches!(hsh_err, Error::Decode(DecodeError::Json(_))));
 }
 
 #[cfg(feature = "pepper")]
 #[test]
 fn from_pepper_error_wraps_into_pepper_variant() {
-    let pe =
-        hsh_kms::PepperError::UnknownVersion(hsh_kms::KeyVersion::new(7));
+    let pe = hsh_kms::PepperError::UnknownVersion(
+        hsh_kms::KeyVersion::new(7),
+    );
     let hsh_err: Error = pe.into();
     assert!(matches!(hsh_err, Error::Pepper(_)));
     assert!(format!("{hsh_err}").contains("pepper provider:"));
@@ -206,8 +201,9 @@ fn from_pepper_error_wraps_into_pepper_variant() {
 
 #[test]
 fn error_implements_std_error() {
-    fn assert_std_error<T: std::error::Error + Send + Sync + 'static>(
-    ) {
+    fn assert_std_error<
+        T: std::error::Error + Send + Sync + 'static,
+    >() {
     }
     assert_std_error::<Error>();
     assert_std_error::<DecodeError>();
@@ -218,7 +214,8 @@ fn hashing_error_source_chain() {
     // HashingError itself is the leaf — std::error::Error::source returns
     // None because we don't wrap a typed source (we stringify on
     // construction for Clone-ability).
-    let outer = Error::hashing(HashingErrorKind::Pbkdf2, "iterations < 1");
+    let outer =
+        Error::hashing(HashingErrorKind::Pbkdf2, "iterations < 1");
     let Error::Hashing(inner) = outer else {
         unreachable!();
     };

@@ -22,19 +22,22 @@ use hsh::Error;
 
 #[test]
 fn argon2id_hash_password_via_trait() {
-    let out = Argon2id::hash_password("hunter2!", "abcdefghijklmnop").unwrap();
+    let out = Argon2id::hash_password("hunter2!", "abcdefghijklmnop")
+        .unwrap();
     assert_eq!(out.len(), 32);
 }
 
 #[test]
 fn argon2i_hash_password_via_trait() {
-    let out = Argon2i::hash_password("hunter2!", "abcdefghijklmnop").unwrap();
+    let out =
+        Argon2i::hash_password("hunter2!", "abcdefghijklmnop").unwrap();
     assert_eq!(out.len(), 32);
 }
 
 #[test]
 fn argon2d_hash_password_via_trait() {
-    let out = Argon2d::hash_password("hunter2!", "abcdefghijklmnop").unwrap();
+    let out =
+        Argon2d::hash_password("hunter2!", "abcdefghijklmnop").unwrap();
     assert_eq!(out.len(), 32);
 }
 
@@ -48,7 +51,11 @@ fn bcrypt_hash_password_via_trait() {
 
 #[test]
 fn scrypt_hash_password_via_trait() {
-    let out = Scrypt::hash_password("hunter2!", "abcdefghijklmnopabcdefghijklmnop").unwrap();
+    let out = Scrypt::hash_password(
+        "hunter2!",
+        "abcdefghijklmnopabcdefghijklmnop",
+    )
+    .unwrap();
     assert!(!out.is_empty());
 }
 
@@ -70,7 +77,8 @@ fn pbkdf2_rejects_zero_iterations() {
         iterations: 0,
         dk_len: 32,
     };
-    let err = Pbkdf2::hash_with(b"pw", b"abcdefghijklmnop", bad).unwrap_err();
+    let err =
+        Pbkdf2::hash_with(b"pw", b"abcdefghijklmnop", bad).unwrap_err();
     assert!(matches!(err, Error::InvalidParameter(_)));
 }
 
@@ -81,7 +89,8 @@ fn pbkdf2_rejects_zero_dk_len() {
         iterations: 1,
         dk_len: 0,
     };
-    let err = Pbkdf2::hash_with(b"pw", b"abcdefghijklmnop", bad).unwrap_err();
+    let err =
+        Pbkdf2::hash_with(b"pw", b"abcdefghijklmnop", bad).unwrap_err();
     assert!(matches!(err, Error::InvalidParameter(_)));
 }
 
@@ -104,8 +113,10 @@ fn pbkdf2_round_trip_is_deterministic() {
         iterations: 10,
         dk_len: 32,
     };
-    let a = Pbkdf2::hash_with(b"pw", b"sssssssssssssss1", params).unwrap();
-    let b = Pbkdf2::hash_with(b"pw", b"sssssssssssssss1", params).unwrap();
+    let a =
+        Pbkdf2::hash_with(b"pw", b"sssssssssssssss1", params).unwrap();
+    let b =
+        Pbkdf2::hash_with(b"pw", b"sssssssssssssss1", params).unwrap();
     assert_eq!(a, b);
 }
 
@@ -199,7 +210,8 @@ fn bcrypt_rejects_oversize_without_prehash() {
 #[test]
 fn bcrypt_verify_rejects_wrong_password() {
     use hsh::algorithms::bcrypt::PrehashAlgorithm;
-    let stored = Bcrypt::hash_with("real", BcryptParams::new(4)).unwrap();
+    let stored =
+        Bcrypt::hash_with("real", BcryptParams::new(4)).unwrap();
     let s = std::str::from_utf8(&stored).unwrap();
     let ok =
         Bcrypt::verify("wrong", s, PrehashAlgorithm::None).unwrap();
@@ -209,11 +221,25 @@ fn bcrypt_verify_rejects_wrong_password() {
 #[test]
 fn bcrypt_verify_accepts_correct_password() {
     use hsh::algorithms::bcrypt::PrehashAlgorithm;
-    let stored = Bcrypt::hash_with("real", BcryptParams::new(4)).unwrap();
+    let stored =
+        Bcrypt::hash_with("real", BcryptParams::new(4)).unwrap();
     let s = std::str::from_utf8(&stored).unwrap();
-    let ok =
-        Bcrypt::verify("real", s, PrehashAlgorithm::None).unwrap();
+    let ok = Bcrypt::verify("real", s, PrehashAlgorithm::None).unwrap();
     assert!(ok);
+}
+
+#[test]
+fn bcrypt_verify_rejects_malformed_mcf_string() {
+    // Malformed bcrypt MCF triggers the bcrypt::verify error path
+    // and the surrounding Error::Verification .map_err closure.
+    use hsh::algorithms::bcrypt::PrehashAlgorithm;
+    let err = Bcrypt::verify(
+        "pw",
+        "$2b$NOT-VALID-BCRYPT",
+        PrehashAlgorithm::None,
+    )
+    .unwrap_err();
+    assert!(matches!(err, Error::Verification(_)));
 }
 
 // ---------------------------------------------------------------------------
@@ -223,13 +249,12 @@ fn bcrypt_verify_accepts_correct_password() {
 
 #[test]
 fn argon2id_verify_matches_when_inputs_agree() {
-    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
     use argon2::Algorithm;
+    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
 
     let salt = "abcdefghijklmnop";
     let pw = "secret password";
-    let stored =
-        Argon2id::hash_password(pw, salt).unwrap();
+    let stored = Argon2id::hash_password(pw, salt).unwrap();
     let ok = verify(
         Algorithm::Argon2id,
         owasp_minimum_2025(),
@@ -243,12 +268,11 @@ fn argon2id_verify_matches_when_inputs_agree() {
 
 #[test]
 fn argon2id_verify_rejects_wrong_password() {
-    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
     use argon2::Algorithm;
+    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
 
     let salt = "abcdefghijklmnop";
-    let stored =
-        Argon2id::hash_password("real", salt).unwrap();
+    let stored = Argon2id::hash_password("real", salt).unwrap();
     let ok = verify(
         Algorithm::Argon2id,
         owasp_minimum_2025(),
@@ -260,10 +284,40 @@ fn argon2id_verify_rejects_wrong_password() {
     assert!(!ok);
 }
 
+// ---------------------------------------------------------------------------
+// Trigger argon2id internal error closures via too-short salt.
+// argon2 requires salt >= 8 bytes; shorter values fire the .map_err
+// inside algorithms::argon2id::hash_with.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn argon2id_rejects_too_short_salt() {
+    // Short salt → argon2's hash_password_into errors → our .map_err
+    // closure fires with Error::Hashing(HashingErrorKind::Argon2).
+    let err = Argon2id::hash_password("pw", "short").unwrap_err();
+    assert!(matches!(err, Error::Hashing(_)));
+}
+
+#[test]
+fn argon2i_rejects_too_short_salt() {
+    let err = Argon2i::hash_password("pw", "short").unwrap_err();
+    assert!(matches!(err, Error::Hashing(_)));
+}
+
+#[test]
+fn argon2d_rejects_too_short_salt() {
+    let err = Argon2d::hash_password("pw", "short").unwrap_err();
+    assert!(matches!(err, Error::Hashing(_)));
+}
+
+// scrypt's hash_password accepts any salt length (it's hashed
+// internally), so we can't trigger its .map_err via short salt the
+// way argon2 allows. Skipped intentionally.
+
 #[test]
 fn argon2id_verify_returns_false_on_size_mismatch() {
-    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
     use argon2::Algorithm;
+    use hsh::algorithms::argon2id::{owasp_minimum_2025, verify};
 
     // Stored hash with wrong length triggers the size-mismatch
     // early-return (Ok(false), not Err).

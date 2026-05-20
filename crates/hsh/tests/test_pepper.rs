@@ -167,6 +167,22 @@ fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
 }
 
 #[test]
+fn legacy_unpeppered_with_wrong_password_returns_invalid_not_rehash() {
+    // Hash without pepper, then verify under a pepper-enabled policy
+    // with the WRONG password. This exercises the
+    // `if policy.pepper.is_some() && !starts_with(PEPPER_PREFIX)` branch
+    // where outcome.is_valid() is false → Outcome::Invalid (not rehash).
+    let bare_policy = fast_test_policy();
+    let stored = api::hash(&bare_policy, "right pw").unwrap();
+
+    let pepper_policy = fast_policy_with_pepper(pepper_v1());
+    let outcome =
+        api::verify_and_upgrade(&pepper_policy, "wrong pw", &stored)
+            .unwrap();
+    assert!(matches!(outcome, Outcome::Invalid));
+}
+
+#[test]
 fn unknown_pepper_version_in_stored_hash_returns_invalid() {
     // Build a hash that claims keyver=99 — version not in our pepper.
     let policy = fast_policy_with_pepper(pepper_v1());
