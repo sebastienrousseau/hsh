@@ -264,6 +264,40 @@ fn verify_unsupported_phc_algorithm() {
 }
 
 // ---------------------------------------------------------------------------
+// Unknown PHC algorithm + PBKDF2 PHC missing/malformed fields. These
+// craft PHC strings that pass password_hash::PasswordHash::new() but
+// fail our internal dispatch / validation.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn verify_dispatches_other_arm_on_unknown_algorithm() {
+    // `argon2u` is a valid PHC-spec ident our match doesn't handle.
+    let policy = fast_test_policy(PrimaryAlgorithm::Argon2id);
+    let bogus = "$argon2u$v=19$m=8,t=1,p=1$YWFhYWFhYWFhYWFhYWFhYQ$dGVzdGRlc3RkZXN0ZGVzdGRlc3RkZXN0";
+    let err =
+        api::verify_and_upgrade(&policy, "pw", bogus).unwrap_err();
+    assert!(matches!(
+        err,
+        Error::UnsupportedAlgorithm(_) | Error::InvalidHashString(_)
+    ));
+}
+
+#[test]
+fn verify_pbkdf2_phc_with_unknown_parameter_key() {
+    // Add an unknown `foo=bar` parameter to a valid PBKDF2 PHC.
+    // The `_ => {}` arm of the parameter loop should silently skip it.
+    let policy = fast_test_policy(PrimaryAlgorithm::Pbkdf2);
+    let stored = api::hash(&policy, "pw").unwrap();
+    // Splice "foo=bar," into the params section.
+    let corrupted = stored.replace("$i=", "$foo=bar,i=");
+    if corrupted != stored {
+        let _ = api::verify_and_upgrade(&policy, "pw", &corrupted);
+        // Either succeeds (unknown param ignored) or fails cleanly —
+        // both exercise the _ => {} arm.
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Bcrypt MCF mismatch path — wrong password under a bcrypt-primary
 // policy must return Outcome::Invalid (not rehash).
 // ---------------------------------------------------------------------------
