@@ -207,9 +207,11 @@ Per-crate READMEs:
 | If you need… | Drop-in config |
 |---|---|
 | **A drop-in for `argonautica` / `rust-argon2` / `bcrypt` / `password-auth` / `djangohashers`** | [migration guides in `doc/`](doc/) — name-for-name mapping tables, behavioural notes, checklists |
+| **Passkey-primary architecture with password fallback** | [`doc/PASSKEY-ERA.md`](doc/PASSKEY-ERA.md) — positioning, three recipes (passkey + password sign-in, recovery credential hardening, staged migration off passwords) |
 | **FIPS 140-3 deployment + Argon2 → PBKDF2 routing** | [`doc/FIPS.md`](doc/FIPS.md) — fail-closed contract, `aws-lc-rs` integration roadmap |
 | **AWS / GCP / Azure / HashiCorp Vault peppering** | [`doc/KMS-INTEGRATION.md`](doc/KMS-INTEGRATION.md) — provider configs, key rotation, `LocalPepper` snapshot pattern |
 | **Per-host benchmark calibration** | `hsh calibrate --algorithm argon2id --target-ms 500` + [`doc/BENCHMARKS.md`](doc/BENCHMARKS.md) |
+| **Day-2 operations runbook** | [`doc/OPERATIONS.md`](doc/OPERATIONS.md) — pre-deployment `inspect-backend` check, fleet sizing, rotation TL;DR, hash-format inspection |
 | **Pre-commit / CI gating** | `crates/hsh-cli/examples/*` + the `hsh verify` exit-code contract |
 
 The rest of this README covers the **library** surface (`hsh`

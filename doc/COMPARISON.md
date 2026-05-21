@@ -97,6 +97,7 @@ Legend: ✅ supported · ❌ not supported · partial = present but limited.
 
 - You want **multi-algorithm support** with one API.
 - You need **auto-rehash on policy drift** (algorithm or parameter migration).
+- You're running a **passkey-primary architecture** and need the password-fallback / recovery-credential side to be hardened against offline replay (see [`PASSKEY-ERA.md`](PASSKEY-ERA.md) for the three reference recipes).
 - You want **in-process versioned pepper** today; KMS-backed providers (AWS / GCP / Azure / Vault) are stub interfaces in v0.0.9 and land for real in 0.1.x.
 - You're going to deploy in a regulated environment where the **FIPS 140-3 *contract*** matters (mint-time fail-closed behaviour). The **validated runtime** (PBKDF2 through `aws-lc-rs`) lands as `hsh-backend-awslc` in 0.1.x.
 - You want a **CLI** for ops / scripting.
