@@ -17,12 +17,12 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
             rest.split_once(':').ok_or_else(|| {
                 anyhow::anyhow!("malformed pepper prefix")
             })?;
-        let mut pairs: Vec<(&str, serde_json::Value)> = vec![
-            ("format", "hsh-pepper".into()),
-            ("keyver", keyver.into()),
-            ("inner", inner.into()),
+        let pairs: Vec<(String, serde_json::Value)> = vec![
+            ("format".into(), "hsh-pepper".into()),
+            ("keyver".into(), keyver.into()),
+            ("inner".into(), inner.into()),
         ];
-        emit(json, &mut pairs)?;
+        emit(json, &pairs)?;
         return Ok(());
     }
 
@@ -32,14 +32,14 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
         || s.starts_with("$2x$")
         || s.starts_with("$2y$")
     {
-        let mut pairs: Vec<(&str, serde_json::Value)> = vec![
-            ("format", "bcrypt-mcf".into()),
-            ("algorithm", "bcrypt".into()),
+        let mut pairs: Vec<(String, serde_json::Value)> = vec![
+            ("format".into(), "bcrypt-mcf".into()),
+            ("algorithm".into(), "bcrypt".into()),
         ];
         if let Some(cost) = s.split('$').nth(2) {
-            pairs.push(("cost", cost.into()));
+            pairs.push(("cost".into(), cost.into()));
         }
-        emit(json, &mut pairs)?;
+        emit(json, &pairs)?;
         return Ok(());
     }
 
@@ -47,9 +47,9 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
     if let Some(rest) = s.strip_prefix('$') {
         let segments: Vec<&str> = rest.split('$').collect();
         if let Some(algo) = segments.first() {
-            let mut pairs: Vec<(&str, serde_json::Value)> = vec![
-                ("format", "phc".into()),
-                ("algorithm", (*algo).into()),
+            let mut pairs: Vec<(String, serde_json::Value)> = vec![
+                ("format".into(), "phc".into()),
+                ("algorithm".into(), (*algo).into()),
             ];
             // Subsequent segments are either "k=v,k=v,..." params,
             // bare salt, or bare hash. We don't try to be exhaustive —
@@ -57,23 +57,19 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
             for (idx, seg) in segments.iter().enumerate().skip(1) {
                 if seg.contains('=') {
                     pairs.push((
-                        Box::leak(
-                            format!("params[{idx}]").into_boxed_str(),
-                        ),
+                        format!("params[{idx}]"),
                         (*seg).into(),
                     ));
                 } else if idx == segments.len() - 1 {
-                    pairs.push(("hash_b64", (*seg).into()));
+                    pairs.push(("hash_b64".into(), (*seg).into()));
                 } else {
                     pairs.push((
-                        Box::leak(
-                            format!("segment[{idx}]").into_boxed_str(),
-                        ),
+                        format!("segment[{idx}]"),
                         (*seg).into(),
                     ));
                 }
             }
-            emit(json, &mut pairs)?;
+            emit(json, &pairs)?;
             return Ok(());
         }
     }
@@ -83,9 +79,9 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
 
 fn emit(
     json: bool,
-    pairs: &mut Vec<(&str, serde_json::Value)>,
+    pairs: &[(String, serde_json::Value)],
 ) -> Result<()> {
     let kv: Vec<(&str, &serde_json::Value)> =
-        pairs.iter().map(|(k, v)| (*k, v)).collect();
+        pairs.iter().map(|(k, v)| (k.as_str(), v)).collect();
     print_kv(json, &kv)
 }

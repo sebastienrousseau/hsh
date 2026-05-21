@@ -217,3 +217,112 @@ fn parse_pbkdf2_params_ignores_unknown_keys() {
     assert_eq!(iters, 1);
     assert_eq!(dk, 32);
 }
+
+// ---------------------------------------------------------------------------
+// Newly-extracted helpers (one per previously-inline closure)
+// ---------------------------------------------------------------------------
+
+#[test]
+fn pbkdf2_bad_iter_helper_returns_invalid_hash_string() {
+    let e = api::pbkdf2_bad_iter();
+    match e {
+        Error::InvalidHashString(s) => {
+            assert!(s.contains("iteration count"));
+        }
+        _ => panic!("expected InvalidHashString"),
+    }
+}
+
+#[test]
+fn pbkdf2_bad_dk_len_helper_returns_invalid_hash_string() {
+    let e = api::pbkdf2_bad_dk_len();
+    match e {
+        Error::InvalidHashString(s) => {
+            assert!(s.contains("output length"));
+        }
+        _ => panic!("expected InvalidHashString"),
+    }
+}
+
+#[test]
+fn bcrypt_requires_utf8_helper_returns_invalid_password() {
+    let e = api::bcrypt_requires_utf8();
+    match e {
+        Error::InvalidPassword(s) => {
+            assert!(s.contains("bcrypt"));
+            assert!(s.contains("UTF-8"));
+        }
+        _ => panic!("expected InvalidPassword"),
+    }
+}
+
+#[test]
+fn bcrypt_verify_requires_utf8_helper_returns_invalid_password() {
+    let e = api::bcrypt_verify_requires_utf8();
+    match e {
+        Error::InvalidPassword(s) => {
+            assert!(s.contains("verification"));
+        }
+        _ => panic!("expected InvalidPassword"),
+    }
+}
+
+#[test]
+fn pepper_malformed_prefix_helper_returns_invalid_hash_string() {
+    let e = api::pepper_malformed_prefix();
+    match e {
+        Error::InvalidHashString(s) => {
+            assert!(s.contains("pepper"));
+        }
+        _ => panic!("expected InvalidHashString"),
+    }
+}
+
+#[test]
+fn pepper_keyver_not_int_helper_returns_invalid_hash_string() {
+    let e = api::pepper_keyver_not_int();
+    match e {
+        Error::InvalidHashString(s) => {
+            assert!(s.contains("keyver"));
+        }
+        _ => panic!("expected InvalidHashString"),
+    }
+}
+
+#[test]
+fn phc_not_recognised_helper_returns_invalid_hash_string() {
+    let e = api::phc_not_recognised();
+    match e {
+        Error::InvalidHashString(s) => {
+            assert!(s.contains("PHC"));
+        }
+        _ => panic!("expected InvalidHashString"),
+    }
+}
+
+#[test]
+fn fips_primary_must_be_pbkdf2_helper_includes_primary_name() {
+    use hsh::policy::PrimaryAlgorithm;
+    let e =
+        api::fips_primary_must_be_pbkdf2(PrimaryAlgorithm::Argon2id);
+    match e {
+        Error::InvalidParameter(s) => {
+            assert!(s.contains("Argon2id"));
+            assert!(s.contains("FIPS"));
+            assert!(s.contains("PBKDF2"));
+        }
+        _ => panic!("expected InvalidParameter"),
+    }
+}
+
+#[test]
+fn fips_feature_not_built_helper_mentions_fips_feature_flag() {
+    let e = api::fips_feature_not_built();
+    match e {
+        Error::InvalidParameter(s) => {
+            assert!(s.contains("fips"));
+            assert!(s.contains("feature"));
+        }
+        _ => panic!("expected InvalidParameter"),
+    }
+}

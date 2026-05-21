@@ -77,10 +77,10 @@ Hash (HSH) is a lightweight library that can easily integrate into any Rust proj
 [10]: https://lib.rs/crates/hsh
 [11]: https://codecov.io/github/sebastienrousseau/hsh
 
-[banner]: https://kura.pro/hsh/images/titles/title-hsh.svg "Hash (HSH) Banner"
+[banner]: https://cloudcdn.pro/hsh/v1/logos/hsh.svg "Hash (HSH) Banner"
 [codecov-badge]: https://img.shields.io/codecov/c/github/sebastienrousseau/cmn?style=for-the-badge&token=DMNW4DN0LO 'Codecov'
 [crates-badge]: https://img.shields.io/crates/v/hsh.svg?style=for-the-badge 'Crates.io'
-[divider]: https://kura.pro/common/images/elements/divider.svg "divider"
+[divider]: https://cloudcdn.pro/common/v1/elements/divider.svg "divider"
 [docs-badge]: https://img.shields.io/docsrs/hsh.svg?style=for-the-badge 'Docs.rs'
 [libs-badge]: https://img.shields.io/badge/lib.rs-v0.0.8-orange.svg?style=for-the-badge 'Lib.rs'
 [license-badge]: https://img.shields.io/crates/l/hsh.svg?style=for-the-badge 'License'

@@ -136,4 +136,115 @@ mod tests {
             .expect("algorithm drift should yield rehash");
         assert!(new_phc.starts_with("$argon2id$"));
     }
+
+    // -----------------------------------------------------------------
+    // Regression: api::hash used to discard policy.scrypt and call
+    // ScryptHasher::hash_password (default params). Verify the stored
+    // PHC carries the policy's `ln=` value.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn scrypt_hash_honors_policy_log_n() {
+        use password_hash::PasswordHash;
+        let policy = fast_policy_with_primary(PrimaryAlgorithm::Scrypt);
+        let stored = api::hash(&policy, "scrypt-probe").unwrap();
+        assert!(stored.starts_with("$scrypt$"));
+        let parsed = PasswordHash::new(&stored).unwrap();
+        let ln = parsed
+            .params
+            .iter()
+            .find(|p| p.0.as_str() == "ln")
+            .and_then(|p| p.1.decimal().ok())
+            .expect("scrypt PHC must carry ln= param");
+        // fast_policy_with_primary sets log_n=8 for tests.
+        assert_eq!(
+            ln, 8,
+            "scrypt hash must reflect policy.scrypt.log_n"
+        );
+    }
+
+    #[test]
+    fn scrypt_round_trip_with_policy_params() {
+        let policy = fast_policy_with_primary(PrimaryAlgorithm::Scrypt);
+        let stored = api::hash(&policy, "round-trip").unwrap();
+        let outcome =
+            api::verify_and_upgrade(&policy, "round-trip", &stored)
+                .unwrap();
+        assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
+    }
+
+    // -----------------------------------------------------------------
+    // Regression: needs_rehash used to ignore bcrypt cost drift.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn bcrypt_cost_drift_triggers_rehash() {
+        let weak = fast_policy_with_primary(PrimaryAlgorithm::Bcrypt); // cost=4
+        let stronger = PolicyBuilder::from_preset(&weak)
+            .bcrypt(hsh::algorithms::bcrypt::BcryptParams::new(5))
+            .build()
+            .unwrap();
+        let stored = api::hash(&weak, "drift-bcrypt").unwrap();
+        let outcome =
+            api::verify_and_upgrade(&stronger, "drift-bcrypt", &stored)
+                .unwrap();
+        assert!(outcome.is_valid());
+        assert!(
+            outcome.needs_rehash(),
+            "bcrypt cost drift must trigger rehash"
+        );
+    }
+
+    // -----------------------------------------------------------------
+    // Regression: needs_rehash used to ignore scrypt parameter drift.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn scrypt_param_drift_triggers_rehash() {
+        let weak = fast_policy_with_primary(PrimaryAlgorithm::Scrypt); // log_n=8
+        let stronger = PolicyBuilder::from_preset(&weak)
+            .scrypt(hsh::algorithms::scrypt::ScryptParams {
+                log_n: 10,
+                r: 8,
+                p: 1,
+                dk_len: 32,
+            })
+            .build()
+            .unwrap();
+        let stored = api::hash(&weak, "drift-scrypt").unwrap();
+        let outcome =
+            api::verify_and_upgrade(&stronger, "drift-scrypt", &stored)
+                .unwrap();
+        assert!(outcome.is_valid());
+        assert!(
+            outcome.needs_rehash(),
+            "scrypt param drift must trigger rehash"
+        );
+    }
+
+    // -----------------------------------------------------------------
+    // Regression: needs_rehash used to ignore pbkdf2 dk_len drift.
+    // -----------------------------------------------------------------
+
+    #[test]
+    fn pbkdf2_dk_len_drift_triggers_rehash() {
+        let weak = fast_policy_with_primary(PrimaryAlgorithm::Pbkdf2);
+        let stored = api::hash(&weak, "drift-pbkdf2").unwrap();
+        let stronger = PolicyBuilder::from_preset(&weak)
+            .pbkdf2(hsh::algorithms::pbkdf2::Pbkdf2Params {
+                prf: hsh::algorithms::pbkdf2::Prf::Sha256,
+                iterations: 1,
+                dk_len: 64,
+            })
+            .build()
+            .unwrap();
+        let outcome =
+            api::verify_and_upgrade(&stronger, "drift-pbkdf2", &stored)
+                .unwrap();
+        assert!(outcome.is_valid());
+        assert!(
+            outcome.needs_rehash(),
+            "pbkdf2 dk_len drift must trigger rehash"
+        );
+    }
 }

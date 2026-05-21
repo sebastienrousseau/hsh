@@ -231,6 +231,39 @@ impl Policy {
             && stored.p_cost() >= self.argon2.p_cost()
             && stored.output_len() == self.argon2.output_len()
     }
+
+    /// Returns `true` if a stored bcrypt `cost` is at least as strong as
+    /// the current policy. A weaker stored cost triggers a rehash on
+    /// successful verify.
+    pub(crate) fn bcrypt_satisfies(&self, stored_cost: u32) -> bool {
+        stored_cost >= self.bcrypt.cost
+    }
+
+    /// Returns `true` if stored scrypt `log_n`, `r`, `p`, and `dk_len`
+    /// are at least as strong as the current policy. Cost factors must
+    /// be `>=`; `dk_len` must match exactly (changing output length
+    /// changes the meaning of the stored bytes).
+    pub(crate) fn scrypt_satisfies(
+        &self,
+        stored: &ScryptParams,
+    ) -> bool {
+        stored.log_n >= self.scrypt.log_n
+            && stored.r >= self.scrypt.r
+            && stored.p >= self.scrypt.p
+            && stored.dk_len == self.scrypt.dk_len
+    }
+
+    /// Returns `true` if stored PBKDF2 `iterations` and `dk_len` are at
+    /// least as strong as the current policy. PRF equality is checked
+    /// by the caller via `algo_id` matching.
+    pub(crate) fn pbkdf2_satisfies(
+        &self,
+        stored_iters: u32,
+        stored_dk_len: usize,
+    ) -> bool {
+        stored_iters >= self.pbkdf2.iterations
+            && stored_dk_len == self.pbkdf2.dk_len
+    }
 }
 
 impl Default for Policy {

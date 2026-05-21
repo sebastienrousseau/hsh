@@ -105,24 +105,10 @@ fn hash_unpeppered(policy: &Policy, password: &[u8]) -> Result<String> {
     if policy.backend.is_fips()
         && !matches!(policy.primary, PrimaryAlgorithm::Pbkdf2)
     {
-        return Err(Error::InvalidParameter(
-            format!(
-                "Backend::Fips140Required cannot mint hashes with {:?} — \
-                 only PBKDF2 has a FIPS 140-3 validated implementation. \
-                 Switch policy.primary to PrimaryAlgorithm::Pbkdf2 or relax \
-                 policy.backend.",
-                policy.primary
-            )
-            .into(),
-        ));
+        return Err(fips_primary_must_be_pbkdf2(policy.primary));
     }
     if policy.backend.is_fips() && !Backend::fips_available_in_build() {
-        return Err(Error::InvalidParameter(
-            "Backend::Fips140Required policy supplied but the `fips` Cargo \
-             feature is not enabled in this build. Rebuild with `--features \
-             fips` or relax policy.backend to Backend::Native."
-                .into(),
-        ));
+        return Err(fips_feature_not_built());
     }
 
     match policy.primary {
@@ -139,23 +125,18 @@ fn hash_unpeppered(policy: &Policy, password: &[u8]) -> Result<String> {
             Ok(phc.to_string())
         }
         PrimaryAlgorithm::Bcrypt => {
-            let pw_str =
-                std::str::from_utf8(password).map_err(|_| {
-                    Error::InvalidPassword(
-                        "bcrypt requires UTF-8 passwords; supply \
-                         pre-hash via PrehashAlgorithm for arbitrary \
-                         bytes"
-                            .into(),
-                    )
-                })?;
+            let pw_str = std::str::from_utf8(password)
+                .map_err(|_| bcrypt_requires_utf8())?;
             let bytes = Bcrypt::hash_with(pw_str, policy.bcrypt)?;
             String::from_utf8(bytes).map_err(map_bcrypt_utf8_err)
         }
         PrimaryAlgorithm::Scrypt => {
             let salt = SaltString::generate(&mut OsRng);
-            let _ = policy.scrypt;
+            let native = policy.scrypt.to_native()?;
             let phc = ScryptHasher
-                .hash_password(password, &salt)
+                .hash_password_customized(
+                    password, None, None, native, &salt,
+                )
                 .map_err(map_scrypt_err)?;
             Ok(phc.to_string())
         }
@@ -237,16 +218,9 @@ fn verify_dispatch(
             return Ok(Outcome::Invalid);
         };
         let (ver_str, inner) =
-            rest.split_once(':').ok_or_else(|| {
-                Error::InvalidHashString(
-                    "malformed pepper prefix".into(),
-                )
-            })?;
-        let ver_num: u32 = ver_str.parse().map_err(|_| {
-            Error::InvalidHashString(
-                "pepper keyver must be an integer".into(),
-            )
-        })?;
+            rest.split_once(':').ok_or_else(pepper_malformed_prefix)?;
+        let ver_num: u32 =
+            ver_str.parse().map_err(|_| pepper_keyver_not_int())?;
         let stored_version = hsh_kms::KeyVersion::new(ver_num);
         let tag = pepper.apply(stored_version, password)?;
         let peppered = general_purpose::STANDARD_NO_PAD.encode(tag);
@@ -292,17 +266,21 @@ fn verify_dispatch_inner(
         || stored.starts_with("$2x$")
         || stored.starts_with("$2y$")
     {
-        let pw_str = std::str::from_utf8(password).map_err(|_| {
-            Error::InvalidPassword(
-                "bcrypt verification requires UTF-8 passwords".into(),
-            )
-        })?;
+        let pw_str = std::str::from_utf8(password)
+            .map_err(|_| bcrypt_verify_requires_utf8())?;
         let valid =
             Bcrypt::verify(pw_str, stored, PrehashAlgorithm::None)?;
         if !valid {
             return Ok(Outcome::Invalid);
         }
-        if !matches!(policy.primary, PrimaryAlgorithm::Bcrypt) {
+        let cost_drift =
+            matches!(policy.primary, PrimaryAlgorithm::Bcrypt)
+                && !parse_bcrypt_cost(stored)
+                    .map(|c| policy.bcrypt_satisfies(c))
+                    .unwrap_or(false);
+        if !matches!(policy.primary, PrimaryAlgorithm::Bcrypt)
+            || cost_drift
+        {
             let new_phc = hash_unpeppered(policy, password)?;
             return Ok(Outcome::Valid {
                 rehashed: Some(new_phc),
@@ -311,11 +289,8 @@ fn verify_dispatch_inner(
         return Ok(Outcome::Valid { rehashed: None });
     }
 
-    let parsed = PasswordHash::new(stored).map_err(|_| {
-        Error::InvalidHashString(
-            "not a recognised PHC or MCF string".into(),
-        )
-    })?;
+    let parsed =
+        PasswordHash::new(stored).map_err(|_| phc_not_recognised())?;
     let algo_id = parsed.algorithm.as_str();
 
     let valid = match algo_id {
@@ -433,6 +408,14 @@ fn needs_rehash(
             .unwrap_or(true);
     }
 
+    if algo_id == "scrypt" {
+        let stored = match parse_scrypt_phc_params(parsed) {
+            Some(s) => s,
+            None => return true,
+        };
+        return !policy.scrypt_satisfies(&stored);
+    }
+
     if algo_id == "pbkdf2-sha256" || algo_id == "pbkdf2-sha512" {
         let policy_prf_id = match policy.pbkdf2.prf {
             Prf::Sha256 => "pbkdf2-sha256",
@@ -447,10 +430,57 @@ fn needs_rehash(
             .find(|p| p.0.as_str() == "i")
             .and_then(|p| p.1.decimal().ok())
             .unwrap_or(0);
-        return stored_iters < policy.pbkdf2.iterations;
+        let stored_dk_len = parsed
+            .params
+            .iter()
+            .find(|p| p.0.as_str() == "l")
+            .and_then(|p| p.1.decimal().ok().map(|d| d as usize))
+            .or_else(|| parsed.hash.map(|h| h.as_bytes().len()))
+            .unwrap_or(0);
+        return !policy.pbkdf2_satisfies(stored_iters, stored_dk_len);
     }
 
     false
+}
+
+/// Parses a bcrypt MCF cost factor (the two-digit field between the
+/// second and third `$`). Returns `None` if the input is not a
+/// recognisable bcrypt MCF string.
+fn parse_bcrypt_cost(stored: &str) -> Option<u32> {
+    // Expected layout: `$2{a,b,x,y}$<cost>$<salt+hash>`.
+    let mut parts = stored.splitn(4, '$');
+    let _empty = parts.next()?; // leading ""
+    let _ident = parts.next()?; // "2a"/"2b"/"2x"/"2y"
+    let cost_str = parts.next()?;
+    cost_str.parse::<u32>().ok()
+}
+
+/// Extracts scrypt `(log_n, r, p, dk_len)` from a parsed PHC. Returns
+/// `None` if a required field is missing or unparseable; the caller
+/// treats `None` as a rehash trigger.
+fn parse_scrypt_phc_params(
+    parsed: &PasswordHash<'_>,
+) -> Option<crate::algorithms::scrypt::ScryptParams> {
+    let mut log_n: Option<u8> = None;
+    let mut r: Option<u32> = None;
+    let mut p: Option<u32> = None;
+    for (k, v) in parsed.params.iter() {
+        match k.as_str() {
+            "ln" => {
+                log_n =
+                    v.decimal().ok().and_then(|d| u8::try_from(d).ok())
+            }
+            "r" => r = v.decimal().ok(),
+            "p" => p = v.decimal().ok(),
+            _ => {}
+        }
+    }
+    Some(crate::algorithms::scrypt::ScryptParams {
+        log_n: log_n?,
+        r: r?,
+        p: p?,
+        dk_len: parsed.hash.map(|h| h.as_bytes().len())?,
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -505,21 +535,82 @@ pub fn parse_pbkdf2_params(
     for p in parsed.params.iter() {
         match p.0.as_str() {
             "i" => {
-                iterations = p.1.decimal().map_err(|_| {
-                    Error::InvalidHashString(
-                        "PBKDF2 PHC bad iteration count".into(),
-                    )
-                })?;
+                iterations =
+                    p.1.decimal().map_err(|_| pbkdf2_bad_iter())?;
             }
             "l" => {
-                dk_len = p.1.decimal().map_err(|_| {
-                    Error::InvalidHashString(
-                        "PBKDF2 PHC bad output length".into(),
-                    )
-                })? as usize;
+                dk_len =
+                    p.1.decimal().map_err(|_| pbkdf2_bad_dk_len())?
+                        as usize;
             }
             _ => {}
         }
     }
     Ok((iterations, dk_len))
+}
+
+#[doc(hidden)]
+pub fn pbkdf2_bad_iter() -> Error {
+    Error::InvalidHashString("PBKDF2 PHC bad iteration count".into())
+}
+
+#[doc(hidden)]
+pub fn pbkdf2_bad_dk_len() -> Error {
+    Error::InvalidHashString("PBKDF2 PHC bad output length".into())
+}
+
+#[doc(hidden)]
+pub fn bcrypt_requires_utf8() -> Error {
+    Error::InvalidPassword(
+        "bcrypt requires UTF-8 passwords; supply pre-hash via \
+         PrehashAlgorithm for arbitrary bytes"
+            .into(),
+    )
+}
+
+#[doc(hidden)]
+pub fn bcrypt_verify_requires_utf8() -> Error {
+    Error::InvalidPassword(
+        "bcrypt verification requires UTF-8 passwords".into(),
+    )
+}
+
+#[doc(hidden)]
+pub fn pepper_malformed_prefix() -> Error {
+    Error::InvalidHashString("malformed pepper prefix".into())
+}
+
+#[doc(hidden)]
+pub fn pepper_keyver_not_int() -> Error {
+    Error::InvalidHashString("pepper keyver must be an integer".into())
+}
+
+#[doc(hidden)]
+pub fn phc_not_recognised() -> Error {
+    Error::InvalidHashString(
+        "not a recognised PHC or MCF string".into(),
+    )
+}
+
+#[doc(hidden)]
+pub fn fips_primary_must_be_pbkdf2(primary: PrimaryAlgorithm) -> Error {
+    Error::InvalidParameter(
+        format!(
+            "Backend::Fips140Required cannot mint hashes with {primary:?} \
+             — only PBKDF2 has a FIPS 140-3 validated implementation. \
+             Switch policy.primary to PrimaryAlgorithm::Pbkdf2 or relax \
+             policy.backend."
+        )
+        .into(),
+    )
+}
+
+#[doc(hidden)]
+pub fn fips_feature_not_built() -> Error {
+    Error::InvalidParameter(
+        "Backend::Fips140Required policy supplied but the `fips` Cargo \
+         feature is not enabled in this build. Rebuild with `--features \
+         fips` or relax policy.backend to Backend::Native."
+            .into(),
+    )
 }

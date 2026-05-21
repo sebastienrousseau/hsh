@@ -40,6 +40,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                     &mut best,
                     format!("argon2id m={m} t=2 p=1"),
                     took,
+                    target,
                 );
             }
         }
@@ -57,6 +58,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                     &mut best,
                     format!("bcrypt cost={cost}"),
                     took,
+                    target,
                 );
             }
         }
@@ -79,6 +81,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                     &mut best,
                     format!("scrypt log_n={log_n} r=8 p=1"),
                     took,
+                    target,
                 );
             }
         }
@@ -103,6 +106,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                     &mut best,
                     format!("pbkdf2-sha256 iters={iters}"),
                     took,
+                    target,
                 );
             }
         }
@@ -143,16 +147,63 @@ fn time_hash(policy: &Policy) -> u128 {
     start.elapsed().as_millis()
 }
 
+/// Keeps the `(params, took)` whose `took` is closest to `target_ms`.
+/// Ties (`abs_diff` equal) keep the first candidate so the ladder's
+/// lower-cost choice wins — a tighter security upper bound at equal
+/// distance is preferred.
 fn consider(
     best: &mut Option<(String, u128)>,
     params: String,
     took: u128,
+    target_ms: u128,
 ) {
+    let new_distance = took.abs_diff(target_ms);
     match best {
         None => *best = Some((params, took)),
-        Some((_, current)) if *current < took => {
+        Some((_, current))
+            if new_distance < current.abs_diff(target_ms) =>
+        {
             *best = Some((params, took));
         }
         _ => {}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::consider;
+
+    #[test]
+    fn consider_picks_closest_to_target() {
+        let mut best: Option<(String, u128)> = None;
+        // target = 250 ms; ladder produces 100, 200, 300, 500.
+        consider(&mut best, "a".into(), 100, 250);
+        consider(&mut best, "b".into(), 200, 250);
+        consider(&mut best, "c".into(), 300, 250);
+        consider(&mut best, "d".into(), 500, 250);
+        let (chosen, took) = best.unwrap();
+        // 200 and 300 are tied at distance 50; first-wins ⇒ "b".
+        assert_eq!(chosen, "b");
+        assert_eq!(took, 200);
+    }
+
+    #[test]
+    fn consider_keeps_only_candidate() {
+        let mut best: Option<(String, u128)> = None;
+        consider(&mut best, "only".into(), 999, 100);
+        let (chosen, took) = best.unwrap();
+        assert_eq!(chosen, "only");
+        assert_eq!(took, 999);
+    }
+
+    #[test]
+    fn consider_does_not_drift_to_slowest() {
+        // Regression: the prior implementation kept the *largest* took,
+        // so a ladder that exceeded target by a lot would still win.
+        let mut best: Option<(String, u128)> = None;
+        consider(&mut best, "fast".into(), 50, 50);
+        consider(&mut best, "slow".into(), 5_000, 50);
+        let (chosen, _) = best.unwrap();
+        assert_eq!(chosen, "fast");
     }
 }
