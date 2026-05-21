@@ -104,12 +104,50 @@ hsh inspect '$argon2id$v=19$m=19456,t=2,p=1$YWJjZGVmZ2hpamtsbW5vcA$dGVzdA'
 #   hash_b64:  dGVzdA
 ```
 
+### `hsh inspect-backend`
+
+Operator self-check: confirms the binary's effective crypto route for a
+given preset before traffic touches it. Surfaces the backend
+(`Native` / `Fips140Required`), whether this build can satisfy a FIPS
+requirement (`fips_available_in_build`), the primary algorithm, whether
+the `pepper` feature was compiled in, plus build provenance (hsh-cli
+version, rustc, target triple, profile).
+
+```bash
+hsh --json inspect-backend --policy fips
+# → {
+#     "backend": "Fips140Required",
+#     "fips_available_in_build": false,
+#     "primary_algorithm": "Pbkdf2",
+#     "readiness": "unsatisfied (build cannot provide a FIPS-validated route)",
+#     "preset": "fips_140_pbkdf2",
+#     "rustc": "rustc 1.95.0 (…)",
+#     "target_triple": "x86_64-unknown-linux-gnu",
+#     …
+#   }
+```
+
+Gate a deploy with `jq`:
+
+```bash
+hsh --json inspect-backend --policy "$DESIRED" \
+  | jq -e '.readiness == "satisfied"' >/dev/null \
+  || { echo "hsh backend not ready for $DESIRED" >&2; exit 1; }
+```
+
+See [`doc/OPERATIONS.md`](../../doc/OPERATIONS.md) for the full
+pre-deployment workflow.
+
 ### `hsh calibrate`
 
 ```bash
 hsh calibrate --algorithm argon2id --target-ms 500
 # Walks m_cost ∈ {4096, 8192, 19456, 32768, 65536, 131072},
 # reports the params that hit closest to 500 ms.
+# JSON mode (--json) also emits a `ladder` array with every candidate
+# and a `runner` block with host_os / arch / target_triple / profile /
+# rustc / hsh_cli_version so sizing decisions are tied to the host
+# that produced them.
 ```
 
 ### `hsh completions`

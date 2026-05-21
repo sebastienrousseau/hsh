@@ -668,6 +668,110 @@ fn completions_emit_zsh_script() {
     assert!(stdout.contains("#compdef hsh"));
 }
 
+// ---------------------------------------------------------------------------
+// `hsh inspect-backend` — operator self-check.
+// ---------------------------------------------------------------------------
+
+#[test]
+fn inspect_backend_owasp_reports_native_satisfied() {
+    let output = hsh()
+        .args(["--json", "inspect-backend", "--policy", "owasp"])
+        .output()
+        .expect("inspect-backend owasp");
+    assert!(output.status.success());
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+    assert_eq!(json["backend"], "Native");
+    assert_eq!(json["primary_algorithm"], "Argon2id");
+    assert_eq!(json["readiness"], "satisfied");
+    assert_eq!(json["fips_available_in_build"], false);
+    // Build provenance must be populated, not "unknown".
+    let rustc = json["rustc"].as_str().expect("rustc string");
+    assert!(
+        rustc.starts_with("rustc "),
+        "rustc should start with 'rustc ', got: {rustc}"
+    );
+    let target = json["target_triple"].as_str().expect("target string");
+    assert!(!target.is_empty() && target != "unknown");
+}
+
+#[test]
+fn inspect_backend_fips_reports_unsatisfied_without_validated_runtime()
+{
+    let output = hsh()
+        .args(["--json", "inspect-backend", "--policy", "fips"])
+        .output()
+        .expect("inspect-backend fips");
+    assert!(output.status.success());
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+    assert_eq!(json["backend"], "Fips140Required");
+    assert_eq!(json["primary_algorithm"], "Pbkdf2");
+    let readiness = json["readiness"].as_str().expect("readiness");
+    assert!(
+        readiness.starts_with("unsatisfied"),
+        "expected unsatisfied readiness without aws-lc-rs, got: {readiness}"
+    );
+}
+
+#[test]
+fn inspect_backend_plain_output_includes_preset_label() {
+    let output = hsh()
+        .args(["inspect-backend", "--policy", "rfc9106"])
+        .output()
+        .expect("inspect-backend plain");
+    assert!(output.status.success());
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    assert!(stdout.contains("preset: rfc9106_first_recommended"));
+    assert!(stdout.contains("backend: Native"));
+    assert!(stdout.contains("primary_algorithm: Argon2id"));
+}
+
+#[test]
+fn calibrate_json_includes_ladder_and_runner_blocks() {
+    let output = hsh()
+        .args([
+            "--json",
+            "calibrate",
+            "--algorithm",
+            "argon2id",
+            "--target-ms",
+            "50",
+        ])
+        .output()
+        .expect("calibrate json with ladder");
+    assert!(output.status.success());
+    let json: serde_json::Value =
+        serde_json::from_slice(&output.stdout).expect("valid JSON");
+
+    // Ladder is present, non-empty, and exactly one entry has selected=true.
+    let ladder = json["ladder"].as_array().expect("ladder array");
+    assert!(!ladder.is_empty(), "ladder must contain candidates");
+    let selected_count = ladder
+        .iter()
+        .filter(|e| e["selected"].as_bool().unwrap_or(false))
+        .count();
+    assert_eq!(
+        selected_count, 1,
+        "exactly one ladder entry should be marked selected"
+    );
+    // Each entry carries candidate / measured_ms / distance_ms.
+    for entry in ladder {
+        assert!(entry["candidate"].is_string());
+        assert!(entry["measured_ms"].is_number());
+        assert!(entry["distance_ms"].is_number());
+    }
+
+    // Runner block carries the build/host metadata.
+    let runner = &json["runner"];
+    assert!(runner["host_os"].is_string());
+    assert!(runner["host_arch"].is_string());
+    assert!(runner["target_triple"].is_string());
+    assert!(runner["profile"].is_string());
+    assert!(runner["rustc"].is_string());
+    assert!(runner["hsh_cli_version"].is_string());
+}
+
 #[test]
 fn completions_emit_fish_script() {
     let output = hsh()

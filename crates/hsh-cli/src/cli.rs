@@ -34,6 +34,18 @@ pub(crate) enum Command {
     Rehash(RehashArgs),
     /// Pretty-print the algorithm + parameters of a stored hash.
     Inspect(InspectArgs),
+    /// Show the effective crypto route for a preset (operator self-check).
+    #[command(
+        long_about = "Show the effective crypto route for a given preset: \
+                      which Backend the policy declares, whether this build \
+                      can satisfy a FIPS requirement, the primary algorithm \
+                      new hashes are minted under, whether the `pepper` \
+                      feature is compiled in, and build provenance (hsh-cli \
+                      version, rustc, target triple, profile). Use this \
+                      before a deployment takes traffic to verify the binary \
+                      actually delivers the contract you expected."
+    )]
+    InspectBackend(InspectBackendArgs),
     /// Calibrate KDF parameters to hit a wall-time target.
     Calibrate(CalibrateArgs),
     /// Emit shell-completion scripts for the named shell.
@@ -117,6 +129,13 @@ pub(crate) struct InspectArgs {
 }
 
 #[derive(Debug, Clone, clap::Args)]
+pub(crate) struct InspectBackendArgs {
+    /// Preset to evaluate. Defaults to OWASP-2025.
+    #[arg(long, value_enum, default_value_t)]
+    pub policy: PresetPolicy,
+}
+
+#[derive(Debug, Clone, clap::Args)]
 pub(crate) struct CalibrateArgs {
     /// Algorithm to calibrate.
     #[arg(short, long, value_enum, default_value_t = AlgoArg::Argon2id)]
@@ -148,6 +167,9 @@ impl Cli {
             }
             Command::Inspect(args) => {
                 crate::commands::inspect::run(args, self.json)
+            }
+            Command::InspectBackend(args) => {
+                crate::commands::inspect_backend::run(args, self.json)
             }
             Command::Calibrate(args) => {
                 crate::commands::calibrate::run(args, self.json)

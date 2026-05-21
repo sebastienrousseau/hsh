@@ -8,13 +8,14 @@ Enterprise password hashing for the command line.
 Usage: hsh [OPTIONS] <COMMAND>
 
 Commands:
-  hash         Hash a password and print the storable form to stdout
-  verify       Verify a candidate password against a stored hash
-  rehash       Verify, then mint a fresh hash under the current policy
-  inspect      Pretty-print the algorithm + parameters of a stored hash
-  calibrate    Calibrate KDF parameters to hit a wall-time target
-  completions  Emit shell-completion scripts for the named shell
-  help         Print this message or the help of the given subcommand(s)
+  hash             Hash a password and print the storable form to stdout
+  verify           Verify a candidate password against a stored hash
+  rehash           Verify, then mint a fresh hash under the current policy
+  inspect          Pretty-print the algorithm + parameters of a stored hash
+  inspect-backend  Show the effective crypto route for a preset (operator self-check)
+  calibrate        Calibrate KDF parameters to hit a wall-time target
+  completions      Emit shell-completion scripts for the named shell
+  help             Print this message or the help of the given subcommand(s)
 
 Options:
       --json     Emit machine-readable JSON instead of plain text

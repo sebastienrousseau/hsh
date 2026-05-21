@@ -22,6 +22,7 @@ const PROBE_PASSWORD: &str = "calibration-probe-1234567890";
 pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
     let target = u128::from(args.target_ms);
     let mut best: Option<(String, u128)> = None;
+    let mut ladder: Vec<LadderEntry> = Vec::new();
 
     match args.algorithm {
         AlgoArg::Argon2id | AlgoArg::Argon2i | AlgoArg::Argon2d => {
@@ -36,12 +37,9 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .build()
                 .unwrap();
                 let took = time_hash(&policy);
-                consider(
-                    &mut best,
-                    format!("argon2id m={m} t=2 p=1"),
-                    took,
-                    target,
-                );
+                let params = format!("argon2id m={m} t=2 p=1");
+                ladder.push(LadderEntry::new(&params, took, target));
+                consider(&mut best, params, took, target);
             }
         }
         AlgoArg::Bcrypt => {
@@ -54,12 +52,9 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .build()
                 .unwrap();
                 let took = time_hash(&policy);
-                consider(
-                    &mut best,
-                    format!("bcrypt cost={cost}"),
-                    took,
-                    target,
-                );
+                let params = format!("bcrypt cost={cost}");
+                ladder.push(LadderEntry::new(&params, took, target));
+                consider(&mut best, params, took, target);
             }
         }
         AlgoArg::Scrypt => {
@@ -77,12 +72,9 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .build()
                 .unwrap();
                 let took = time_hash(&policy);
-                consider(
-                    &mut best,
-                    format!("scrypt log_n={log_n} r=8 p=1"),
-                    took,
-                    target,
-                );
+                let params = format!("scrypt log_n={log_n} r=8 p=1");
+                ladder.push(LadderEntry::new(&params, took, target));
+                consider(&mut best, params, took, target);
             }
         }
         AlgoArg::Pbkdf2 => {
@@ -102,41 +94,95 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .build()
                 .unwrap();
                 let took = time_hash(&policy);
-                consider(
-                    &mut best,
-                    format!("pbkdf2-sha256 iters={iters}"),
-                    took,
-                    target,
-                );
+                let params = format!("pbkdf2-sha256 iters={iters}");
+                ladder.push(LadderEntry::new(&params, took, target));
+                consider(&mut best, params, took, target);
             }
         }
     }
 
-    let (params, took) = best.unwrap_or(("(no result)".into(), 0));
+    let (selected_params, took) =
+        best.unwrap_or(("(no result)".into(), 0));
     let distance = took.abs_diff(target);
 
     if json {
+        // Structured ladder + runner metadata. The ladder lets
+        // operators see the full sweep; the runner block ties results
+        // to the host that produced them so they're not silently
+        // misapplied across heterogeneous fleets.
+        let ladder_json: Vec<serde_json::Value> = ladder
+            .iter()
+            .map(|e| {
+                serde_json::json!({
+                    "candidate": e.candidate,
+                    "measured_ms": e.measured_ms,
+                    "distance_ms": e.distance_ms,
+                    "selected": e.candidate == selected_params,
+                })
+            })
+            .collect();
+        let runner = serde_json::json!({
+            "host_os": std::env::consts::OS,
+            "host_arch": std::env::consts::ARCH,
+            "target_triple": env!("HSH_TARGET_TRIPLE"),
+            "profile": env!("HSH_PROFILE"),
+            "rustc": env!("HSH_RUSTC_VERSION"),
+            "hsh_cli_version": env!("CARGO_PKG_VERSION"),
+        });
+        let ladder_value = serde_json::Value::Array(ladder_json);
         print_kv(
             true,
             &[
                 ("target_ms", &serde_json::Value::from(args.target_ms)),
                 (
                     "selected_params",
-                    &serde_json::Value::String(params.clone()),
+                    &serde_json::Value::String(selected_params.clone()),
                 ),
                 ("measured_ms", &serde_json::Value::from(took as u64)),
                 (
                     "distance_ms",
                     &serde_json::Value::from(distance as u64),
                 ),
+                ("ladder", &ladder_value),
+                ("runner", &runner),
             ],
         )?;
     } else {
         println!("target:   {} ms", args.target_ms);
-        println!("selected: {params}");
+        println!("selected: {selected_params}");
         println!("measured: {took} ms (off by {distance} ms)");
+        println!("ladder:");
+        for entry in &ladder {
+            let mark = if entry.candidate == selected_params {
+                "*"
+            } else {
+                " "
+            };
+            println!(
+                "  {mark} {} → {} ms (off by {} ms)",
+                entry.candidate, entry.measured_ms, entry.distance_ms
+            );
+        }
     }
     Ok(())
+}
+
+/// One entry in the calibration sweep — a candidate parameter set plus
+/// the measured wall-time and its distance from the target.
+struct LadderEntry {
+    candidate: String,
+    measured_ms: u64,
+    distance_ms: u64,
+}
+
+impl LadderEntry {
+    fn new(candidate: &str, measured: u128, target: u128) -> Self {
+        Self {
+            candidate: candidate.to_owned(),
+            measured_ms: measured as u64,
+            distance_ms: measured.abs_diff(target) as u64,
+        }
+    }
 }
 
 fn time_hash(policy: &Policy) -> u128 {

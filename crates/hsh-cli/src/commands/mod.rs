@@ -7,6 +7,7 @@ pub(crate) mod calibrate;
 pub(crate) mod completions;
 pub(crate) mod hash;
 pub(crate) mod inspect;
+pub(crate) mod inspect_backend;
 pub(crate) mod rehash;
 pub(crate) mod verify;
 
