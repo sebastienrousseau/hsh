@@ -71,7 +71,7 @@ vrd = "0.0.8"
 [dev-dependencies]
 # Dependencies for testing and development.
 assert_cmd = "2.0.14"
-criterion = "0.5.1"
+criterion = "0.8.2"
 
 [lib]
 # Metadata about the library.
