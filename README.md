@@ -208,7 +208,7 @@ Per-crate READMEs:
 |---|---|
 | **A drop-in for `argonautica` / `rust-argon2` / `bcrypt` / `password-auth` / `djangohashers`** | [migration guides in `doc/`](doc/) — name-for-name mapping tables, behavioural notes, checklists |
 | **Passkey-primary architecture with password fallback** | [`doc/PASSKEY-ERA.md`](doc/PASSKEY-ERA.md) — positioning, three recipes (passkey + password sign-in, recovery credential hardening, staged migration off passwords) |
-| **FIPS 140-3 deployment + Argon2 → PBKDF2 routing** | [`doc/FIPS.md`](doc/FIPS.md) — fail-closed contract, `aws-lc-rs` integration roadmap |
+| **FIPS 140-3 deployment** | [`doc/FIPS.md`](doc/FIPS.md) — mint-time fail-closed contract, verify-side rehash from legacy Argon2/bcrypt/scrypt to PBKDF2, `aws-lc-rs` validated-runtime roadmap |
 | **AWS / GCP / Azure / HashiCorp Vault peppering** | [`doc/KMS-INTEGRATION.md`](doc/KMS-INTEGRATION.md) — provider configs, key rotation, `LocalPepper` snapshot pattern |
 | **Per-host benchmark calibration** | `hsh calibrate --algorithm argon2id --target-ms 500` + [`doc/BENCHMARKS.md`](doc/BENCHMARKS.md) |
 | **Day-2 operations runbook** | [`doc/OPERATIONS.md`](doc/OPERATIONS.md) — pre-deployment `inspect-backend` check, fleet sizing, rotation TL;DR, hash-format inspection |
@@ -396,9 +396,9 @@ table below groups the inventory by capability theme.
 | **Pepper integration** | `hsh-kms` ships **`LocalPepper`** (in-process HMAC-SHA-256, versioned key rotation) as a real provider. Four cloud providers (AWS KMS, GCP Cloud KMS, Azure Key Vault, HashiCorp Vault Transit) are **stub interfaces in v0.0.9** — stable shape, `PepperError::Backend` at fetch — with network-backed implementations landing in 0.1.x |
 | **FIPS contract vs runtime** | `Backend::Fips140Required` enforces the **mint-time contract** (refuses any non-PBKDF2 primary, fails closed if the build can't satisfy FIPS) in v0.0.9. The **validated runtime** (PBKDF2 routed through `aws-lc-rs`) lands as `hsh-backend-awslc` in 0.1.x ([`doc/FIPS.md`](doc/FIPS.md)) |
 | **Operational hardening** | 5 libfuzzer targets (nightly), 7 proptest invariants, Miri focused (per-PR, 60 min) + full sweep (weekly, 90 min), SLSA L3 build provenance, sigstore keyless signing, OpenSSF Scorecard |
-| **CLI** | `hsh-cli` with 6 subcommands (`hash` / `verify` / `rehash` / `inspect` / `calibrate` / `completions`), shell completions for bash / zsh / fish / PowerShell, multi-platform packaging templates (Docker / Homebrew / Debian / Arch / Scoop) |
-| **Documentation** | 7 ADRs (scope, FIPS, pepper, unsafe-code, v1.0 contract, KMS, general-hashing), 5 migration guides, API stability + release runbook + support doc |
-| **Test coverage** | 13 KAT vectors (Argon2id from RFC 9106 §5, bcrypt OpenBSD vectors, PBKDF2 RFC 6070), 7 property invariants (round-trip, drift detection, pepper version) |
+| **CLI** | `hsh-cli` with 7 subcommands (`hash` / `verify` / `rehash` / `inspect` / `inspect-backend` / `calibrate` / `completions`), shell completions for bash / zsh / fish / PowerShell / elvish, multi-platform packaging templates (Docker / Homebrew / Debian / Arch / Scoop) |
+| **Documentation** | 5 ADRs (pepper key versioning, FIPS strategy, general-hashing scope, zero-unsafe policy, v1.0 stability contract), 5 migration guides (argonautica / rust-argon2 / bcrypt / djangohashers / password-hash), passkey-era positioning + day-2 operations + IP-governance runbooks, API stability + release runbook + support doc |
+| **Test coverage** | 13 KAT vectors for `hsh-digest` (SHA-2 / SHA-3 / BLAKE3 from NIST CAVP + BLAKE3 project), 7 property invariants in `hsh` (round-trip, drift detection, pepper version) plus 11 property invariants in `hsh-digest` (one-shot vs streaming, chunking, output length, determinism, cross-algorithm) |
 
 Phase-by-phase breakdown: [`CHANGELOG.md`](CHANGELOG.md).
 Milestone: <https://github.com/sebastienrousseau/hsh/milestone/1>.
@@ -553,7 +553,7 @@ Per-crate migration guides at
 Run individual examples per crate:
 
 ```bash
-cargo run -p hsh-cli   --example quickstart
+cargo run -p hsh-cli   --example library_shape
 cargo run -p hsh       --example quickstart
 cargo run -p hsh       --example fips_policy
 cargo run -p hsh       --example migration_from_bcrypt
@@ -567,7 +567,7 @@ cargo run -p hsh-digest --example content_addressing
 | Category | Example | Purpose |
 | :--- | :--- | :--- |
 | **Core** | `hsh/examples/quickstart` | Hash + verify + auto-rehash round-trip |
-| | `hsh-cli/examples/quickstart` | Library-shape demonstration of what `hsh-cli` does under the hood |
+| | `hsh-cli/examples/library_shape` | Library-shape demonstration of what `hsh-cli` does under the hood |
 | | `hsh/examples/builder_pattern` | `PolicyBuilder::new()` / `from_preset()` / setters |
 | **FIPS** | `hsh/examples/fips_policy` | `Backend::Fips140Required` fail-closed contract |
 | **Migration** | `hsh/examples/migration_from_bcrypt` | Bcrypt → Argon2id transparent upgrade on next verify |
@@ -791,7 +791,7 @@ Vulnerability reporting policy:
 | Document | Covers |
 | --- | --- |
 | [`doc/API-STABILITY.md`](doc/API-STABILITY.md) | Per-crate, per-symbol stability tier (1 — stable / 2 — evolving / 3 — experimental) + semver bump policy |
-| [`doc/FIPS.md`](doc/FIPS.md) | FIPS 140-3 deployment, Argon2 → PBKDF2 routing, `aws-lc-rs` integration roadmap |
+| [`doc/FIPS.md`](doc/FIPS.md) | FIPS 140-3 deployment, mint-time fail-closed contract, verify-side rehash to PBKDF2, `aws-lc-rs` integration roadmap |
 | [`doc/KMS-INTEGRATION.md`](doc/KMS-INTEGRATION.md) | Pepper / KMS deployment for AWS / GCP / Azure / HashiCorp Vault |
 | [`doc/BENCHMARKS.md`](doc/BENCHMARKS.md) | Criterion methodology, reproduction commands, per-host calibration |
 | [`doc/COMPARISON.md`](doc/COMPARISON.md) | Feature matrix vs `argonautica`, `rust-argon2`, `bcrypt`, `password-auth`, `djangohashers` |
@@ -799,7 +799,7 @@ Vulnerability reporting policy:
 | [`doc/SUPPORT.md`](doc/SUPPORT.md) | Where to ask, response windows |
 | [`doc/pre-commit.md`](doc/pre-commit.md) | Local pre-commit hook setup |
 | [`doc/MIGRATION-from-*.md`](doc/) | 5 migration guides (argonautica, rust-argon2, bcrypt, djangohashers, password-hash) |
-| [`doc/adr/`](doc/adr/) | 7 ADRs covering scope, FIPS, pepper-key versioning, zero-`unsafe` policy, v1.0 contract |
+| [`doc/adr/`](doc/adr/) | 5 ADRs covering pepper-key versioning, FIPS strategy, general-hashing scope, zero-`unsafe` policy, and the v1.0 stability contract |
 | [`SECURITY.md`](SECURITY.md) | Vulnerability reporting, supported versions, threat model |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Setup, signed commits, PR guidelines |
 | [`CHANGELOG.md`](CHANGELOG.md) | Per-release notes following Keep a Changelog 1.1.0 |

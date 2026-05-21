@@ -8,7 +8,7 @@
 //!
 //! Run with:
 //! ```text
-//! cargo run -p hsh-cli --example quickstart
+//! cargo run -p hsh-cli --example library_shape
 //! ```
 
 use hsh::{Policy, api};

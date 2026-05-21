@@ -25,7 +25,8 @@
 //!
 //! Bcrypt's MCF (`$2b$<cost>$<salt+hash>`) has no parameter slot for a
 //! pre-hash marker, so [`crate::api::hash`] wraps the MCF in the
-//! `hsh-bcrypt-sha256:<mcf>` envelope when [`PrehashAlgorithm::Sha256`]
+//! `hsh-bcrypt-sha256:<mcf>` envelope when
+//! [`PrehashAlgorithm::Sha256`](crate::algorithms::bcrypt::PrehashAlgorithm::Sha256)
 //! is set on the [`crate::policy::Policy`]. The envelope round-trips
 //! through [`crate::api::verify_and_upgrade`], which routes the password
 //! through the same pre-hash before comparing — without the envelope the

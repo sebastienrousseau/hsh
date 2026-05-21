@@ -52,16 +52,17 @@ echo -n "correct horse battery staple" | hsh verify \
 
 ## Subcommands
 
-| Command          | Purpose                                                                  |
-| ---------------- | ------------------------------------------------------------------------ |
-| `hsh hash`       | Hash a password → emit the storable PHC / MCF string                     |
-| `hsh verify`     | Verify a candidate password against a stored hash                        |
-| `hsh rehash`     | Verify + mint a fresh hash under the current policy (combined op)         |
-| `hsh inspect`    | Pretty-print the algorithm + parameters of any stored hash                |
-| `hsh calibrate`  | Walk a parameter ladder; report the params closest to a wall-time target  |
-| `hsh completions`| Emit bash / zsh / fish / powershell / elvish completion scripts           |
+| Command               | Purpose                                                                       |
+| --------------------- | ----------------------------------------------------------------------------- |
+| `hsh hash`            | Hash a password → emit the storable PHC / MCF / envelope string               |
+| `hsh verify`          | Verify a candidate password against a stored hash                             |
+| `hsh rehash`          | Verify + mint a fresh hash under the current policy (combined op)             |
+| `hsh inspect`         | Pretty-print the algorithm + parameters of any stored hash                    |
+| `hsh inspect-backend` | Show the effective crypto route for a preset (operator self-check)            |
+| `hsh calibrate`       | Walk a parameter ladder; report the params closest to a wall-time target      |
+| `hsh completions`     | Emit bash / zsh / fish / powershell / elvish completion scripts               |
 
-Every subcommand accepts `--json` for machine-readable output and `--policy {owasp,rfc9106,fips}` to switch the parameter ladder.
+Every subcommand accepts `--json` for machine-readable output. `hash`, `verify`, `rehash`, and `inspect-backend` take `--policy {owasp,rfc9106,fips}` to switch the parameter ladder; `calibrate` takes `--algorithm` and `--target-ms` instead.
 
 ### `hsh hash`
 
@@ -209,12 +210,13 @@ The JSON schema is stable per the stability contract — additive changes only.
 
 ## Examples
 
-See [`crates/hsh-cli/examples/`](examples/) for runnable demos:
+See [`crates/hsh-cli/examples/`](examples/) for the runnable demo:
 
-- `quickstart.rs` — hash + verify in 10 LOC.
-- `pipeline.rs` — shell-pipeline patterns.
+- `library_shape.rs` — programmatic walk-through of what the `hash`
+  and `verify` subcommands do under the hood, useful for embedding the
+  same flow in your own binary rather than shelling out.
 
-Run with `cargo run --example quickstart`.
+Run with `cargo run -p hsh-cli --example library_shape`.
 
 ---
 
