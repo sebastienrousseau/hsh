@@ -54,14 +54,11 @@ let policy = Policy::owasp_minimum_2025()
 let stored = api::hash(&policy, "correct horse battery staple")?;
 //                    ^^^^^^^ "hsh-pepper:1:$argon2id$v=19$..."
 
-let (outcome, rehashed) = api::verify_and_upgrade(&policy, password, &stored)?;
-match (outcome, rehashed) {
-    (hsh::Outcome::Valid { needs_rehash: true }, Some(new_phc)) => {
-        // Pepper version rotated since the original hash. Persist
-        // `new_phc` so subsequent verifies are O(1).
-        persist(new_phc);
-    }
-    _ => {}
+let outcome = api::verify_and_upgrade(&policy, password, &stored)?;
+if let hsh::Outcome::Valid { rehashed: Some(new_phc) } = outcome {
+    // Pepper version rotated since the original hash. Persist
+    // `new_phc` so subsequent verifies are O(1).
+    persist(new_phc);
 }
 ```
 

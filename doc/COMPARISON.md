@@ -67,9 +67,11 @@ Legend: ✅ supported · ❌ not supported · partial = present but limited.
 
 | Feature                                              | `hsh` | `argonautica` | `rust-argon2` | `bcrypt` | `password-auth` |
 | ---------------------------------------------------- | ----- | ------------- | ------------- | -------- | --------------- |
-| Server-side **pepper** (KMS-backed)                  | ✅     | partial (key) | ❌             | ❌        | ❌               |
+| Server-side **pepper** (in-process, HMAC-SHA-256 + key versioning) | ✅     | partial (key) | ❌             | ❌        | ❌               |
 | Versioned pepper rotation                            | ✅     | ❌             | ❌             | ❌        | ❌               |
-| **FIPS 140-3 contract** (`Backend::Fips140Required`) | ✅     | ❌             | ❌             | ❌        | ❌               |
+| KMS-backed pepper providers (AWS / GCP / Azure / Vault) | 🟡 stub interfaces in v0.0.9 — real fetch in 0.1.x | ❌ | ❌ | ❌ | ❌ |
+| **FIPS 140-3 contract** (`Backend::Fips140Required`, mint-time fail-closed) | ✅     | ❌             | ❌             | ❌        | ❌               |
+| **FIPS 140-3 runtime** (PBKDF2 routed through validated crypto module) | 🟡 contract-only in v0.0.9 — `hsh-backend-awslc` lands in 0.1.x | ❌ | ❌ | ❌ | ❌ |
 | CLI binary                                           | ✅     | ❌             | ❌             | ❌        | ❌               |
 | Multi-platform packaging templates                   | ✅     | ❌             | ❌             | ❌        | ❌               |
 | Migration guides from competing crates               | ✅ (5) | ❌             | ❌             | ❌        | ❌               |
@@ -95,8 +97,8 @@ Legend: ✅ supported · ❌ not supported · partial = present but limited.
 
 - You want **multi-algorithm support** with one API.
 - You need **auto-rehash on policy drift** (algorithm or parameter migration).
-- You want **server-side pepper** with KMS-backed key rotation.
-- You're going to deploy in a regulated environment where the **FIPS contract** matters.
+- You want **in-process versioned pepper** today; KMS-backed providers (AWS / GCP / Azure / Vault) are stub interfaces in v0.0.9 and land for real in 0.1.x.
+- You're going to deploy in a regulated environment where the **FIPS 140-3 *contract*** matters (mint-time fail-closed behaviour). The **validated runtime** (PBKDF2 through `aws-lc-rs`) lands as `hsh-backend-awslc` in 0.1.x.
 - You want a **CLI** for ops / scripting.
 - You value enterprise-grade **supply-chain hygiene** (SLSA L3, sigstore, SBOM, Scorecard).
 

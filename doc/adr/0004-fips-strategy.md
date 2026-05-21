@@ -62,7 +62,7 @@ gets a FIPS-validated hash or they get a typed error.
 - A custom PHC-string format
   (`$pbkdf2-sha256$i=<iters>,l=<len>$<salt>$<hash>`) that `hsh`
   parses end-to-end. Algorithm drift (Argon2 → PBKDF2), iteration
-  drift, and PRF drift all trigger `Outcome::Valid { needs_rehash: true }`.
+  drift, and PRF drift all trigger `Outcome::Valid { rehashed: Some(_) }`.
 - 8 integration tests in `crates/hsh/tests/test_pbkdf2.rs`.
 - A `fips` Cargo feature, currently a no-op marker so callers can lock
   the flag into their `Cargo.toml` today.

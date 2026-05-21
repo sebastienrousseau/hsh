@@ -120,7 +120,7 @@ The trait shape is stable. Stubs return `PepperError::Backend("not yet wired up"
 1. Generate a fresh 32-byte pepper, register it as `KeyVersion::new(N+1)` in your KMS.
 2. Add it to the `LocalPepper` keyset alongside the existing versions — **do not remove old versions yet**.
 3. Bump `current` to `N+1` and redeploy.
-4. As users log in, `verify_and_upgrade` returns `Outcome::Valid { needs_rehash: true }` with a new hash carrying `keyver=N+1`; persist it.
+4. As users log in, `verify_and_upgrade` returns `Outcome::Valid { rehashed: Some(new_phc) }` carrying `keyver=N+1`; persist `new_phc`.
 5. After a chosen window (e.g. 90 days), audit your DB for rows still on old keyvers. Force-rotate inactive users via fresh sign-in.
 6. Once no rows reference an old keyver, drop it from the keyset on the next deploy.
 

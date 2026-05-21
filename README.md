@@ -8,8 +8,10 @@
 
 <p align="center">
   A multi-algorithm password hashing library for Rust with PHC string
-  storage, auto-rehash on policy drift, KMS-backed peppering, and a
-  fail-closed FIPS 140-3 contract — written from scratch with
+  storage, auto-rehash on policy drift, an in-process HMAC-SHA-256
+  pepper with versioned key rotation (KMS providers stubbed for 0.1.x),
+  and a fail-closed FIPS 140-3 <em>contract</em> (validated runtime via
+  <code>aws-lc-rs</code> lands in 0.1.x) — written from scratch with
   <code>#![forbid(unsafe_code)]</code> across the workspace.
 </p>
 
@@ -104,6 +106,20 @@ hsh = { version = "0.0.9", features = ["pepper"] }
 Brings in `hsh-kms` and exposes `Policy::with_pepper(...)`. The
 `pepper` feature is off by default so applications without a KMS
 don't pay the `hmac` / `sha2` cost on the dep graph.
+
+> [!IMPORTANT]
+> **Readiness status (v0.0.9).** The `hsh-kms` crate ships
+> `LocalPepper` (in-process HMAC-SHA-256 with versioned key rotation)
+> as a fully-functional provider. The four cloud providers — AWS KMS,
+> GCP Cloud KMS, Azure Key Vault, HashiCorp Vault Transit — are **stub
+> interfaces** in this release; their `fetch_pepper` always returns
+> `PepperError::Backend`. Real network-backed implementations land in
+> 0.1.x. Similarly, `Backend::Fips140Required` enforces the **mint-time
+> contract** (fail-closed when Argon2 is requested) but does **not**
+> route PBKDF2 through a FIPS-validated module today — that requires
+> the forthcoming `hsh-backend-awslc` crate (also 0.1.x). See
+> [`doc/COMPARISON.md`](doc/COMPARISON.md) and [`doc/FIPS.md`](doc/FIPS.md)
+> for the precise scope.
 
 ### Build from source
 
@@ -315,12 +331,18 @@ Five architectural choices motivate the rewrite:
    transparently re-encodes under the new version on next verify.
 
 4. **FIPS 140-3 fail-closed contract.** `Backend::Fips140Required`
-   causes `api::hash` to **refuse** to mint a hash unless the build
-   can satisfy FIPS 140-3 — never silently degrade to a non-FIPS
-   primitive. Argon2 (not FIPS-approved) is automatically routed to
-   PBKDF2-HMAC-SHA-256 / SHA-512 under this backend. The contract
-   is documented in [`doc/FIPS.md`](doc/FIPS.md); the `aws-lc-rs`
-   FIPS backend lands in Phase 4.
+   causes `api::hash` to **refuse** to mint a hash unless the
+   policy's primary algorithm is `PrimaryAlgorithm::Pbkdf2` *and* the
+   build can satisfy FIPS 140-3 — never silently degrade to a
+   non-FIPS primitive, never re-route Argon2/bcrypt/scrypt to PBKDF2
+   silently. Callers asking for a non-PBKDF2 primary under a FIPS
+   backend get a clear `Error::InvalidParameter` instead. The
+   **contract** is enforced today in v0.0.9; the **validated runtime**
+   (PBKDF2 routed through `aws-lc-rs`) is delivered by the
+   forthcoming `hsh-backend-awslc` crate in 0.1.x, at which point
+   `Backend::fips_available_in_build()` will return `true` in
+   FIPS-capable builds. The contract is documented in
+   [`doc/FIPS.md`](doc/FIPS.md).
 
 5. **Constant-time everywhere it matters.** `subtle::ConstantTimeEq`
    gates every hash comparison; `zeroize::ZeroizeOnDrop` wipes
@@ -367,9 +389,9 @@ table below groups the inventory by capability theme.
 | **Algorithms** | Argon2id (RFC 9106), Argon2i / Argon2d (verify-only legacy), bcrypt (with 72-byte safety rail), scrypt (RFC 7914), PBKDF2-HMAC-SHA-256 / SHA-512 (RFC 8018) |
 | **General hashing** | `hsh-digest` ships SHA-256 / 384 / 512, SHA3-256 / 384 / 512, BLAKE3-256; KangarooTwelve / TurboSHAKE (per [RFC 9861][rfc9861], published Oct 2025) and Ascon-Hash256 / Ascon-XOF128 (per [NIST SP 800-232][sp800232], finalised Aug 2025) are *published standards* whose Rust implementations are currently stubbed — implementation tracked as a Phase 6 follow-up |
 | **Storage formats** | PHC strings for Argon2id / scrypt / PBKDF2; MCF (`$2b$…`) for bcrypt; bespoke `hsh-pepper:<keyver>:<inner>` wrapper for peppered hashes |
-| **Verify + auto-rehash** | Algorithm drift, parameter drift, PBKDF2-PRF drift, and pepper-version drift all trigger rehash on next successful verify |
-| **Pepper integration** | `hsh-kms` with `Pepper` trait, `LocalPepper`, and four KMS provider stubs (AWS KMS, GCP Cloud KMS, Azure Key Vault, HashiCorp Vault Transit) |
-| **FIPS contract** | `Backend::Fips140Required` causes `api::hash` to fail closed when Argon2 is requested without a FIPS-approved fallback ([`doc/FIPS.md`](doc/FIPS.md)) |
+| **Verify + auto-rehash** | Algorithm drift, Argon2 m/t/p/output-len drift, bcrypt cost drift, bcrypt prehash-mode drift, scrypt log_n/r/p/dk_len drift, PBKDF2 iter/dk_len/PRF drift, and pepper-version drift all trigger rehash on next successful verify |
+| **Pepper integration** | `hsh-kms` ships **`LocalPepper`** (in-process HMAC-SHA-256, versioned key rotation) as a real provider. Four cloud providers (AWS KMS, GCP Cloud KMS, Azure Key Vault, HashiCorp Vault Transit) are **stub interfaces in v0.0.9** — stable shape, `PepperError::Backend` at fetch — with network-backed implementations landing in 0.1.x |
+| **FIPS contract vs runtime** | `Backend::Fips140Required` enforces the **mint-time contract** (refuses any non-PBKDF2 primary, fails closed if the build can't satisfy FIPS) in v0.0.9. The **validated runtime** (PBKDF2 routed through `aws-lc-rs`) lands as `hsh-backend-awslc` in 0.1.x ([`doc/FIPS.md`](doc/FIPS.md)) |
 | **Operational hardening** | 5 libfuzzer targets (nightly), 7 proptest invariants, Miri focused (per-PR, 60 min) + full sweep (weekly, 90 min), SLSA L3 build provenance, sigstore keyless signing, OpenSSF Scorecard |
 | **CLI** | `hsh-cli` with 6 subcommands (`hash` / `verify` / `rehash` / `inspect` / `calibrate` / `completions`), shell completions for bash / zsh / fish / PowerShell, multi-platform packaging templates (Docker / Homebrew / Debian / Arch / Scoop) |
 | **Documentation** | 7 ADRs (scope, FIPS, pepper, unsafe-code, v1.0 contract, KMS, general-hashing), 5 migration guides, API stability + release runbook + support doc |

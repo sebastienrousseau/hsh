@@ -70,9 +70,9 @@ let outcome = api::verify_and_upgrade(
 )?;
 
 match outcome {
-    (Outcome::Valid { needs_rehash: true }, Some(new_phc)) => persist(new_phc),
-    (Outcome::Valid { needs_rehash: false }, _) => { /* ok */ }
-    (Outcome::Invalid, _) => deny(),
+    Outcome::Valid { rehashed: Some(new_phc) } => persist(new_phc),
+    Outcome::Valid { rehashed: None } => { /* ok */ }
+    Outcome::Invalid => deny(),
 }
 # Ok(()) }
 # fn persist(_: String) {}

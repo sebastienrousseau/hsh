@@ -13,7 +13,7 @@ playbook.
 | Will it silently fall back to non-FIPS crypto?          | **No** — `hsh` returns a typed error if the build can't satisfy the requirement. |
 | Is the routing actually validated today?                | **Not yet.** PBKDF2 runs via the pure-Rust RustCrypto `pbkdf2` crate. The `aws-lc-rs` routing lands as a Phase 4 follow-up. |
 | What hashes work in FIPS mode?                          | **PBKDF2-HMAC-SHA-256/512 only.** Argon2 / bcrypt / scrypt have no FIPS-validated implementation anywhere. |
-| Can I verify existing Argon2/bcrypt/scrypt hashes under FIPS? | **Yes** — verification under a FIPS policy still works; only *minting* is restricted. The verifier signals `Outcome::Valid { needs_rehash: true }` so old hashes migrate to PBKDF2 on next login. |
+| Can I verify existing Argon2/bcrypt/scrypt hashes under FIPS? | **Yes** — verification under a FIPS policy still works; only *minting* is restricted. The verifier signals `Outcome::Valid { rehashed: Some(new_phc) }` so old hashes migrate to PBKDF2 on next login. |
 
 ## The model
 
@@ -124,8 +124,8 @@ If your existing deployment uses Argon2id and you're moving to FIPS:
    `hsh-backend-awslc` in your dep graph.
 2. `api::verify_and_upgrade` will accept the existing Argon2id hashes
    (verification under a FIPS policy is permitted), match them, and
-   return `Outcome::Valid { needs_rehash: true }` with a new PBKDF2
-   hash to persist.
+   return `Outcome::Valid { rehashed: Some(new_phc) }` with a new
+   PBKDF2 hash to persist.
 3. As users log in, the corpus migrates from Argon2id → PBKDF2.
 4. After a chosen window, audit your DB for rows still on Argon2id
    and force-rotate inactive users.

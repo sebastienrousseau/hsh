@@ -57,14 +57,11 @@ let policy = Policy::owasp_minimum_2025();
 let legacy = read_from_django_users_table();
 let phc = django_to_phc(&legacy);
 
-let (outcome, rehashed) =
-    api::verify_and_upgrade(&policy, &candidate, &phc)?;
+let outcome = api::verify_and_upgrade(&policy, &candidate, &phc)?;
 
-if let Outcome::Valid { needs_rehash: true } = outcome {
-    if let Some(new_phc) = rehashed {
-        // new_phc is $argon2id$... — write it back.
-        update_user_password_hash(user_id, &new_phc);
-    }
+if let Outcome::Valid { rehashed: Some(new_phc) } = outcome {
+    // new_phc is $argon2id$... — write it back.
+    update_user_password_hash(user_id, &new_phc);
 }
 ```
 
