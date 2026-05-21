@@ -18,13 +18,14 @@
 #![allow(missing_docs, unused_results)]
 
 use criterion::{
-    black_box, criterion_group, criterion_main, Criterion, Throughput,
+    criterion_group, criterion_main, Criterion, Throughput,
 };
 use hsh::algorithms::bcrypt::BcryptParams;
 use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
 use hsh::api;
 use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
+use std::hint::black_box;
 
 const PASSWORD: &str = "correct horse battery staple";
 

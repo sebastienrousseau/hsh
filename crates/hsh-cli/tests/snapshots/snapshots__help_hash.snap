@@ -13,14 +13,14 @@ Options:
 
       --policy <POLICY>
           Preset policy to apply. Defaults to OWASP-2025
-          
-          [default: owasp]
 
           Possible values:
           - owasp:   OWASP-2025 minimum (Argon2id, m=19456, t=2, p=1)
           - rfc9106: RFC 9106 §4 first-recommended (Argon2id, m=2^21, t=1, p=4)
           - fips:    Hardened FIPS profile (PBKDF2-HMAC-SHA-256, 600k iters,
             Backend::Fips140Required — requires a FIPS-capable build)
+          
+          [default: owasp]
 
   -a, --algorithm <ALGORITHM>
           Override the primary algorithm

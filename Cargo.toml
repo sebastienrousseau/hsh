@@ -37,8 +37,8 @@ sha2       = "0.10"
 sha3       = "0.10"
 blake3     = "1.5"
 digest     = { version = "0.10", features = ["alloc"] }
-serde      = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.137"
+serde      = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.143"
 log        = { version = "0.4.25", features = ["std"] }
 
 # FIPS backend — `aws-lc-rs` with `features = ["fips"]` is the target
@@ -51,7 +51,7 @@ log        = { version = "0.4.25", features = ["std"] }
 
 # Dev
 assert_cmd = "2.0.14"
-criterion  = "0.5.1"
+criterion  = "0.8.2"
 proptest   = "1.5"
 hex        = "0.4"
 

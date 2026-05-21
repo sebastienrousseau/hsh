@@ -53,6 +53,14 @@ mod tests {
         assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
     }
 
+    // Miri interprets crypto primitives ~200× slower than native;
+    // gating the redundant tests below keeps the focused Miri job under
+    // its 60 min budget. One round-trip per primitive
+    // (argon2id_round_trip, bcrypt_mcf_round_trip,
+    // scrypt_round_trip_with_policy_params,
+    // bcrypt_with_prehash_sha256_round_trips) still runs under Miri so
+    // every upstream unsafe code path is exercised.
+    #[cfg_attr(miri, ignore = "Miri: covered by argon2id_round_trip")]
     #[test]
     fn argon2id_rejects_wrong_password() {
         let policy = fast_test_policy();
@@ -65,6 +73,7 @@ mod tests {
         assert!(matches!(outcome, Outcome::Invalid));
     }
 
+    #[cfg_attr(miri, ignore = "Miri: covered by argon2id_round_trip")]
     #[test]
     fn argon2id_triggers_rehash_when_policy_strengthens() {
         let weak = fast_test_policy();
@@ -114,6 +123,10 @@ mod tests {
         assert!(!outcome.needs_rehash());
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by argon2id_round_trip + bcrypt_mcf_round_trip"
+    )]
     #[test]
     fn bcrypt_then_upgrade_to_argon2id() {
         let bcrypt_policy =
@@ -143,6 +156,10 @@ mod tests {
     // PHC carries the policy's `ln=` value.
     // -----------------------------------------------------------------
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by scrypt_round_trip_with_policy_params"
+    )]
     #[test]
     fn scrypt_hash_honors_policy_log_n() {
         use password_hash::PasswordHash;
@@ -177,6 +194,7 @@ mod tests {
     // Regression: needs_rehash used to ignore bcrypt cost drift.
     // -----------------------------------------------------------------
 
+    #[cfg_attr(miri, ignore = "Miri: covered by bcrypt_mcf_round_trip")]
     #[test]
     fn bcrypt_cost_drift_triggers_rehash() {
         let weak = fast_policy_with_primary(PrimaryAlgorithm::Bcrypt); // cost=4
@@ -199,6 +217,10 @@ mod tests {
     // Regression: needs_rehash used to ignore scrypt parameter drift.
     // -----------------------------------------------------------------
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by scrypt_round_trip_with_policy_params"
+    )]
     #[test]
     fn scrypt_param_drift_triggers_rehash() {
         let weak = fast_policy_with_primary(PrimaryAlgorithm::Scrypt); // log_n=8
@@ -267,6 +289,10 @@ mod tests {
         assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by bcrypt_with_prehash_sha256_round_trips"
+    )]
     #[test]
     fn bcrypt_with_prehash_accepts_long_passwords() {
         // > 72 bytes — would be rejected without prehash, succeeds with.
@@ -280,6 +306,10 @@ mod tests {
         assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by bcrypt_with_prehash_sha256_round_trips"
+    )]
     #[test]
     fn bcrypt_with_prehash_rejects_wrong_password() {
         let policy = bcrypt_prehash_policy(
@@ -292,6 +322,10 @@ mod tests {
         assert!(matches!(outcome, Outcome::Invalid));
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by bcrypt_with_prehash_sha256_round_trips"
+    )]
     #[test]
     fn bcrypt_prehash_drift_triggers_rehash_none_to_sha256() {
         // Stored under prehash=None. Policy now requires prehash=Sha256.
@@ -322,6 +356,10 @@ mod tests {
         assert!(rehashed.starts_with("hsh-bcrypt-sha256:"));
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: covered by bcrypt_with_prehash_sha256_round_trips"
+    )]
     #[test]
     fn bcrypt_prehash_drift_triggers_rehash_sha256_to_none() {
         // Stored under prehash=Sha256. Policy now uses prehash=None.
@@ -352,6 +390,10 @@ mod tests {
         assert!(!rehashed.starts_with("hsh-bcrypt-sha256:"));
     }
 
+    #[cfg_attr(
+        miri,
+        ignore = "Miri: PBKDF2 + drift logic is non-unsafe; covered enough by argon2id_round_trip"
+    )]
     #[test]
     fn pbkdf2_dk_len_drift_triggers_rehash() {
         let weak = fast_policy_with_primary(PrimaryAlgorithm::Pbkdf2);

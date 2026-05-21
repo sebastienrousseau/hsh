@@ -92,6 +92,12 @@ fn peppered_round_trip_holds() {
     assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
 }
 
+// Miri-gating: per-PR Miri's 60-min budget can't run every peppered
+// hashing test (argon2 + HMAC + sha2 in the interpreter is ~200×
+// slower than native). Keep `peppered_round_trip_holds` and
+// `unknown_pepper_version_in_stored_hash_returns_invalid` running —
+// they cover the HMAC + sha2 unsafe paths plus the version-parse arm.
+#[cfg_attr(miri, ignore = "Miri: covered by peppered_round_trip_holds")]
 #[test]
 fn peppered_rejects_wrong_password() {
     let policy = fast_policy_with_pepper(pepper_v1());
@@ -103,6 +109,7 @@ fn peppered_rejects_wrong_password() {
     assert!(matches!(outcome, Outcome::Invalid));
 }
 
+#[cfg_attr(miri, ignore = "Miri: covered by peppered_round_trip_holds")]
 #[test]
 fn peppered_rejected_when_policy_has_no_pepper() {
     let peppered_policy = fast_policy_with_pepper(pepper_v1());
@@ -119,6 +126,7 @@ fn peppered_rejected_when_policy_has_no_pepper() {
     assert!(matches!(outcome, Outcome::Invalid));
 }
 
+#[cfg_attr(miri, ignore = "Miri: covered by peppered_round_trip_holds")]
 #[test]
 fn pepper_rotation_triggers_rehash() {
     let v1_policy = fast_policy_with_pepper(pepper_v1());
@@ -146,6 +154,7 @@ fn pepper_rotation_triggers_rehash() {
     assert!(matches!(outcome2, Outcome::Valid { rehashed: None }));
 }
 
+#[cfg_attr(miri, ignore = "Miri: covered by peppered_round_trip_holds")]
 #[test]
 fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
     let bare_policy = fast_test_policy();
@@ -166,6 +175,7 @@ fn legacy_unpeppered_hash_upgrades_under_pepper_policy() {
     assert!(new_phc.starts_with("hsh-pepper:1:"));
 }
 
+#[cfg_attr(miri, ignore = "Miri: covered by peppered_round_trip_holds")]
 #[test]
 fn legacy_unpeppered_with_wrong_password_returns_invalid_not_rehash() {
     // Hash without pepper, then verify under a pepper-enabled policy

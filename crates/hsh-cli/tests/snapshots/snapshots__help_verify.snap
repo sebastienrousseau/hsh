@@ -18,14 +18,14 @@ Options:
 
       --policy <POLICY>
           Preset policy to apply for rehash detection
-          
-          [default: owasp]
 
           Possible values:
           - owasp:   OWASP-2025 minimum (Argon2id, m=19456, t=2, p=1)
           - rfc9106: RFC 9106 §4 first-recommended (Argon2id, m=2^21, t=1, p=4)
           - fips:    Hardened FIPS profile (PBKDF2-HMAC-SHA-256, 600k iters,
             Backend::Fips140Required — requires a FIPS-capable build)
+          
+          [default: owasp]
 
       --password <PASSWORD>
           Password (insecure: leaves password in shell history)
