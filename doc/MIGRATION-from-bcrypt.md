@@ -37,26 +37,24 @@ policy.primary = PrimaryAlgorithm::Bcrypt;
 // policy.bcrypt.cost = 12;  // override default if you want
 
 let stored = api::hash(&policy, "password123")?;
-let (outcome, _) = api::verify_and_upgrade(&policy, "password123", &stored)?;
+let outcome = api::verify_and_upgrade(&policy, "password123", &stored)?;
 ```
 
 ## After (migrating to Argon2id)
 
 ```rust
-use hsh::{api, Policy};
+use hsh::{api, Outcome, Policy};
 
 let policy = Policy::owasp_minimum_2025();  // Argon2id primary
 let legacy_bcrypt_hash = read_from_db_column();
 
-let (outcome, rehashed) =
+let outcome =
     api::verify_and_upgrade(&policy, &candidate, &legacy_bcrypt_hash)?;
 
-if outcome.is_valid() {
-    if let Some(new_phc) = rehashed {
-        // outcome.needs_rehash() == true; the new PHC is
-        // $argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>
-        update_user_password_hash(user_id, &new_phc);
-    }
+if let Outcome::Valid { rehashed: Some(new_phc) } = outcome {
+    // The cross-algorithm drift trigger fired; the new PHC is
+    // $argon2id$v=19$m=19456,t=2,p=1$<salt>$<hash>
+    update_user_password_hash(user_id, &new_phc);
 }
 ```
 

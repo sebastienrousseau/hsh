@@ -42,7 +42,7 @@ use hsh::{api, Policy};
 let policy = Policy::owasp_minimum_2025();
 let stored = api::hash(&policy, "password123")?;
 
-let (outcome, _) = api::verify_and_upgrade(&policy, "password123", &stored)?;
+let outcome = api::verify_and_upgrade(&policy, "password123", &stored)?;
 assert!(outcome.is_valid());
 ```
 

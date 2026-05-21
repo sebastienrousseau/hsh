@@ -73,21 +73,52 @@ verify (e.g. user is dormant), the only correct path is to force a
 password reset — you do not have the cleartext, so you cannot
 remint under a new algorithm.
 
+## Pre-deploy: verify the binary's effective crypto route
+
+`hsh inspect-backend --policy <preset>` is the operator self-check.
+It resolves the preset, asks `hsh::Backend` what it demands, and
+reports whether this build can satisfy that demand. Use it as a
+deploy gate so the binary going to production actually delivers the
+contract its policy claims.
+
+```sh
+$ hsh --json inspect-backend --policy fips | jq -e '.readiness == "satisfied"'
+# exit 0 → deploy; exit 1 → block until hsh-backend-awslc lands
+```
+
+Plain output for human eyes:
+
+```sh
+$ hsh inspect-backend --policy owasp
+preset: owasp_minimum_2025
+backend: Native
+primary_algorithm: Argon2id
+fips_available_in_build: false
+pepper_feature_compiled: true
+readiness: satisfied
+hsh_cli_version: 0.0.9
+rustc: rustc 1.95.0 (…)
+target_triple: x86_64-unknown-linux-gnu
+profile: release
+```
+
 ## Calibrate parameters for your host
 
 ```sh
 $ hsh calibrate --algorithm argon2id --target-ms 500
-argon2id m=131072 t=2 p=1   ≈ 503 ms
-
-$ hsh calibrate --algorithm bcrypt --target-ms 250
-bcrypt cost=11              ≈ 247 ms
-
-$ hsh calibrate --algorithm scrypt --target-ms 500
-scrypt N=2^18 r=8 p=1       ≈ 487 ms
-
-$ hsh calibrate --algorithm pbkdf2 --target-ms 250
-pbkdf2-sha256 iters=2400000 ≈ 251 ms
+target:   500 ms
+selected: argon2id m=65536 t=2 p=1
+measured: 503 ms (off by 3 ms)
+ladder:
+  * argon2id m=65536 t=2 p=1 → 503 ms (off by 3 ms)
+    …more rungs of the ladder, the selected one is prefixed with *…
 ```
+
+JSON mode also emits a `ladder` array (every candidate the sweep
+tried, with `measured_ms`, `distance_ms`, `selected`) plus a
+`runner` block carrying `host_os`, `host_arch`, `target_triple`,
+`profile`, `rustc`, `hsh_cli_version` so sizing decisions are tied
+to the host that produced them.
 
 Re-run calibration after a CPU upgrade — the optimal cost ladder
 shifts.
@@ -95,14 +126,25 @@ shifts.
 ## Inspect a stored value without verifying
 
 ```sh
-$ hsh inspect '$argon2id$v=19$m=19456,t=2,p=1$…'
+$ hsh inspect '$argon2id$v=19$m=19456,t=2,p=1$WX0$dGVzdA'
+format: phc
 algorithm: argon2id
-version: 19
-m_cost: 19456
-t_cost: 2
-p_cost: 1
-salt_b64: …
-hash_b64: …
+params[1]: v=19
+params[2]: m=19456,t=2,p=1
+segment[3]: WX0
+hash_b64: dGVzdA
+
+$ hsh inspect '$2b$10$saltsaltsaltsaltsalth8shorhashbcryptmcfgoeshere'
+format: bcrypt-mcf
+algorithm: bcrypt
+cost: 10
+
+$ hsh inspect 'hsh-bcrypt-sha256:$2b$10$…'
+format: hsh-bcrypt-sha256
+algorithm: bcrypt
+prehash: hmac-sha256
+inner: $2b$10$…
+cost: 10
 
 $ hsh inspect 'hsh-pepper:1:$argon2id$…'
 format: hsh-pepper

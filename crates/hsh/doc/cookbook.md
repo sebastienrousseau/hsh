@@ -104,8 +104,19 @@ fn build_policy() -> Result<Policy, hsh::Error> {
 
 With `with_prehash(Sha256)`, inputs of any length are accepted —
 `hsh` HMACs them down to 32 bytes (base64 → 44 chars) before
-passing to bcrypt. The on-wire bcrypt MCF string is indistinguishable
-from a "normal" bcrypt hash; the pre-hash is a deployment-side detail.
+passing to bcrypt. The pre-hash mode is encoded in the stored
+value so verify can route correctly: the result is wrapped in a
+`hsh-bcrypt-sha256:<bcrypt-mcf>` envelope. This is necessary
+because bcrypt's MCF has no parameter slot for a pre-hash marker,
+and `api::verify_and_upgrade` needs to know whether to apply the
+pre-hash before handing the password to bcrypt's verifier — without
+the envelope, the verify side would feed bcrypt the raw password
+and the comparison would always fail. The envelope composes with
+the peppered wrapper too: peppered + pre-hashed bcrypt hashes are
+stored as `hsh-pepper:<keyver>:hsh-bcrypt-sha256:<bcrypt-mcf>`.
+Pre-hash mode drift (stored mode ≠ policy mode) triggers an
+`Outcome::Valid { rehashed: Some(_) }` on the next successful
+verify, same as cost / parameter drift.
 
 ## Migrating from a legacy bcrypt database
 

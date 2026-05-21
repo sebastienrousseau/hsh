@@ -222,12 +222,15 @@ Vulnerability reporting: see [`SECURITY.md`](../../SECURITY.md).
 | Doc                                                                       | What's in it                                                               |
 | ------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
 | [`API-STABILITY.md`](../../doc/API-STABILITY.md)                          | Per-symbol stability tier + semver bump policy                              |
-| [`FIPS.md`](../../doc/FIPS.md)                                            | FIPS 140-3 deployment + Argon2 → PBKDF2 migration playbook                  |
-| [`KMS-INTEGRATION.md`](../../doc/KMS-INTEGRATION.md)                      | Pepper / KMS providers for AWS / GCP / Azure / Vault                       |
+| [`FIPS.md`](../../doc/FIPS.md)                                            | FIPS 140-3 mint-time fail-closed contract + verify-side rehash to PBKDF2    |
+| [`KMS-INTEGRATION.md`](../../doc/KMS-INTEGRATION.md)                      | Pepper / KMS providers for AWS / GCP / Azure / Vault (stub interfaces in v0.0.9; real fetch in 0.1.x) |
+| [`PASSKEY-ERA.md`](../../doc/PASSKEY-ERA.md)                              | Positioning hsh as the password-fallback / recovery hardening layer in a passkey-primary architecture |
+| [`OPERATIONS.md`](../../doc/OPERATIONS.md)                                | Day-2 runbook: `inspect-backend` deploy gate, fleet sizing, rotation TL;DR  |
+| [`IP-GOVERNANCE.md`](../../doc/IP-GOVERNANCE.md)                          | Patent watchlist, annual standards review, pre-commercialisation checklist  |
 | [`COMPARISON.md`](../../doc/COMPARISON.md)                                | Feature matrix vs argonautica / rust-argon2 / bcrypt / password-auth        |
 | [`BENCHMARKS.md`](../../doc/BENCHMARKS.md)                                | Criterion methodology + reproduction commands                              |
 | [`MIGRATION-from-*.md`](../../doc/)                                       | Migration guides from 5 ecosystem crates                                   |
-| [`adr/`](../../doc/adr/)                                                  | 7 Architecture Decision Records                                            |
+| [`adr/`](../../doc/adr/)                                                  | 5 Architecture Decision Records                                            |
 | [`SECURITY.md`](../../SECURITY.md)                                        | Vulnerability reporting + threat model                                     |
 
 ---

@@ -162,8 +162,9 @@ Versions surveyed as of 2026-05-19:
 - `scrypt` 0.12.0 (2026-04-22)
 - `djangohashers` 1.8.4 (2025-12-28)
 
-Re-run [`scripts/coverage-check.sh`](../scripts/coverage-check.sh)
-periodically to refresh the matrix as upstream crates evolve.
+Re-check upstream versions and re-render this matrix periodically
+(at minimum at every release; ideally as part of the annual
+standards review in [`IP-GOVERNANCE.md`](IP-GOVERNANCE.md)).
 
 ## See also
 

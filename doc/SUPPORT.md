@@ -67,9 +67,11 @@ For panics, include the full backtrace
   → The `doc/MIGRATION-from-*.md` family.
 - **"Can I use this for FIPS?"** →
   [`doc/FIPS.md`](FIPS.md) explains what's wired today.
-- **"Is parameter X tuneable?"** →
-  [`doc/PARAMETER-TUNING.md`](PARAMETER-TUNING.md) (Phase 5
-  follow-up — coming in v0.0.10).
+- **"Is parameter X tuneable?"** → Yes — every Argon2 / bcrypt /
+  scrypt / PBKDF2 parameter is exposed via `PolicyBuilder`. For
+  sizing on real hardware, use `hsh calibrate --algorithm <algo>
+  --target-ms <budget>` and persist the selected params via the
+  builder. See the runbook in [`OPERATIONS.md`](OPERATIONS.md).
 
 ## Stable contact
 

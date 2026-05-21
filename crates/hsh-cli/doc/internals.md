@@ -12,18 +12,21 @@ behaviour lives in the library.
 
 ```text
 crates/hsh-cli/src/
-├── main.rs             # entry point; clap parse + dispatch
-├── cli.rs              # `Cli` struct, subcommand args, ValueEnum impls
-├── io.rs               # password input (stdin / --password / TTY no-echo)
-│                       # + structured output (key-value plain / JSON)
+├── main.rs                 # entry point; clap parse + dispatch
+├── cli.rs                  # `Cli` struct, subcommand args, ValueEnum impls
+├── build.rs                # captures HSH_TARGET_TRIPLE / PROFILE / RUSTC_VERSION
+│                           # at compile time for `hsh inspect-backend`
+├── io.rs                   # password input (stdin / --password / TTY no-echo)
+│                           # + structured output (key-value plain / JSON)
 └── commands/
-    ├── mod.rs          # subcommand dispatch + policy resolution
-    ├── hash.rs         # `hsh hash`
-    ├── verify.rs       # `hsh verify`
-    ├── rehash.rs       # `hsh rehash`
-    ├── inspect.rs      # `hsh inspect`
-    ├── calibrate.rs    # `hsh calibrate`
-    └── completions.rs  # `hsh completions {bash|zsh|fish|powershell|elvish}`
+    ├── mod.rs              # subcommand dispatch + policy resolution
+    ├── hash.rs             # `hsh hash`
+    ├── verify.rs           # `hsh verify`
+    ├── rehash.rs           # `hsh rehash`
+    ├── inspect.rs          # `hsh inspect`
+    ├── inspect_backend.rs  # `hsh inspect-backend` (operator self-check)
+    ├── calibrate.rs        # `hsh calibrate`
+    └── completions.rs      # `hsh completions {bash|zsh|fish|powershell|elvish}`
 ```
 
 ## Subcommand dispatch
@@ -31,12 +34,13 @@ crates/hsh-cli/src/
 ```text
 clap Cli::parse()
   └─ match cli.command:
-       Command::Hash(args)        → commands::hash::run
-       Command::Verify(args)      → commands::verify::run
-       Command::Rehash(args)      → commands::rehash::run
-       Command::Inspect(args)     → commands::inspect::run
-       Command::Calibrate(args)   → commands::calibrate::run
-       Command::Completions(arg)  → commands::completions::run
+       Command::Hash(args)            → commands::hash::run
+       Command::Verify(args)          → commands::verify::run
+       Command::Rehash(args)          → commands::rehash::run
+       Command::Inspect(args)         → commands::inspect::run
+       Command::InspectBackend(args)  → commands::inspect_backend::run
+       Command::Calibrate(args)       → commands::calibrate::run
+       Command::Completions(arg)      → commands::completions::run
 ```
 
 Each `run()` function:

@@ -245,7 +245,7 @@ verified function tables and behavioural notes live in
 +use hsh::{api, Policy};
 +let policy = Policy::owasp_minimum_2025();
 +let stored = api::hash(&policy, "hunter2")?;
-+let (outcome, _) = api::verify_and_upgrade(&policy, "hunter2", &stored)?;
++let outcome = api::verify_and_upgrade(&policy, "hunter2", &stored)?;
 +let ok = outcome.is_valid();
 ```
 
@@ -258,7 +258,7 @@ verified function tables and behavioural notes live in
 -let ok    = argon2::verify_encoded(&stored, b"hunter2")?;
 +let policy = hsh::Policy::owasp_minimum_2025();
 +let stored = hsh::api::hash(&policy, "hunter2")?;
-+let (outcome, _) = hsh::api::verify_and_upgrade(&policy, "hunter2", &stored)?;
++let outcome = hsh::api::verify_and_upgrade(&policy, "hunter2", &stored)?;
 +let ok = outcome.is_valid();
 ```
 
@@ -274,7 +274,7 @@ verified function tables and behavioural notes live in
 +    .primary(PrimaryAlgorithm::Bcrypt)
 +    .build()?;
 +let stored = api::hash(&policy, "hunter2")?;
-+let (outcome, _) = api::verify_and_upgrade(&policy, "hunter2", &stored)?;
++let outcome = api::verify_and_upgrade(&policy, "hunter2", &stored)?;
 +let ok = outcome.is_valid();
 ```
 

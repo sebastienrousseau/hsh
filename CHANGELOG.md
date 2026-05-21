@@ -7,12 +7,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Late-cycle correctness fixes (P0)
+
+- **P0-1: scrypt policy params now honoured by `api::hash`.** The arm
+  previously read `policy.scrypt` and discarded it (`let _ = …;`),
+  silently using `ScryptHasher` defaults. Now wires
+  `policy.scrypt.to_native()` through `hash_password_customized`.
+- **P0-1: rehash drift detection covers every parameter dimension.**
+  `needs_rehash` previously detected only Argon2 params and PBKDF2
+  iterations. Now also detects bcrypt cost drift (parsed from MCF),
+  scrypt log_n/r/p/dk_len drift (parsed from PHC `ln=,r=,p=` plus
+  stored-hash length), PBKDF2 dk_len drift, and bcrypt prehash-mode
+  drift. Three new `Policy::{bcrypt,scrypt,pbkdf2}_satisfies`
+  helpers mirror the existing `argon2_satisfies`.
+- **P0-1: `hsh calibrate` selects the candidate closest to the
+  target.** `consider()` previously kept the largest measured time,
+  so any target above the slowest rung lost. Now takes `target_ms`
+  and minimises `abs_diff`.
+- **P0-1: `hsh inspect` no longer leaks heap memory via `Box::leak`.**
+  Switched to `Vec<(String, Value)>` with the `(&str, &Value)` view
+  built at emit time.
+- **P0-2: bcrypt prehash mode now round-trips end-to-end.** Before
+  this fix, `api::hash` applied `policy.bcrypt.prehash` on the mint
+  side but `api::verify_and_upgrade` always verified with
+  `PrehashAlgorithm::None`, so any hash minted under
+  `with_prehash(Sha256)` failed to verify. New
+  `hsh-bcrypt-sha256:<bcrypt-mcf>` envelope encodes the prehash
+  mode in the stored format; matching strip-and-route on verify
+  via `verify_bcrypt`. Prehash-mode drift triggers rehash. `hsh
+  inspect` recognises the envelope. Composes with the existing
+  `hsh-pepper:<keyver>:<inner>` wrapper.
+- **P0-3: docs split implemented-vs-stub-vs-contract-only.** README +
+  COMPARISON now distinguish `LocalPepper` (implemented) from cloud
+  KMS providers (stub interfaces; real fetch lands in 0.1.x), and
+  FIPS contract (delivered) from FIPS validated runtime (lands as
+  `hsh-backend-awslc` in 0.1.x). Six stale
+  `Outcome::Valid { needs_rehash: true }` examples across `doc/`
+  and per-crate READMEs corrected to the v0.0.9
+  `rehashed: Option<String>` shape.
+
+### Added (P1-3 — CLI / ops hardening)
+
+- **`hsh inspect-backend --policy <preset>`** — new operator
+  self-check subcommand. Resolves the named preset, asks
+  `hsh::Backend` what it demands, asks the build whether it can
+  satisfy that demand, and emits a `readiness` field gateable via
+  `jq -e '.readiness == "satisfied"'`. Surfaces backend, primary
+  algorithm, `fips_available_in_build`, `pepper_feature_compiled`,
+  plus build provenance (hsh-cli version, rustc, target triple,
+  profile via a new `build.rs`).
+- **`hsh calibrate --json` enriched** — adds a `ladder` array (every
+  candidate with `measured_ms`, `distance_ms`, `selected`) plus a
+  `runner` block (`host_os`, `host_arch`, `target_triple`,
+  `profile`, `rustc`, `hsh_cli_version`) so sizing decisions are
+  tied to the host that produced them. Plain-text output also
+  gains a `ladder:` section.
+- **`doc/OPERATIONS.md`** — day-2 runbook documenting the
+  pre-deployment `inspect-backend` check, fleet sizing with the new
+  calibrate JSON shape, the pepper rotation TL;DR, and the every-
+  prefix-recognised summary for `hsh inspect`.
+
+### Added (P2 — positioning + governance)
+
+- **`doc/PASSKEY-ERA.md`** — positions `hsh` as the
+  password-fallback / recovery-credential hardening layer in a
+  2026 passkey-primary architecture (NIST SP 800-63-4 finalised
+  July 2025, FIDO Passkey Index 2025, Microsoft May-2026
+  announcement linked inline). Three concrete recipes: passkey
+  primary + password fallback for sign-in, recovery credential
+  hardening (tighter policy + mandatory pepper, single-use,
+  rotatable), and the four-phase staged migration off passwords.
+- **`doc/IP-GOVERNANCE.md`** — patent watchlist (US 11,641,281 B2;
+  US 11,741,218 B2; US 9,454,661 B2 / US 20150379270 A1 family)
+  with disclaimers + open-prior-art pointers, six-row annual
+  standards review process (OWASP / NIST 800-63 / NIST 800-132 +
+  FIPS 140-3 / FIDO / IETF CFRG + RustCrypto / RFC editor),
+  pre-commercialisation legal checklist, and a per-release
+  governance gate wired into `doc/RELEASE.md`.
+
+### Changed (regression pass)
+
+- **Test gating for Miri (focused, per-PR).** Miri interprets
+  crypto primitives ~200× slower than native; the focused job hit
+  60-min timeout after the P0-2 bcrypt-prehash tests grew the
+  suite. Redundant per-test exercises are now annotated
+  `#[cfg_attr(miri, ignore = "…")]`, keeping one representative
+  round-trip per primitive (argon2id / bcrypt / scrypt /
+  bcrypt-with-prehash / peppered) so every upstream `unsafe` code
+  path is still exercised. Native `cargo test` runs every test
+  unaffected. Focused Miri job time: 60-min timeout → ~13 min.
+- **Renamed `crates/hsh-cli/examples/quickstart.rs` →
+  `library_shape.rs`** to resolve a `cargo build --examples`
+  output-filename collision warning marked "may become a hard
+  error in the future"; the `hsh/examples/quickstart.rs` keeps
+  its canonical name. README + the hsh-cli README updated.
+
+### Dependency bumps (rolled in from dependabot PRs #167, #168,
+### #170, #172, #173, #174)
+
+- `serde` 1.0.216 → 1.0.228
+- `serde_json` 1.0.137 → 1.0.143
+- `criterion` 0.5.1 → 0.8.2 (bench imports switched to
+  `std::hint::black_box` to silence the v0.8 deprecation of
+  `criterion::black_box`)
+- `actions/checkout` v4.3.1 → v6.0.2 (SHA-pinned across all 7
+  workflows)
+- `actions/upload-artifact` v4.6.2 → v7.0.1 (SHA-pinned)
+- `codecov/codecov-action` v5.5.4 → v6.0.1 (SHA-pinned)
+- `clap` 4.5 → 4.6 came along via the lockfile refresh; snapshot
+  fixtures for `hsh hash --help` and `hsh verify --help` updated to
+  reflect clap's reordering of `[default: …]` in subcommand help
+  output.
+
 ### Planned
 
 - **v1.0.0** — ships after an ~8-week stabilisation window during
   which v0.0.9 absorbs post-merge bug reports and the CI nightlies
   produce the first set of SLSA attestations + OpenSSF Scorecard
   scores. See [`doc/adr/0007-v1-stability-contract.md`](doc/adr/0007-v1-stability-contract.md).
+- **scrypt 0.11 → 0.12** is deferred (dependabot PR #171 closed):
+  the major API break renames the `simple` feature to
+  `password-hash`, removes the `dk_len` arg from `Params::new`,
+  makes `Scrypt` non-unit, and bumps `password_hash` 0.5 → 0.6
+  cascading into argon2 / bcrypt / pbkdf2 — needs a dedicated
+  workspace-wide lift PR.
 
 ### Added (Phase 7)
 
@@ -392,13 +510,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   follow-up — today's verify accepts the stored cost without comparing
   against `policy.bcrypt.cost`.
 
-## [0.0.9] — 2026-05-19
-
-This release kicks off the enterprise-readiness programme — see the
-[v0.0.9 milestone](https://github.com/sebastienrousseau/hsh/milestone/1)
-for the full roadmap across Phases 0–7.
-
-### Added
+### Added (Phase 0 — foundation + security hot-fixes)
 
 - Cargo **workspace** layout: source moved into `crates/hsh/`; root is now
   a workspace manifest with shared profile and dependency configuration.
@@ -409,21 +521,20 @@ for the full roadmap across Phases 0–7.
 - Consolidated GitHub Actions: a single `ci.yml` delegates to the reusable
   workflows in `sebastienrousseau/pipelines`.
 
-### Changed
+### Changed (Phase 0)
 
 - **MSRV** bumped to **1.75** (was 1.60).
 - Release profile uses `opt-level = 3` (was `"s"`) and now enables
   `overflow-checks = true` — arithmetic on cost parameters must never
   silently wrap.
 - Crate description, README, and crate-level docs no longer claim
-  "quantum-resistant" — see ADR-0001 (to be written in Phase 1) and the
-  "What HSH is not" section in the README.
+  "quantum-resistant" — see the "What HSH is not" section in the README.
 - Verification code path no longer prints password, salt, or hash bytes
   to stdout.
 - Dependabot: weekly Monday cadence, grouped minor+patch updates, scoped
   commit messages, PR labels.
 
-### Security
+### Security (Phase 0)
 
 - **S1 — constant-time verify.** `argon2i` and `scrypt` verify paths now
   use `subtle::ConstantTimeEq` instead of `==` byte comparison. Closes
@@ -439,20 +550,20 @@ for the full roadmap across Phases 0–7.
   positioning from README, crate docs, and `Cargo.toml`. Closes
   [#152](https://github.com/sebastienrousseau/hsh/issues/152).
 
-### Breaking changes
+### Breaking changes (Phase 0)
 
 - `Hash::{hash, salt, algorithm}` fields are now private; use the
   `hash()`, `salt()`, `algorithm()` accessor methods.
 - Error type changed from `String` / `&'static str` to `hsh::Error`.
   Pattern-match on variants or use `Display` for human-readable text.
 
-### Deprecated
+### Deprecated (Phase 0)
 
 - Calls relying on the old verify path's `println!` debug output — those
   prints are gone. There was no API for capturing them, but anyone scraping
   stdout in tests will need to update.
 
-### Removed
+### Removed (Phase 0)
 
 - The `feature = "bench"` `cfg_attr` gate from `lib.rs` (was unused and
   triggered an `unexpected_cfgs` warning).

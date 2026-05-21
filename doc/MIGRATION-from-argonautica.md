@@ -42,7 +42,7 @@ use hsh::{api, Policy, Outcome};
 let policy = Policy::owasp_minimum_2025();
 let stored = api::hash(&policy, "password123")?;
 
-let (outcome, _) = api::verify_and_upgrade(&policy, "password123", &stored)?;
+let outcome = api::verify_and_upgrade(&policy, "password123", &stored)?;
 assert!(matches!(outcome, Outcome::Valid { .. }));
 ```
 
@@ -57,10 +57,10 @@ use hsh::{api, Policy};
 
 let policy = Policy::owasp_minimum_2025();
 let legacy_hash = read_from_db_column();
-let (outcome, rehashed) =
+let outcome =
     api::verify_and_upgrade(&policy, &candidate, &legacy_hash)?;
 
-if outcome.is_valid() {
+if let Outcome::Valid { rehashed } = outcome {
     if let Some(new_phc) = rehashed {
         // Persist `new_phc` — the parameters used by argonautica
         // probably drift below your current Policy, so we just
