@@ -213,6 +213,7 @@ Per-crate READMEs:
 | **Per-host benchmark calibration** | `hsh calibrate --algorithm argon2id --target-ms 500` + [`doc/BENCHMARKS.md`](doc/BENCHMARKS.md) |
 | **Day-2 operations runbook** | [`doc/OPERATIONS.md`](doc/OPERATIONS.md) — pre-deployment `inspect-backend` check, fleet sizing, rotation TL;DR, hash-format inspection |
 | **Pre-commit / CI gating** | `crates/hsh-cli/examples/*` + the `hsh verify` exit-code contract |
+| **IP / standards governance** | [`doc/IP-GOVERNANCE.md`](doc/IP-GOVERNANCE.md) — patent watchlist, annual OWASP / NIST / FIDO review cadence, pre-commercialisation legal checklist |
 
 The rest of this README covers the **library** surface (`hsh`
 itself). For the satellite crates, jump straight to their READMEs

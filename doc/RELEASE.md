@@ -38,6 +38,31 @@ verification, and post-release follow-up that lives outside CI.
    `CHANGELOG.md` diff. Sit on it for the standard review window
    (48h for patches, 72h for minor/major).
 
+## Governance gate
+
+Before the release PR can be tagged, the maintainer adds a single
+governance comment to the release PR confirming the patent + standards
+watchlist in [`IP-GOVERNANCE.md`](IP-GOVERNANCE.md) has been
+re-reviewed for this release. Format:
+
+```text
+Governance review (vX.Y.Z):
+- Patent watchlist (IP-GOVERNANCE.md §Patent watchlist) — reviewed YYYY-MM-DD; <no changes | summary of change>.
+- Standards refresh (IP-GOVERNANCE.md §Annual standards review) — last full annual review YYYY-MM, next due YYYY-MM; no interim changes affecting this release.
+```
+
+For a patch release (vX.Y.Z+1) where no presets, parameters, or
+wire formats moved, "no changes" is the expected entry and the
+comment is one line. For a minor or major release the comment
+must reflect any change to `Policy` presets, wrapper formats, or
+deprecated upstreams. If the change warranted an ADR, the
+governance comment links it.
+
+This gate exists so a downstream auditor asking *"when did the
+maintainers last verify this implementation tracks open
+standards?"* has a per-release answer in the PR record, not a
+hand-wave.
+
 ## Tag push (T-0)
 
 Once the release PR is merged on `main`:
