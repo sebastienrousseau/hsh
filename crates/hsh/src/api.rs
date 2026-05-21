@@ -45,6 +45,15 @@ use subtle::ConstantTimeEq;
 #[cfg(feature = "pepper")]
 const PEPPER_PREFIX: &str = "hsh-pepper:";
 
+/// Prefix on stored bcrypt hashes whose input was HMAC-SHA-256 pre-hashed
+/// before bcrypt saw it. Format: `hsh-bcrypt-sha256:<bcrypt-mcf>`. The
+/// envelope is needed because bcrypt's MCF has no parameter slot for a
+/// pre-hash marker, and the prehash mode must round-trip from `api::hash`
+/// to `api::verify_and_upgrade` for verification to agree with hashing.
+/// Composes with [`PEPPER_PREFIX`]: a peppered + pre-hashed bcrypt hash
+/// is stored as `hsh-pepper:<keyver>:hsh-bcrypt-sha256:<bcrypt-mcf>`.
+const BCRYPT_PREHASH_SHA256_PREFIX: &str = "hsh-bcrypt-sha256:";
+
 /// Hashes `password` under `policy` and returns a PHC-format string
 /// (or, for [`PrimaryAlgorithm::Bcrypt`], an MCF-format `$2b$…` string).
 ///
@@ -128,7 +137,14 @@ fn hash_unpeppered(policy: &Policy, password: &[u8]) -> Result<String> {
             let pw_str = std::str::from_utf8(password)
                 .map_err(|_| bcrypt_requires_utf8())?;
             let bytes = Bcrypt::hash_with(pw_str, policy.bcrypt)?;
-            String::from_utf8(bytes).map_err(map_bcrypt_utf8_err)
+            let mcf = String::from_utf8(bytes)
+                .map_err(map_bcrypt_utf8_err)?;
+            Ok(match policy.bcrypt.prehash {
+                PrehashAlgorithm::None => mcf,
+                PrehashAlgorithm::Sha256 => {
+                    format!("{BCRYPT_PREHASH_SHA256_PREFIX}{mcf}")
+                }
+            })
         }
         PrimaryAlgorithm::Scrypt => {
             let salt = SaltString::generate(&mut OsRng);
@@ -261,32 +277,31 @@ fn verify_dispatch_inner(
     password: &[u8],
     stored: &str,
 ) -> Result<Outcome> {
+    // hsh-bcrypt-sha256:<mcf> envelope — the input was HMAC-SHA-256
+    // pre-hashed before bcrypt saw it. Strip the envelope, verify with
+    // the matching prehash mode, then evaluate drift.
+    if let Some(inner_mcf) =
+        stored.strip_prefix(BCRYPT_PREHASH_SHA256_PREFIX)
+    {
+        return verify_bcrypt(
+            policy,
+            password,
+            inner_mcf,
+            PrehashAlgorithm::Sha256,
+        );
+    }
+
     if stored.starts_with("$2a$")
         || stored.starts_with("$2b$")
         || stored.starts_with("$2x$")
         || stored.starts_with("$2y$")
     {
-        let pw_str = std::str::from_utf8(password)
-            .map_err(|_| bcrypt_verify_requires_utf8())?;
-        let valid =
-            Bcrypt::verify(pw_str, stored, PrehashAlgorithm::None)?;
-        if !valid {
-            return Ok(Outcome::Invalid);
-        }
-        let cost_drift =
-            matches!(policy.primary, PrimaryAlgorithm::Bcrypt)
-                && !parse_bcrypt_cost(stored)
-                    .map(|c| policy.bcrypt_satisfies(c))
-                    .unwrap_or(false);
-        if !matches!(policy.primary, PrimaryAlgorithm::Bcrypt)
-            || cost_drift
-        {
-            let new_phc = hash_unpeppered(policy, password)?;
-            return Ok(Outcome::Valid {
-                rehashed: Some(new_phc),
-            });
-        }
-        return Ok(Outcome::Valid { rehashed: None });
+        return verify_bcrypt(
+            policy,
+            password,
+            stored,
+            PrehashAlgorithm::None,
+        );
     }
 
     let parsed =
@@ -340,6 +355,40 @@ fn verify_dispatch_inner(
     } else {
         Ok(Outcome::Valid { rehashed: None })
     }
+}
+
+/// Verifies a bcrypt MCF string and decides whether the stored format
+/// drifted from the current policy along any of cost / prehash mode /
+/// primary-algo dimensions. Triggers rehash on any drift.
+fn verify_bcrypt(
+    policy: &Policy,
+    password: &[u8],
+    mcf: &str,
+    stored_prehash: PrehashAlgorithm,
+) -> Result<Outcome> {
+    let pw_str = std::str::from_utf8(password)
+        .map_err(|_| bcrypt_verify_requires_utf8())?;
+    let valid = Bcrypt::verify(pw_str, mcf, stored_prehash)?;
+    if !valid {
+        return Ok(Outcome::Invalid);
+    }
+
+    let policy_is_bcrypt =
+        matches!(policy.primary, PrimaryAlgorithm::Bcrypt);
+    let cost_drift = policy_is_bcrypt
+        && !parse_bcrypt_cost(mcf)
+            .map(|c| policy.bcrypt_satisfies(c))
+            .unwrap_or(false);
+    let prehash_drift =
+        policy_is_bcrypt && stored_prehash != policy.bcrypt.prehash;
+
+    if !policy_is_bcrypt || cost_drift || prehash_drift {
+        let new_phc = hash_unpeppered(policy, password)?;
+        return Ok(Outcome::Valid {
+            rehashed: Some(new_phc),
+        });
+    }
+    Ok(Outcome::Valid { rehashed: None })
 }
 
 fn verify_pbkdf2_phc(

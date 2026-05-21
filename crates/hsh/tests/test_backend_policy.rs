@@ -227,9 +227,20 @@ fn bcrypt_with_prehash_accepts_long_input() {
             .build()
             .unwrap();
     let too_long = "x".repeat(100);
-    // With pre-hash, long input is accepted.
+    // With pre-hash, long input is accepted. Stored format carries the
+    // hsh-bcrypt-sha256: envelope so verify_and_upgrade can route to the
+    // matching prehash mode at verify time.
     let stored = hsh::api::hash(&policy, &too_long).unwrap();
-    assert!(stored.starts_with("$2"));
+    assert!(stored.starts_with("hsh-bcrypt-sha256:"));
+    let inner = stored
+        .strip_prefix("hsh-bcrypt-sha256:")
+        .expect("envelope present");
+    assert!(inner.starts_with("$2"));
+    // Round-trip through verify to prove the envelope's verify path works.
+    let outcome =
+        hsh::api::verify_and_upgrade(&policy, &too_long, &stored)
+            .unwrap();
+    assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
 }
 
 #[test]

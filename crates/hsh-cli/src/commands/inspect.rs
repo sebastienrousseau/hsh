@@ -26,6 +26,21 @@ pub(crate) fn run(args: InspectArgs, json: bool) -> Result<()> {
         return Ok(());
     }
 
+    // hsh-bcrypt-sha256: envelope — bcrypt with HMAC-SHA-256 pre-hash.
+    if let Some(rest) = s.strip_prefix("hsh-bcrypt-sha256:") {
+        let mut pairs: Vec<(String, serde_json::Value)> = vec![
+            ("format".into(), "hsh-bcrypt-sha256".into()),
+            ("algorithm".into(), "bcrypt".into()),
+            ("prehash".into(), "hmac-sha256".into()),
+            ("inner".into(), rest.into()),
+        ];
+        if let Some(cost) = rest.split('$').nth(2) {
+            pairs.push(("cost".into(), cost.into()));
+        }
+        emit(json, &pairs)?;
+        return Ok(());
+    }
+
     // Bcrypt MCF
     if s.starts_with("$2a$")
         || s.starts_with("$2b$")

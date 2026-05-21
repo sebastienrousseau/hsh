@@ -20,6 +20,21 @@
 //! This wrapper **rejects** any password longer than 72 bytes by default.
 //! Callers that genuinely need to support longer inputs must opt in to a
 //! pre-hash via [`BcryptParams::with_prehash`](crate::algorithms::bcrypt::BcryptParams::with_prehash).
+//!
+//! ## Storage format when a pre-hash is configured
+//!
+//! Bcrypt's MCF (`$2b$<cost>$<salt+hash>`) has no parameter slot for a
+//! pre-hash marker, so [`crate::api::hash`] wraps the MCF in the
+//! `hsh-bcrypt-sha256:<mcf>` envelope when [`PrehashAlgorithm::Sha256`]
+//! is set on the [`crate::policy::Policy`]. The envelope round-trips
+//! through [`crate::api::verify_and_upgrade`], which routes the password
+//! through the same pre-hash before comparing — without the envelope the
+//! verify side would feed bcrypt the raw password and the comparison
+//! would always fail. The envelope also composes with the
+//! `hsh-pepper:<keyver>:` wrapper: peppered + pre-hashed bcrypt hashes
+//! are stored as `hsh-pepper:<keyver>:hsh-bcrypt-sha256:<mcf>`. Pre-hash
+//! mode drift (stored mode ≠ policy mode) triggers an `Outcome::Valid
+//! { rehashed: Some(_) }` on the next successful verify.
 
 use crate::error::{Error, Result};
 use crate::models::hash_algorithm::HashingAlgorithm;

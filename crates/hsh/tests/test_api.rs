@@ -226,6 +226,132 @@ mod tests {
     // Regression: needs_rehash used to ignore pbkdf2 dk_len drift.
     // -----------------------------------------------------------------
 
+    // -----------------------------------------------------------------
+    // Regression: P0-2 — bcrypt prehash policy consistency.
+    // Prior to v0.0.9 final, api::hash applied policy.bcrypt.prehash
+    // on the mint side but api::verify_and_upgrade always verified
+    // with PrehashAlgorithm::None, so a long password hashed under
+    // PrehashAlgorithm::Sha256 would fail to verify.
+    // -----------------------------------------------------------------
+
+    fn bcrypt_prehash_policy(
+        prehash: hsh::algorithms::bcrypt::PrehashAlgorithm,
+    ) -> Policy {
+        let bcrypt = hsh::algorithms::bcrypt::BcryptParams::new(4)
+            .with_prehash(prehash);
+        PolicyBuilder::from_preset(&fast_policy_with_primary(
+            PrimaryAlgorithm::Bcrypt,
+        ))
+        .bcrypt(bcrypt)
+        .build()
+        .unwrap()
+    }
+
+    #[test]
+    fn bcrypt_with_prehash_sha256_round_trips() {
+        let policy = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::Sha256,
+        );
+        let stored = api::hash(&policy, "round-trip-prehash").unwrap();
+        assert!(
+            stored.starts_with("hsh-bcrypt-sha256:"),
+            "policy with prehash=Sha256 must emit the envelope, got: {stored}"
+        );
+
+        let outcome = api::verify_and_upgrade(
+            &policy,
+            "round-trip-prehash",
+            &stored,
+        )
+        .unwrap();
+        assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
+    }
+
+    #[test]
+    fn bcrypt_with_prehash_accepts_long_passwords() {
+        // > 72 bytes — would be rejected without prehash, succeeds with.
+        let pwd = "a".repeat(200);
+        let policy = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::Sha256,
+        );
+        let stored = api::hash(&policy, &pwd).unwrap();
+        let outcome =
+            api::verify_and_upgrade(&policy, &pwd, &stored).unwrap();
+        assert!(matches!(outcome, Outcome::Valid { rehashed: None }));
+    }
+
+    #[test]
+    fn bcrypt_with_prehash_rejects_wrong_password() {
+        let policy = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::Sha256,
+        );
+        let stored = api::hash(&policy, "the-real-password").unwrap();
+        let outcome =
+            api::verify_and_upgrade(&policy, "wrong-password", &stored)
+                .unwrap();
+        assert!(matches!(outcome, Outcome::Invalid));
+    }
+
+    #[test]
+    fn bcrypt_prehash_drift_triggers_rehash_none_to_sha256() {
+        // Stored under prehash=None. Policy now requires prehash=Sha256.
+        let weak = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::None,
+        );
+        let stronger = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::Sha256,
+        );
+
+        let stored = api::hash(&weak, "drift-none-to-sha").unwrap();
+        assert!(
+            stored.starts_with("$2"),
+            "weak path must emit raw MCF"
+        );
+
+        let outcome = api::verify_and_upgrade(
+            &stronger,
+            "drift-none-to-sha",
+            &stored,
+        )
+        .unwrap();
+        assert!(outcome.is_valid());
+        assert!(outcome.needs_rehash());
+        let rehashed = outcome
+            .rehashed()
+            .expect("prehash drift must yield rehash payload");
+        assert!(rehashed.starts_with("hsh-bcrypt-sha256:"));
+    }
+
+    #[test]
+    fn bcrypt_prehash_drift_triggers_rehash_sha256_to_none() {
+        // Stored under prehash=Sha256. Policy now uses prehash=None.
+        let prehash_policy = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::Sha256,
+        );
+        let bare_policy = bcrypt_prehash_policy(
+            hsh::algorithms::bcrypt::PrehashAlgorithm::None,
+        );
+
+        let stored =
+            api::hash(&prehash_policy, "drift-sha-to-none").unwrap();
+        assert!(stored.starts_with("hsh-bcrypt-sha256:"));
+
+        let outcome = api::verify_and_upgrade(
+            &bare_policy,
+            "drift-sha-to-none",
+            &stored,
+        )
+        .unwrap();
+        assert!(outcome.is_valid());
+        assert!(outcome.needs_rehash());
+        let rehashed = outcome
+            .rehashed()
+            .expect("prehash drift must yield rehash payload");
+        // Bare policy ⇒ rehash is plain MCF.
+        assert!(rehashed.starts_with("$2"));
+        assert!(!rehashed.starts_with("hsh-bcrypt-sha256:"));
+    }
+
     #[test]
     fn pbkdf2_dk_len_drift_triggers_rehash() {
         let weak = fast_policy_with_primary(PrimaryAlgorithm::Pbkdf2);
