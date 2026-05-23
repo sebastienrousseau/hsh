@@ -1,0 +1,9 @@
+# cargo-vet imports lock file.
+#
+# Populated automatically by `cargo vet update` after `audits.toml`
+# declares its trusted imports. Committed so CI runs against the same
+# set of third-party audits maintainers have approved.
+#
+# This file is intentionally empty in v0.0.9 — Phase 2 sets up the
+# infrastructure; first `cargo vet update` will land as the next
+# follow-up commit.

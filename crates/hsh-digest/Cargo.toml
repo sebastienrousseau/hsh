@@ -1,0 +1,52 @@
+[package]
+name        = "hsh-digest"
+version     = "0.0.9"
+description = "General-purpose cryptographic hashing primitives (SHA-2, SHA-3, BLAKE3) — NOT for password storage. Use `hsh::api` for passwords."
+build       = false
+
+authors.workspace       = true
+edition.workspace       = true
+rust-version.workspace  = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+categories              = ["cryptography", "no-std"]
+keywords                = ["hash", "digest", "sha2", "sha3", "blake3"]
+
+[lib]
+name = "hsh_digest"
+path = "src/lib.rs"
+
+[dependencies]
+digest    = { workspace = true }
+sha2      = { workspace = true, optional = true }
+sha3      = { workspace = true, optional = true }
+blake3    = { workspace = true, optional = true }
+subtle    = { workspace = true }
+zeroize   = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+hex      = { workspace = true }
+proptest = { workspace = true }
+
+[features]
+# Sensible defaults — the SHA-2 family is the bedrock of every modern
+# protocol; sha3 + blake3 are popular enough to justify being on by
+# default. Disable explicitly when you want a minimal build.
+default = ["sha2", "sha3", "blake3"]
+
+sha2   = ["dep:sha2"]
+sha3   = ["dep:sha3"]
+blake3 = ["dep:blake3"]
+
+# Reserved for future incremental work — KangarooTwelve / TurboSHAKE
+# (RFC 9861, Oct 2025) and Ascon-Hash256 / Ascon-XOF128 (NIST SP 800-232
+# final, Aug 2025). The shape is defined; the impls are tracked as
+# Phase 6 follow-ups.
+k12   = []
+ascon = []
+
+[lints]
+workspace = true

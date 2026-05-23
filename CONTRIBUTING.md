@@ -1,57 +1,71 @@
-# Contributing to `Hash (HSH)`
+# Contributing to `hsh`
 
-Welcome! We're thrilled that you're interested in contributing to the `Hash (HSH)` library. Whether you're looking to evangelize, submit feedback, or contribute code, we appreciate your involvement in making `Hash (HSH)` a better tool for everyone. Here's how you can get started.
+Thanks for your interest in `hsh`. This document covers everything
+you need to file a useful bug report, propose a change, or land a pull
+request.
 
-## Evangelize
+## Reporting bugs and proposing features
 
-One of the simplest ways to help us out is by spreading the word about Hash (HSH). We believe that a bigger, more involved community makes for a better framework, and that better frameworks make the world a better place. If you know people who might benefit from using Hash (HSH), please let them know!
+- **Bug reports and feature requests** live on the
+  [issue tracker][issues]. Search existing issues first.
+- **Security reports** are out of scope for the public tracker. See
+  [`SECURITY.md`](SECURITY.md) for the coordinated disclosure
+  process.
+- A useful issue includes: what you were doing, what you expected to
+  happen, what actually happened, the output of `hsh --version` (or
+  the version pinned in your `Cargo.toml`), and the smallest input
+  that reproduces it.
 
-## How to Contribute
+## Sending pull requests
 
-If you're interested in making a more direct contribution, there are several ways you can help us improve Hash (HSH). Here are some guidelines for submitting feedback, bug reports, and code contributions.
+```sh
+git clone https://github.com/sebastienrousseau/hsh.git
+cd hsh
+make ci                    # fmt + clippy + test + doc (what CI runs on every PR)
+```
 
-### Feedback
+- Source lives in the Cargo **workspace** under [`crates/`](crates/):
+  - [`crates/hsh/`](crates/hsh/) — core library
+  - [`crates/hsh-cli/`](crates/hsh-cli/) — `hsh` binary
+  - [`crates/hsh-kms/`](crates/hsh-kms/) — pepper / KMS providers
+  - [`crates/hsh-digest/`](crates/hsh-digest/) — general digests
+- Match the existing **commit style** (Conventional Commits, e.g.
+  `fix(api): …`, `feat(cli): …`, `docs: …`).
+- Keep PRs focused. If your change touches the public API surface,
+  read [`doc/API-STABILITY.md`](doc/API-STABILITY.md) first to
+  understand which surfaces are stability tier 1 and require a
+  semver bump.
+- New behaviour wants a regression test next to it — see the
+  existing layout in `crates/*/tests/`.
+- Don't skip pre-commit hooks (`--no-verify`) and don't bypass CI
+  (`[skip ci]` / `if: false`). If a hook fails, fix the underlying
+  issue.
 
-Your feedback is incredibly valuable to us, and we're always looking for ways to make Hash (HSH) better. If you have ideas, suggestions, or questions about Hash (HSH), we'd love to hear them. Here's how you can provide feedback:
+## Style and lints
 
-- Click [here][2] to submit a new feedback.
-- Use a descriptive title that clearly summarizes your feedback.
-- Provide a detailed description of the issue or suggestion.
-- Be patient while we review and respond to your feedback.
+- `rustfmt` is non-negotiable; `make fmt-check` is the gate.
+- `clippy` runs with `-D warnings` and the workspace lint groups
+  configured in the root `Cargo.toml` (`[workspace.lints.rust]` +
+  `[workspace.lints.clippy]`). Don't add `#[allow(...)]` to silence
+  a lint without a justification comment.
+- `#![forbid(unsafe_code)]` is the workspace-wide rule
+  ([ADR-0006](doc/adr/0006-zero-unsafe-policy.md)).
+- The disallowed-methods list in [`clippy.toml`](clippy.toml) bans
+  non-OS-CSPRNG random sources and crates we've explicitly chosen
+  not to depend on. Don't try to work around them.
 
-### Bug Reports
+## Larger conversations
 
-If you encounter a bug while using Hash (HSH), please let us know so we can fix it. Here's how you can submit a bug report:
+- For design questions that don't fit in an issue, open a
+  Discussion on the repo or start a draft PR with a single
+  `doc/` change explaining what you're proposing.
+- For positioning / architecture conversations, the existing
+  long-form artefacts ([`doc/PASSKEY-ERA.md`](doc/PASSKEY-ERA.md),
+  [`doc/COMPARISON.md`](doc/COMPARISON.md),
+  [`doc/FIPS.md`](doc/FIPS.md), the ADRs under
+  [`doc/adr/`](doc/adr/)) are good seeds.
 
-- Click [here][2] to submit a new issue.
-- Use a descriptive title that clearly summarizes the bug.
-- Provide a detailed description of the issue, including steps to reproduce it.
-- Be patient while we review and respond to your bug report.
+Thanks again — every well-shaped issue, well-scoped PR, and
+well-reasoned design comment makes the project better.
 
-### Code Contributions
-
-If you're interested in contributing code to Hash (HSH), we're excited to have your help! Here's what you need to know:
-
-#### Feature Requests
-
-If you have an idea for a new feature or improvement, we'd love to hear it. Here's how you can contribute code for a new feature to Hash (HSH):
-
-- Fork the repo.
-- Clone the Hash [HSH](1) repo by running:
-  `git clone {repository}`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for Hash (HSH).
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for Hash (HSH).
-
-#### Submitting Code
-
-If you've identified a bug or have a specific code improvement in mind, we welcome your pull requests. Here's how to submit your code changes:
-
-- Fork the repo.
-- Clone the Hash (HSH) repo by running:
-  `git clone {repository}`
-- Edit files in the `src/` folder. The `src/` folder contains the source code for Hash (HSH).
-- Submit a pull request, and we'll review and merge your changes if they fit with our vision for Hash (HSH).
-
-We hope that this guide has been helpful in explaining how you can contribute to Hash (HSH). Thank you for your interest and involvement in our project!
-
-[2]: https://github.com/sebastienrousseau/dtt/issues/new
+[issues]: https://github.com/sebastienrousseau/hsh/issues

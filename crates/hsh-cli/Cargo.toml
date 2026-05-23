@@ -1,0 +1,52 @@
+[package]
+name        = "hsh-cli"
+version     = "0.0.9"
+description = "Command-line companion for the `hsh` password-hashing library: hash / verify / rehash / inspect / calibrate."
+
+# CLI gets the modern edition; the lib stays on 2021 / MSRV 1.75 so it
+# remains broadly consumable.
+edition       = "2024"
+# Bumped from 1.85 → 1.88 because the `rpassword` 7.5+ dep started
+# using let chains (stable in 1.88). The lib crates' 1.75 floor is
+# unaffected because they don't pull rpassword.
+rust-version  = "1.88"
+
+authors.workspace       = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+keywords                = ["argon2id", "password", "cli", "phc", "kdf"]
+categories              = ["authentication", "command-line-utilities", "cryptography"]
+
+[[bin]]
+name = "hsh"
+path = "src/main.rs"
+
+[dev-dependencies]
+# Snapshot testing for the CLI's human-readable output.
+# `insta` is the standard tool — the snapshots live in
+# `crates/hsh-cli/tests/snapshots/` and are reviewed via
+# `cargo insta review` locally.
+insta = { version = "1.40", default-features = false, features = ["yaml"] }
+
+[dependencies]
+hsh        = { version = "0.0.9", path = "../hsh" }
+hsh-kms    = { version = "0.0.9", path = "../hsh-kms", optional = true }
+
+# Re-used directly for the `calibrate` subcommand's parameter ladder.
+argon2     = { workspace = true }
+
+clap          = { workspace = true }
+clap_complete = { workspace = true }
+anyhow        = { workspace = true }
+rpassword     = { workspace = true }
+serde_json    = { workspace = true }
+
+[features]
+default = []
+pepper  = ["hsh/pepper", "dep:hsh-kms"]
+fips    = ["hsh/fips"]
+
+[lints]
+workspace = true

@@ -1,0 +1,76 @@
+name: Docs
+
+# Build rustdoc and publish to the `gh-pages` branch (served at
+# https://doc.hshlib.com via the CNAME on the Pages settings page).
+#
+# Runs on:
+#   - every tag push (so the canonical release docs are always live)
+#   - every push to `main` (so the latest-on-main docs are fresh)
+#   - manual workflow_dispatch (rebuild without a push)
+#
+# The Pages config on this repo is `build_type: legacy` with source
+# `gh-pages` branch / path `/`, so the deploy step here just commits
+# the generated `target/doc/` tree to that branch and lets GitHub
+# Pages pick it up.
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  build-and-deploy:
+    name: Build rustdoc and deploy to gh-pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write       # required to push to gh-pages branch
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - name: Cache cargo registry / target
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Build rustdoc (workspace, all features, no deps)
+        env:
+          RUSTDOCFLAGS: "-D warnings -D rustdoc::broken-intra-doc-links"
+        run: cargo doc --workspace --all-features --no-deps
+      - name: Drop a top-level index.html that redirects to the core crate
+        # `cargo doc` produces target/doc/<crate>/index.html files per
+        # crate but no root index. Without this redirect, opening
+        # https://doc.hshlib.com/ lands on a directory listing.
+        run: |
+          cat > target/doc/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>hsh — documentation</title>
+          <meta http-equiv="refresh" content="0; url=hsh/">
+          <link rel="canonical" href="hsh/">
+          <p>Redirecting to <a href="hsh/">hsh/</a>…</p>
+          HTML
+      - name: Restore CNAME so the custom domain isn't wiped on each deploy
+        run: echo "doc.hshlib.com" > target/doc/CNAME
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./target/doc
+          publish_branch: gh-pages
+          force_orphan: true     # always replace gh-pages tip — no history bloat
+          enable_jekyll: false   # Pages Jekyll defaults break /_*/ paths in rustdoc
+          user_name: "github-actions[bot]"
+          user_email: "41898282+github-actions[bot]@users.noreply.github.com"
+          commit_message: "docs: deploy rustdoc for ${{ github.sha }}"

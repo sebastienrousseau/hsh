@@ -1,0 +1,46 @@
+# cargo-vet-style audit trail for first-party review of dependencies.
+#
+# Run `cargo vet` to validate. This file records the audits that
+# *this project's maintainers* have personally performed; trusted
+# imports (RustSec, Mozilla, Google) are recorded in `imports.lock`.
+#
+# Format reference:
+# https://mozilla.github.io/cargo-vet/audit-criteria.html
+
+[criteria.crypto-reviewed]
+description = """
+This crate's cryptographic code has been read end-to-end by a maintainer
+familiar with the relevant primitive (Argon2 / bcrypt / scrypt / SHA-2)
+and the public API surface used by `hsh` has been confirmed to:
+  - perform comparison in constant time wherever a secret is involved,
+  - zero secret material on drop where applicable,
+  - not silently truncate inputs.
+"""
+implies = ["safe-to-deploy"]
+
+# Bring in widely-trusted external audit sets when running cargo-vet.
+# These import lines tell cargo-vet which third-party audit feeds to
+# accept; the actual signed-hash records live in `imports.lock`.
+[imports.bytecode-alliance]
+url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/main/supply-chain/audits.toml"
+
+[imports.embark]
+url = "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/main/audits.toml"
+
+[imports.google]
+url = "https://raw.githubusercontent.com/google/supply-chain/main/audits.toml"
+
+[imports.mozilla]
+url = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+
+# ---------------------------------------------------------------------------
+# First-party audits go below. Add an [[audits.<crate>]] block when the
+# maintainer has read the relevant version end-to-end.
+# ---------------------------------------------------------------------------
+
+# Example placeholder — replace as audits are performed:
+# [[audits.argon2]]
+# who = "Sebastien Rousseau <sebastian.rousseau@gmail.com>"
+# version = "0.5.3"
+# criteria = ["crypto-reviewed", "safe-to-deploy"]
+# notes = "Reviewed verify path; uses subtle internally."

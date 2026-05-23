@@ -1,0 +1,214 @@
+name: CI
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Minimum permissions are declared per-job (workflow level intentionally
+# omitted so reusable callers can still claim what they need).
+
+jobs:
+  ci:
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    permissions:
+      contents: read
+      pull-requests: read
+    with:
+      rust-version: 'stable'
+      # Upstream's tarpaulin-based coverage step trips `ld.so` assertions
+      # under our `-Clink-dead-code` + heavy-generic surface (clap + serde
+      # derive in hsh-cli). We run coverage locally via cargo-llvm-cov below,
+      # which is more stable on that workload.
+      run-coverage: false
+
+  # Note: we previously called sebastienrousseau/pipelines's security
+  # reusable workflow, but its CodeQL job doesn't accept a
+  # `config-file` input — so test/example fixtures kept tripping
+  # `rust/hard-coded-cryptographic-value`. CodeQL now runs only from
+  # the local `codeql.yml` (which pins `.github/codeql/codeql-config.yml`),
+  # cargo-audit / cargo-deny live in `supply-chain.yml`, and the
+  # dependency-review piece is inlined below.
+  coverage:
+    name: Coverage (cargo-llvm-cov)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+          components: llvm-tools-preview
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-llvm-cov
+      - name: Generate coverage + enforce threshold
+        # --fail-under-lines = 95 enforced workspace-wide after the
+        # extracted-helpers refactor in `api.rs` (see CHANGELOG v0.0.9).
+        # Workspace region coverage sits at 98%+.
+        #
+        # --ignore-filename-regex excludes files whose lines are
+        # structurally untestable from external input:
+        #   - KMS stub provider files (aws/gcp/azure/vault.rs) — stub
+        #     interfaces awaiting real network impls
+        #   - hsh/src/lib.rs (binary entry-point boilerplate)
+        #   - hsh-cli/src/main.rs (bin entry shim)
+        #   - hsh/src/algorithms/{argon2id,bcrypt,scrypt,pbkdf2}.rs —
+        #     thin wrappers over RustCrypto crates whose remaining
+        #     uncovered lines are `.map_err` closures fired only by
+        #     internal-primitive failures (e.g. argon2 hash_password
+        #     rejecting params that Params::new already validated).
+        #     The RustCrypto crates have their own test suites.
+        #   - hsh/src/models/hash.rs — legacy compat-v0_0_x surface,
+        #     scheduled for removal in v0.2.0 per doc/API-STABILITY.md.
+        run: |
+          cargo llvm-cov --workspace --all-features --lcov \
+            --ignore-filename-regex '(crates/hsh-kms/src/(aws|gcp|azure|vault)\.rs|crates/hsh/src/lib\.rs|crates/hsh-cli/src/main\.rs|crates/hsh/src/algorithms/(argon2id|bcrypt|scrypt|pbkdf2)\.rs|crates/hsh/src/models/hash\.rs)' \
+            --fail-under-lines 95 \
+            --output-path lcov.info
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
+        with:
+          files: lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+        with:
+          fail-on-severity: moderate
+
+  docs:
+    if: github.ref == 'refs/heads/main'
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@main
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    with:
+      type: rust
+      redirect-crate: hsh
+
+  feature-checks:
+    name: Feature permutations (cargo-hack)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Install cargo-hack
+        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-hack
+      - name: Check feature powerset (excl. hsh-digest)
+        # `--no-dev-deps` skips features that only exist for dev to keep
+        # the matrix size sane; `--exclude-features` skips the FIPS marker
+        # since enabling it without a real backend changes no behaviour.
+        run: cargo hack check --workspace --exclude hsh-digest --feature-powerset --no-dev-deps --exclude-features fips
+      - name: Check feature powerset (hsh-digest, at-least-one algorithm)
+        # hsh-digest requires at least one of sha2/sha3/blake3 — the
+        # empty feature set is rejected by a `compile_error!`.
+        run: cargo hack check -p hsh-digest --feature-powerset --no-dev-deps --at-least-one-of sha2,sha3,blake3
+
+  public-api:
+    name: Public API diff vs main
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Install cargo-public-api
+        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        with:
+          tool: cargo-public-api
+      - name: Diff public API
+        # Advisory only — flags additions/removals for reviewer attention.
+        # A breaking removal must be paired with a semver-major intent
+        # per doc/API-STABILITY.md.
+        run: |
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh || true
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
+          cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
+
+  msrv-1-88:
+    name: MSRV — workspace minimum (1.88)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: "1.88"
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          key: msrv-1.88
+      - name: Workspace check at 1.88 floor
+        # The *workspace* effective floor is 1.88:
+        # - `hsh-cli` uses edition = "2024" (needs Cargo 1.85+).
+        # - The `rpassword` 7.5+ dep uses `let` chains (stable in 1.88).
+        # The library crates declare `rust-version = "1.75"` for
+        # downstream consumability (documentation only — downstream
+        # consumers depend on the lib crates without pulling `hsh-cli`
+        # into their workspace, so they keep the 1.75 floor).
+        run: cargo +1.88 check --locked --workspace --all-features
+
+  cross-platform:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          key: ${{ matrix.os }}
+      - name: cargo test --locked --workspace
+        # --locked = fail if Cargo.lock would change.
+        # --no-fail-fast = let the matrix see every failure, not just the first.
+        run: cargo test --locked --workspace --all-features --no-fail-fast

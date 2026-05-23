@@ -1,0 +1,117 @@
+[package]
+name        = "hsh"
+version     = "0.0.9"
+description = "Enterprise password hashing for Rust: Argon2i / bcrypt / scrypt today, Argon2id / PHC / KMS / FIPS on the v0.1 roadmap."
+readme      = "../../README.md"
+build       = "build.rs"
+
+authors.workspace       = true
+edition.workspace       = true
+rust-version.workspace  = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+categories.workspace    = true
+keywords.workspace      = true
+
+exclude = [
+    "/.git/*",
+    "/.github/*",
+    "/.gitignore",
+    "/.vscode/*",
+]
+
+include = [
+    "/build.rs",
+    "/Cargo.toml",
+    "/benches/**",
+    "/examples/**",
+    "/src/**",
+    "/tests/**",
+    "/../../CHANGELOG.md",
+    "/../../LICENSE-APACHE",
+    "/../../LICENSE-MIT",
+    "/../../README.md",
+    "/../../SECURITY.md",
+]
+
+[lib]
+name       = "hsh"
+path       = "src/lib.rs"
+crate-type = ["lib"]
+
+[[bench]]
+name    = "benchmark"
+harness = false
+path    = "benches/criterion.rs"
+
+[[example]]
+name = "hsh"
+path = "examples/hsh.rs"
+
+[dependencies]
+# Security primitives
+subtle    = { workspace = true }
+zeroize   = { workspace = true }
+thiserror = { workspace = true }
+
+# Algorithms — RustCrypto stack
+argon2        = { workspace = true }
+bcrypt        = { workspace = true }
+hmac          = { workspace = true }
+pbkdf2        = { workspace = true }
+scrypt        = { workspace = true }
+sha2          = { workspace = true }
+password-hash = { workspace = true }
+
+# Encoding / serde
+base64     = { workspace = true }
+serde      = { workspace = true }
+serde_json = { workspace = true }
+log        = { workspace = true }
+
+# RNG
+rand_core = { workspace = true }
+getrandom = { workspace = true }
+
+# Pepper / KMS — optional, behind the `pepper` feature.
+hsh-kms = { version = "0.0.9", path = "../hsh-kms", optional = true }
+
+[dev-dependencies]
+assert_cmd   = { workspace = true }
+criterion    = { workspace = true }
+proptest     = { workspace = true }
+hex          = { workspace = true }
+# Re-exported from `argon2` / `scrypt` already as a runtime dep; we
+# add it here explicitly so the helper tests in tests/test_api_helpers.rs
+# can construct `PasswordHash` values directly.
+password-hash = { workspace = true }
+
+[features]
+default = []
+
+# Re-export the v0.0.x stringly-typed API for one release cycle so existing
+# users can upgrade gradually. To be removed in v0.2.0.
+compat-v0_0_x = []
+
+# Enables pepper / KMS integration via the `hsh-kms` companion crate.
+# Off by default to keep the dependency surface minimal for callers that
+# don't want it.
+pepper = ["dep:hsh-kms"]
+
+# Marker feature for the future FIPS 140-3 routing through `aws-lc-rs`.
+# **Today this feature is a no-op** — enabling it does NOT route through
+# a FIPS-validated module. It exists so callers can lock in the
+# intended build flag now while the `hsh-backend-awslc` follow-up crate
+# bakes (see doc/FIPS.md). When the real backend lands, this feature
+# will pull it in transparently.
+fips = []
+
+[package.metadata.docs.rs]
+all-features    = true
+targets         = ["x86_64-unknown-linux-gnu"]
+rustdoc-args    = ["--cfg", "docsrs", "--generate-link-to-definition"]
+
+[lints]
+workspace = true

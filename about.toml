@@ -1,0 +1,45 @@
+# cargo-about configuration: drives generation of NOTICE files / SBOMs
+# describing every transitive dependency's license.
+#
+# Run with:
+#   cargo about generate -o NOTICE.html about.hbs
+#   cargo about generate -o NOTICE.md   about.md.hbs
+#
+# Phase 2 sets up the config; the actual NOTICE templates land in
+# Phase 5 (release packaging).
+
+accepted = [
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "0BSD",
+    "CC0-1.0",
+    "ISC",
+    "MIT",
+    "MPL-2.0",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "Unlicense",
+    "Zlib",
+]
+
+# Target triples to evaluate. Phase 5 release work adds the full
+# release matrix here.
+targets = [
+    "x86_64-unknown-linux-gnu",
+    "aarch64-unknown-linux-gnu",
+    "x86_64-apple-darwin",
+    "aarch64-apple-darwin",
+    "x86_64-pc-windows-msvc",
+    "aarch64-pc-windows-msvc",
+]
+
+[ring.clarify]
+license = "ISC AND MIT AND OpenSSL"
+override-git-commit = "main"
+
+[[ring.clarify.git]]
+path  = "LICENSE"
+license = "OpenSSL"
+checksum = "bd0eed23"

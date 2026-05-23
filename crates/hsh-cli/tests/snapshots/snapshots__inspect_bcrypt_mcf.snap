@@ -1,0 +1,8 @@
+---
+source: crates/hsh-cli/tests/snapshots.rs
+expression: stdout
+snapshot_kind: text
+---
+format: bcrypt-mcf
+algorithm: bcrypt
+cost: 10

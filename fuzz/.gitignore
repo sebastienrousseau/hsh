@@ -1,0 +1,4 @@
+target
+corpus/*/*.bin
+artifacts
+coverage

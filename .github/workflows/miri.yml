@@ -1,0 +1,77 @@
+name: Miri
+
+# Focused per-PR (cheap), full weekly (expensive).
+on:
+  pull_request:
+    paths:
+      - "crates/**"
+      - "fuzz/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/miri.yml"
+      - "scripts/miri.sh"
+  schedule:
+    # Sunday 03:00 UTC — full sweep budget.
+    - cron: "0 3 * * 0"
+  workflow_dispatch:
+
+concurrency:
+  group: miri-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  focused:
+    name: Miri (focused, per-PR)
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install nightly + miri
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: nightly
+          components: miri, rust-src
+      - name: Cache
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Miri setup
+        run: cargo +nightly miri setup
+      - name: Run focused Miri suite
+        env:
+          # proptest reads `current_dir()` for failure-persistence file
+          # resolution; Miri's isolation blocks that syscall.
+          MIRIFLAGS: "-Zmiri-disable-isolation"
+        run: ./scripts/miri.sh focused
+
+  full:
+    name: Miri (full sweep, weekly)
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install nightly + miri
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: nightly
+          components: miri, rust-src
+      - name: Cache
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Miri setup
+        run: cargo +nightly miri setup
+      - name: Run full Miri sweep
+        env:
+          MIRIFLAGS: "-Zmiri-disable-isolation -Zmiri-strict-provenance"
+        run: ./scripts/miri.sh full

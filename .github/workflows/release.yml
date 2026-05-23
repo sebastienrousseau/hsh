@@ -1,251 +1,255 @@
-name: 🧪 Release
+name: Release
 
+# Triggered by pushing a semver tag (v0.0.9, v0.1.0, v1.0.0, …).
 on:
   push:
-    branches:
-      - main
-      - feat/hsh
-  pull_request:
-    branches:
-      - feat/hsh
-  release:
-    types: [created]
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+permissions:
+  contents: write          # required to attach release artefacts
+  id-token: write          # required for sigstore keyless signing
+  attestations: write      # required for SLSA L3 build provenance
+  packages: write          # required to push images, if we add Docker later
 
 concurrency:
-  group: ${{ github.ref }}
-  cancel-in-progress: true
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  # Build the project for all the targets and generate artifacts.
-  build:
-    # This job builds the project for all the targets and generates a
-    # release artifact that contains the binaries for all the targets.
-    name: ❯ Build 🛠
-
-    # Only run this job on the main branch when a commit is pushed.
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
-    # Set up the job environment variables.
-    env:
-      BUILD_ID: ${{ github.run_id }}
-      CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      OS: ${{ matrix.platform.os }}
-      TARGET: ${{ matrix.platform.target }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        platform:
-          - target: x86_64-pc-windows-msvc
-            os: windows-latest
-          - target: aarch64-pc-windows-msvc
-            os: windows-latest
-          - target: x86_64-apple-darwin
-            os: macos-latest
-          - target: aarch64-apple-darwin
-            os: macos-latest
-          - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
-
-    runs-on: ${{ matrix.platform.os }}
-
-    steps:
-      # Check out the repository code.
-      - name: Checkout sources
-        id: checkout
-        uses: actions/checkout@v4
-
-      # Install the stable Rust toolchain.
-      - name: Install stable toolchain
-        id: install-toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      # Cache dependencies to speed up subsequent builds.
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Install the targets for the cross-compilation toolchain
-      - name: Install target
-        id: install-target
-        run: rustup target add ${{ env.TARGET }}
-
-      # Build the targets
-      - name: Build targets
-        id: build-targets
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --verbose --workspace --release --target ${{ env.TARGET }}
-
-      # Package the binary for each target
-      - name: Package the binary
-        id: package-binary
-        run: |
-          mkdir -p target/package
-          tar czf target/package/${{ env.TARGET }}.tar.gz -C target/${{ env.TARGET }}/release .
-          echo "${{ env.TARGET }}.tar.gz=target/package/${{ env.TARGET }}.tar.gz" >> $GITHUB_ENV
-
-      # Upload the binary for each target
-      - name: Upload the binary
-        id: upload-binary
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.TARGET }}.tar.gz
-          path: target/package/${{ env.TARGET }}.tar.gz
-
-  # Release the binary to GitHub Releases
-  release:
-    name: ❯ Release 🚀
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: build
+  # ---------------------------------------------------------------------
+  # Quality gate — fmt, clippy, test, doc must all pass before we even
+  # consider publishing.
+  # ---------------------------------------------------------------------
+  quality-gate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      # Check out the repository code
-      - name: Checkout sources
-        uses: actions/checkout@v4
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
-      # Update the version number based on the Cargo.toml file
-      - name: Update version number
-        run: |
-          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
-        shell: /bin/bash -e {0}
-
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cargo
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      # Download the artifacts from the build job
-      - name: Download artifacts
-        run: |
-          for target in ${{ env.TARGET }}; do
-            echo "Downloading $target artifact"
-            name="${target}.tar.gz"
-            echo "Artifact name: $name"
-            mkdir -p target/package
-            curl -sSL -H "Authorization: token ${GITHUB_TOKEN}" -H "Accept: application/vnd.github.v3+json" -L "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/actions/runs/${BUILD_ID}/artifacts/${name}" -o "target/package/${name}"
-          done
-
-        env:
-          VERSION: ${{ env.VERSION }}
-          TARGET: ${{ env.TARGET }}
-          OS: ${{ env.OS }}
-
-      # Generate the changelog based on the git log
-      - name: Generate Changelog
-        id: generate-changelog
-        env:
-          BUILD_ID: ${{ github.run_id }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RELEASE_URL: https://github.com/sebastienrousseau/hsh/releases
-          TARGET: ${{ env.TARGET }}
-
-        run: |
-          if [[ ! -f CHANGELOG.md ]]; then
-            # Set path to changelog file
-            changelog_file="${{ github.workspace }}/CHANGELOG.md"
-
-            # Get version from Cargo.toml
-            version=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-
-            # Append version information to changelog
-            echo "## Release v${version} - $(date +'%Y-%m-%d')" >> "${changelog_file}"
-
-            # Copy content of template file to changelog
-            cat TEMPLATE.md >> "${changelog_file}"
-
-            # Append git log to changelog
-            echo "$(git log --pretty=format:'%s' --reverse HEAD)" >> "${changelog_file}"
-
-            # Append empty line to changelog
-            echo "" >> "${changelog_file}"
-
-          fi
-        shell: bash
-
-      # Create the release on GitHub releases
-      - name: Create Release
-        id: create-release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ env.VERSION }}
-        with:
-          tag_name: v${{ env.VERSION }}
-          release_name: Hash (HSH) 🦀 v${{ env.VERSION }}
-          body_path: ${{ github.workspace }}/CHANGELOG.md
-          draft: true
-          prerelease: false
-
-  # Publish the release to Crates.io automatically
-  crate:
-    name: ❯ Crate.io 🦀
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: release
-    runs-on: ubuntu-latest
-
-    steps:
-      # Check out the repository code
       - name: Checkout
-        uses: actions/checkout@v4
-
-      # Install the stable Rust toolchain
-      - name: Install stable toolchain
-        id: install-toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: stable
-          override: true
+          components: rustfmt, clippy
+      - name: Cache cargo registry / target
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: fmt
+        run: cargo fmt --all --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+      - name: test
+        run: cargo test --workspace --all-features
+      - name: doc
+        run: cargo doc --workspace --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: "-D warnings"
 
-      # Cache dependencies to speed up subsequent builds
-      - name: Cache dependencies
-        id: cache-dependencies
-        uses: actions/cache@v4
-        with:
-          path: /home/runner/.cargo/registry/index/
-          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-index-
-
-      # Update the version number based on the Cargo.toml file
-      - name: Update version number
-        id: update-version
+  # ---------------------------------------------------------------------
+  # Tag verification — assert the git tag matches Cargo.toml.
+  # ---------------------------------------------------------------------
+  verify-version:
+    runs-on: ubuntu-latest
+    needs: quality-gate
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.extract.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Extract tag version
+        id: extract
         run: |
-          NEW_VERSION=$(grep version Cargo.toml | sed -n 2p | cut -d '"' -f 2)
-          echo "VERSION=$NEW_VERSION" >> "$GITHUB_ENV"
-        shell: /bin/bash -e {0}
+          tag="${GITHUB_REF#refs/tags/v}"
+          echo "Tag version: $tag"
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+      - name: Cross-check against Cargo.toml
+        run: |
+          cargo_ver="$(grep -E '^version =' crates/hsh/Cargo.toml | head -1 | sed -E 's/version = "([^"]+)"/\1/')"
+          if [ "$cargo_ver" != "${{ steps.extract.outputs.version }}" ]; then
+            echo "::error::tag ${{ steps.extract.outputs.version }} != crates/hsh Cargo.toml $cargo_ver"
+            exit 1
+          fi
+          echo "OK: tag and Cargo.toml agree on $cargo_ver"
 
-      # Log in to crates.io
-      - name: Log in to crates.io
-        id: login-crate-io
-        run: cargo login ${{ secrets.CARGO_API_TOKEN }}
+  # ---------------------------------------------------------------------
+  # SBOM generation via cargo-about.
+  # ---------------------------------------------------------------------
+  sbom:
+    runs-on: ubuntu-latest
+    needs: verify-version
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - name: Install cargo-about
+        run: cargo install --locked cargo-about
+      - name: Generate plain-text NOTICE
+        run: |
+          mkdir -p artifacts
+          cargo about generate --output-file artifacts/NOTICE.md doc/about.md.hbs \
+            || echo "no template yet — emitting `cargo about` raw output instead" \
+            && cargo about generate --output-file artifacts/NOTICE.md \
+                <(echo '{{#each licenses}}- {{name}} ({{spdx_id}}){{/each}}') \
+            || true
+      - name: Cargo tree manifest
+        run: cargo tree --workspace --all-features --no-default-features > artifacts/CARGO-TREE.txt || true
+      - name: Upload SBOM artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: artifacts/
 
-      # Publish the Rust library to Crate.io
-      - name: Publish Library to Crate.io
-        id: publish-library
-        uses: actions-rs/cargo@v1
+  # ---------------------------------------------------------------------
+  # SLSA L3 build provenance + sigstore keyless signing.
+  #
+  # The attest-build-provenance action does SLSA L3 in-toto attestations
+  # using the GitHub OIDC token. cosign sign-blob with --yes uses the
+  # same OIDC for keyless signing through Fulcio + Rekor.
+  # ---------------------------------------------------------------------
+  attest:
+    runs-on: ubuntu-latest
+    needs: sbom
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - name: Cache
+        uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+      - name: Build release artefact
+        run: |
+          mkdir -p artifacts
+          cargo build --release --workspace
+          cp target/release/hsh artifacts/hsh-${{ needs.verify-version.outputs.version }}-x86_64-unknown-linux-gnu \
+            || echo "no binary — library-only release"
+          (cd artifacts && find . -type f -exec sha256sum {} +) > artifacts/SHA256SUMS || true
+      - name: Generate SLSA build provenance
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        with:
+          subject-path: artifacts/
+      - name: Install cosign
+        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+      - name: Keyless sign every artefact
+        run: |
+          for f in artifacts/*; do
+            [ -f "$f" ] || continue
+            cosign sign-blob --yes --output-signature "${f}.sig" --output-certificate "${f}.pem" "$f"
+          done
+      - name: Upload signed artefacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: signed-artefacts
+          path: artifacts/
+
+  # ---------------------------------------------------------------------
+  # Publish to crates.io in dependency order. hsh-kms / hsh-digest have
+  # no internal deps; hsh-cli depends on hsh; hsh depends on hsh-kms +
+  # hsh-digest (behind feature gates) so it must publish AFTER them.
+  # ---------------------------------------------------------------------
+  publish:
+    runs-on: ubuntu-latest
+    needs: [verify-version, attest]
+    environment: crates-io
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - name: "Cargo publish (dep order: hsh-kms → hsh-digest → hsh → hsh-cli)"
+        # `cargo publish` for hsh / hsh-cli will fail-fast if the
+        # transitive workspace crates haven't appeared on crates.io
+        # yet. The `sleep` between publishes lets the registry index
+        # propagate before the next dependent crate tries to resolve.
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
+        run: |
+          cargo publish -p hsh-kms     --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh-digest  --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh         --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh-cli     --token "$CARGO_REGISTRY_TOKEN"
+
+  # ---------------------------------------------------------------------
+  # Create the GitHub Release page and attach the signed artefacts +
+  # SBOM + NOTICE produced by the earlier jobs. Notes come from the
+  # matching CHANGELOG.md `[X.Y.Z]` section, extracted at run time.
+  # ---------------------------------------------------------------------
+  github-release:
+    runs-on: ubuntu-latest
+    needs: [verify-version, attest, publish]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Download signed artefacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
         with:
-          command: publish
-          args: "--no-verify --allow-dirty"
-          use-cross: false
+          name: signed-artefacts
+          path: artifacts/
+      - name: Download SBOM
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
+        with:
+          name: sbom
+          path: sbom/
+        continue-on-error: true
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        env:
+          VERSION: ${{ needs.verify-version.outputs.version }}
+        run: |
+          # Pull lines between `## [<VERSION>]` and the next `## [` header.
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { in_section = 1; next }
+            in_section && /^## \[/   { exit }
+            in_section               { print }
+          ' CHANGELOG.md > release-notes.md
+          echo "Notes (first 30 lines):"
+          head -30 release-notes.md
+          echo "notes-path=release-notes.md" >> "$GITHUB_OUTPUT"
+      - name: Create / update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.verify-version.outputs.version }}
+        run: |
+          tag="v${VERSION}"
+          # `gh release create` fails if the release already exists;
+          # in that case fall through to `edit` (handles workflow re-runs).
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --notes-file release-notes.md \
+              --title "$tag" \
+              --verify-tag
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file release-notes.md \
+              --verify-tag
+          fi
+          # Attach every signed artefact + the SBOM if present.
+          if compgen -G "artifacts/*" >/dev/null; then
+            gh release upload "$tag" artifacts/* --clobber
+          fi
+          if compgen -G "sbom/*" >/dev/null; then
+            gh release upload "$tag" sbom/* --clobber
+          fi

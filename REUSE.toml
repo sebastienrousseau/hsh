@@ -1,0 +1,130 @@
+# REUSE 3.3 annotations: blanket licensing for files that don't
+# carry an inline SPDX header (config, fixtures, packaging templates,
+# generated artefacts). Source code files (.rs) keep their inline
+# SPDX headers — this file only fills in the gaps.
+#
+# Documented at https://reuse.software/spec-3.3/
+
+version = 1
+
+# ── Project meta / config files ───────────────────────────────────
+[[annotations]]
+path = [
+    ".editorconfig",
+    ".gitattributes",
+    ".gitignore",
+    "rustfmt.toml",
+    "rust-toolchain.toml",
+    "clippy.toml",
+    "Cargo.toml",
+    "Cargo.lock",
+    "Makefile",
+    "about.toml",
+    "about.hbs",
+    "deny.toml",
+    "REUSE.toml",
+    "supply-chain/audits.toml",
+    "supply-chain/config.toml",
+    "supply-chain/imports.lock",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── CI workflows ──────────────────────────────────────────────────
+[[annotations]]
+path = ".github/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Documentation ─────────────────────────────────────────────────
+[[annotations]]
+path = [
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "SECURITY.md",
+    "AUTHORS.md",
+    "TEMPLATE.md",
+    "GETTING_STARTED.md",
+    "GLOSSARY.md",
+    "PLAN.md",
+    "doc/**",
+    "crates/hsh/README.md",
+    "crates/hsh-cli/README.md",
+    "crates/hsh-kms/README.md",
+    "crates/hsh-digest/README.md",
+    "crates/hsh/doc/**",
+    "crates/hsh-cli/doc/**",
+    "crates/hsh-kms/doc/**",
+    "crates/hsh-digest/doc/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Per-crate examples ────────────────────────────────────────────
+[[annotations]]
+path = "crates/*/examples/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Benchmarks ────────────────────────────────────────────────────
+[[annotations]]
+path = "crates/*/benches/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Snapshot test fixtures ────────────────────────────────────────
+[[annotations]]
+path = [
+    "crates/hsh-cli/tests/snapshots/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Distro packaging templates (pkg/) ─────────────────────────────
+# Hand-written per-channel packaging metadata consumed by
+# release.yml. Files are templates — `__VERSION__` /
+# `__SHA256__` placeholders rewritten per release — or inert
+# config files without inline SPDX headers.
+[[annotations]]
+path = "pkg/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Fuzz corpora + Cargo manifests ────────────────────────────────
+[[annotations]]
+path = [
+    "fuzz/.gitignore",
+    "fuzz/Cargo.toml",
+    "fuzz/Cargo.lock",
+    "fuzz/corpus/**",
+    "fuzz/artifacts/**",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Release notes ─────────────────────────────────────────────────
+[[annotations]]
+path = "RELEASE-NOTES-*.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"
+
+# ── Logos / favicons (binary assets) ──────────────────────────────
+[[annotations]]
+path = [
+    "**/*.svg",
+    "**/*.png",
+    "**/*.ico",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023-2026 Hash (HSH) library contributors"
+SPDX-License-Identifier = "MIT OR Apache-2.0"

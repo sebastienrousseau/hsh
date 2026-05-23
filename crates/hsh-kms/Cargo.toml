@@ -1,0 +1,45 @@
+[package]
+name        = "hsh-kms"
+version     = "0.0.9"
+description = "Pepper / KMS integration for the hsh crate: HMAC-SHA-256 pepper application with versioned keys and pluggable KMS backends."
+build       = false
+
+authors.workspace       = true
+edition.workspace       = true
+rust-version.workspace  = true
+license.workspace       = true
+repository.workspace    = true
+homepage.workspace      = true
+documentation.workspace = true
+categories.workspace    = true
+keywords.workspace      = true
+
+[lib]
+name = "hsh_kms"
+path = "src/lib.rs"
+
+[dependencies]
+hmac      = { workspace = true }
+sha2      = { workspace = true }
+subtle    = { workspace = true }
+zeroize   = { workspace = true }
+thiserror = { workspace = true }
+log       = { workspace = true }
+
+[dev-dependencies]
+hex = { workspace = true }
+
+[features]
+default = []
+
+# Provider stubs — feature gates compile in the per-provider module. The
+# real network-call implementations land incrementally as follow-ups;
+# today these features only enable the stub APIs so downstream users can
+# wire up their integration code against a stable shape.
+aws-kms              = []
+gcp-kms              = []
+azure-key-vault      = []
+hashicorp-vault      = []
+
+[lints]
+workspace = true

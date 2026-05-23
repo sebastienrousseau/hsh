@@ -1,0 +1,14 @@
+Package: hsh
+Version: {{VERSION}}
+Architecture: {{ARCH}}
+Maintainer: Sebastien Rousseau <sebastian.rousseau@gmail.com>
+Depends: libc6 (>= 2.31)
+Homepage: https://github.com/sebastienrousseau/hsh
+Description: Enterprise password hashing for the command line.
+ hsh is a small CLI that wraps the hsh Rust library: hash a password
+ (Argon2id / scrypt / bcrypt / PBKDF2), verify a candidate against a
+ stored hash, rehash to migrate algorithms or strengthen parameters,
+ and inspect existing PHC / MCF strings.
+ .
+ Passwords are read from stdin or the HSH_PASSWORD environment
+ variable -- never the command line.

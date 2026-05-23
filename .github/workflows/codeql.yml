@@ -1,0 +1,55 @@
+name: CodeQL
+
+# Local CodeQL workflow that pins our custom config (path exclusions
+# for test/example/bench/fuzz fixtures). The reusable
+# `security.yml@main` workflow also runs CodeQL but doesn't yet accept
+# a `config-file` input — when that lands upstream this file can be
+# retired in favour of a single shared invocation.
+
+on:
+  push:
+    branches: [main, feat/**]
+  pull_request:
+  schedule:
+    # Weekly Monday 04:00 UTC — catches advisory-db / query updates.
+    - cron: "0 4 * * 1"
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  analyze:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [rust, actions]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        with:
+          languages: ${{ matrix.language }}
+          config-file: .github/codeql/codeql-config.yml
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+
+      - name: Perform analysis
+        uses: github/codeql-action/analyze@458d36d7d4f47d0dd16ca424c1d3cda0060f1360 # v3.35.5
+        with:
+          category: "/language:${{ matrix.language }}"

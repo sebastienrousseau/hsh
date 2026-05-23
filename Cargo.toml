@@ -1,177 +1,159 @@
-[package]
-# Metadata about the package.
-authors = ["The Hash (HSH) library contributors <contact@hshlib.com>"]
-build = "build.rs"
-categories = [
-    "algorithms",
-    "authentication",
-    "cryptography",
-    "data-structures",
-    "encoding",
-]
-description = """
-    Quantum-Resistant Cryptographic Hash Library for Password Encryption and
-    Verification in Rust.
-"""
-documentation = "https://docs.rs/hsh"
-edition = "2021"
-exclude = [
-    "/.git/*",
-    "/.github/*",
-    "/.gitignore",
-    "/.vscode/*"
-]
-homepage = "https://hshlib.com/"
-include = [
-    "/CONTRIBUTING.md",
-    "/LICENSE-APACHE",
-    "/LICENSE-MIT",
-    "/benches/**",
-    "/build.rs",
-    "/Cargo.toml",
-    "/examples/**",
-    "/README.md",
-    "/src/**",
-    "/tests/**",
-]
-keywords = ["argon2", "argon2i", "hash", "password", "security"]
-license = "MIT OR Apache-2.0"
-name = "hsh"
-readme = "README.md"
-repository = "https://github.com/sebastienrousseau/hsh/"
-rust-version = "1.60"
-version = "0.0.8"
+[workspace]
+resolver = "2"
+members  = ["crates/hsh", "crates/hsh-cli", "crates/hsh-digest", "crates/hsh-kms"]
+# fuzz/ is a libfuzzer crate driven by cargo-fuzz (`cargo +nightly fuzz`);
+# it depends on the unstable libfuzzer runtime and must not be part of
+# the default `cargo build --workspace` set.
+exclude  = ["fuzz"]
 
-[[bench]]
-# Benchmarking configuration.
-name = "benchmark"
-harness = false
-path = "benches/criterion.rs"
+[workspace.package]
+authors       = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>", "The Hash (HSH) library contributors"]
+edition       = "2021"
+rust-version  = "1.75"
+license       = "MIT OR Apache-2.0"
+repository    = "https://github.com/sebastienrousseau/hsh"
+homepage      = "https://hshlib.com/"
+documentation = "https://docs.rs/hsh"
+categories    = ["authentication", "cryptography"]
+keywords      = ["argon2id", "password", "phc", "kdf", "scrypt"]
+
+[workspace.dependencies]
+# Foundation
+password-hash = { version = "0.5", default-features = false, features = ["alloc"] }
+subtle        = "2.6"
+zeroize       = { version = "1.8", features = ["zeroize_derive"] }
+thiserror     = "2.0"
+rand_core     = { version = "0.6", features = ["std", "getrandom"] }
+getrandom     = "0.2"
+
+# Algorithms
+argon2     = { version = "0.5", default-features = false, features = ["alloc", "password-hash"] }
+base64     = "0.22.1"
+bcrypt     = "0.19.1"
+hmac       = "0.12"
+pbkdf2     = { version = "0.12", default-features = false, features = ["password-hash", "simple"] }
+scrypt     = { version = "0.11", default-features = false, features = ["simple"] }
+sha2       = "0.10"
+sha3       = "0.10"
+blake3     = "1.5"
+digest     = { version = "0.10", features = ["alloc"] }
+serde      = { version = "1.0.228", features = ["derive"] }
+serde_json = "1.0.143"
+log        = { version = "0.4.29", features = ["std"] }
+
+# FIPS backend — `aws-lc-rs` with `features = ["fips"]` is the target
+# binding, but the AWS-LC FIPS sub-build needs Go + CMake + Xcode
+# tooling that isn't universally available. The dep is intentionally
+# left out of the workspace until the Phase 4 follow-up lands a
+# dedicated `hsh-backend-awslc` crate behind a separate workspace
+# member so callers without a FIPS-capable build env aren't blocked.
+# See doc/FIPS.md.
+
+# Dev
+assert_cmd = "2.2.2"
+criterion  = "0.8.2"
+proptest   = "1.5"
+hex        = "0.4"
+
+# CLI deps (hsh-cli only)
+clap          = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+clap_complete = "4.5"
+# clap_mangen is currently version-skewed against clap_builder 4.5.2;
+# revisit when both move. Manpage generation is a Phase 5 follow-up
+# under release.yml — the CLI works without it.
+anyhow        = "1.0"
+rpassword     = "7.3"
+
+[workspace.lints.rust]
+# Forbid — security-critical
+unsafe_code                   = "forbid"
+missing_debug_implementations = "forbid"
+non_ascii_idents              = "forbid"
+unreachable_pub               = "forbid"
+
+# Warn
+missing_docs                  = "deny"
+missing_copy_implementations  = "warn"
+unstable_features             = "warn"
+unused_extern_crates          = "warn"
+unused_results                = "warn"
+
+# Deny
+dead_code                     = "deny"
+deprecated_in_future          = "deny"
+ellipsis_inclusive_range_patterns = "deny"
+explicit_outlives_requirements    = "deny"
+future_incompatible           = { level = "deny", priority = -1 }
+keyword_idents                = { level = "deny", priority = -1 }
+macro_use_extern_crate        = "deny"
+meta_variable_misuse          = "deny"
+noop_method_call              = "deny"
+rust_2018_idioms              = { level = "deny", priority = -1 }
+rust_2021_compatibility       = { level = "deny", priority = -1 }
+single_use_lifetimes          = "deny"
+trivial_casts                 = "deny"
+trivial_numeric_casts         = "deny"
+unused                        = { level = "deny", priority = -1 }
+unused_features               = "deny"
+unused_import_braces          = "deny"
+unused_labels                 = "deny"
+unused_lifetimes              = "deny"
+unused_macro_rules            = "deny"
+unused_qualifications         = "deny"
+variant_size_differences      = "deny"
+
+[workspace.lints.clippy]
+# Only the `all` group is promoted to warn at the workspace level.
+# Pedantic/nursery/cargo groups are not enabled here because external
+# CI runs `cargo clippy -- -D warnings`, which would otherwise turn
+# every advisory finding into a build break. Developers can opt in
+# locally with `cargo clippy -- -W clippy::pedantic`.
+all                     = { level = "warn", priority = -1 }
+
+# Allows for noisy lints in the `all` group that we knowingly accept
+# across the workspace.
+collection_is_never_read           = "allow"
+too_long_first_doc_paragraph       = "allow"
+uninlined_format_args              = "allow"
+format_collect                     = "allow"
+# `.expect(...)` is used in a handful of places with documented
+# unreachable error paths; tests/examples use it freely.
+expect_used                        = "allow"
+
+[profile.dev]
+codegen-units    = 256
+debug            = true
+debug-assertions = true
+incremental      = true
+lto              = false
+opt-level        = 0
+overflow-checks  = true
+panic            = "unwind"
+rpath            = false
+strip            = false
+
+[profile.release]
+codegen-units    = 1
+debug            = false
+debug-assertions = false
+incremental      = false
+lto              = true
+opt-level        = 3
+overflow-checks  = true       # security-critical: arithmetic on cost parameters must not silently wrap
+panic            = "abort"
+rpath            = false
+strip            = "symbols"
+
+[profile.test]
+codegen-units    = 256
+debug            = true
+debug-assertions = true
+incremental      = true
+lto              = false
+opt-level        = 0
+overflow-checks  = true
+rpath            = false
+strip            = false
 
 [profile.bench]
 debug = true
-
-[[example]]
-# Example configuration.
-name = "hsh"
-path = "examples/hsh.rs"
-
-[dependencies]
-# Dependencies of the package.
-argon2rs = "0.2.5"
-base64 = "0.22.1"
-bcrypt = "0.16.0"
-dtt = "0.0.9"
-log = {version="0.4.25", features = ["std"] }
-scrypt = "0.11.0"
-serde = { version = "1.0.216", features = ["derive"] }
-serde_json = "1.0.137"
-vrd = "0.0.8"
-
-[dev-dependencies]
-# Dependencies for testing and development.
-assert_cmd = "2.0.14"
-criterion = "0.5.1"
-
-[lib]
-# Metadata about the library.
-crate-type = ["lib"]
-name = "hsh"
-path = "src/lib.rs"
-
-[features]
-# No default features
-default = []
-
-[package.metadata.docs.rs]
-targets = ["x86_64-unknown-linux-gnu"]
-rustdoc-args = ["--generate-link-to-definition"]
-
-# Linting config
-[lints.rust]
-
-## Warn
-# box_pointers = "warn"
-missing_copy_implementations = "warn"
-missing_docs = "warn"
-unstable_features = "warn"
-# unused_crate_dependencies = "warn"
-unused_extern_crates = "warn"
-unused_results = "warn"
-
-## Allow
-bare_trait_objects = "allow"
-elided_lifetimes_in_paths = "allow"
-non_camel_case_types = "allow"
-non_upper_case_globals = "allow"
-trivial_bounds = "allow"
-unsafe_code = "allow"
-
-## Forbid
-missing_debug_implementations = "forbid"
-non_ascii_idents = "forbid"
-unreachable_pub = "forbid"
-
-## Deny
-dead_code = "deny"
-deprecated_in_future = "deny"
-ellipsis_inclusive_range_patterns = "deny"
-explicit_outlives_requirements = "deny"
-future_incompatible = { level = "deny", priority = -1 }
-keyword_idents = "deny"
-macro_use_extern_crate = "deny"
-meta_variable_misuse = "deny"
-missing_fragment_specifier = "deny"
-noop_method_call = "deny"
-pointer_structural_match = "deny"
-rust_2018_idioms = { level = "deny", priority = -1 }
-rust_2021_compatibility = { level = "deny", priority = -1 }
-single_use_lifetimes = "deny"
-trivial_casts = "deny"
-trivial_numeric_casts = "deny"
-unused = { level = "deny", priority = -1 }
-unused_features = "deny"
-unused_import_braces = "deny"
-unused_labels = "deny"
-unused_lifetimes = "deny"
-unused_macro_rules = "deny"
-unused_qualifications = "deny"
-variant_size_differences = "deny"
-
-[package.metadata.clippy]
-warn-lints = ["clippy::all", "clippy::pedantic", "clippy::cargo", "clippy::nursery"]
-
-[profile.dev]
-codegen-units = 256
-debug = true
-debug-assertions = true
-incremental = true
-lto = false
-opt-level = 0
-overflow-checks = true
-panic = 'unwind'
-rpath = false
-strip = false
-
-[profile.release]
-codegen-units = 1
-debug = false
-debug-assertions = false
-incremental = false
-lto = true
-opt-level = "s"
-overflow-checks = false
-panic = "abort"
-rpath = false
-strip = "symbols"
-
-[profile.test]
-codegen-units = 256
-debug = true
-debug-assertions = true
-incremental = true
-lto = false
-opt-level = 0
-overflow-checks = true
-rpath = false
-strip = false

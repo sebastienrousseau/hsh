@@ -1,0 +1,43 @@
+---
+source: crates/hsh-cli/tests/snapshots.rs
+expression: stdout
+snapshot_kind: text
+---
+Hash a password and print the storable form to stdout
+
+Usage: hsh hash [OPTIONS]
+
+Options:
+      --json
+          Emit machine-readable JSON instead of plain text
+
+      --policy <POLICY>
+          Preset policy to apply. Defaults to OWASP-2025
+
+          Possible values:
+          - owasp:   OWASP-2025 minimum (Argon2id, m=19456, t=2, p=1)
+          - rfc9106: RFC 9106 §4 first-recommended (Argon2id, m=2^21, t=1, p=4)
+          - fips:    Hardened FIPS profile (PBKDF2-HMAC-SHA-256, 600k iters,
+            Backend::Fips140Required — requires a FIPS-capable build)
+          
+          [default: owasp]
+
+  -a, --algorithm <ALGORITHM>
+          Override the primary algorithm
+
+          Possible values:
+          - argon2id: Argon2id — recommended default
+          - argon2i:  Argon2i — verify-only for legacy hashes
+          - argon2d:  Argon2d — exposed for completeness
+          - bcrypt:   Bcrypt — Blowfish-based KDF
+          - scrypt:   Scrypt — memory-hard KDF
+          - pbkdf2:   PBKDF2-HMAC-SHA-256 — the only FIPS-validated path
+
+      --password <PASSWORD>
+          Password (insecure: leaves password in shell history). Omit and provide via stdin or
+          `$HSH_PASSWORD` instead
+          
+          [env: HSH_PASSWORD]
+
+  -h, --help
+          Print help (see a summary with '-h')
