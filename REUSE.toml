@@ -23,7 +23,6 @@ path = [
     "about.hbs",
     "deny.toml",
     "REUSE.toml",
-    ".codacy.yaml",
     "supply-chain/audits.toml",
     "supply-chain/config.toml",
     "supply-chain/imports.lock",
