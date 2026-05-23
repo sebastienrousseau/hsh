@@ -65,14 +65,26 @@ jobs:
           tag="${GITHUB_REF#refs/tags/v}"
           echo "Tag version: $tag"
           echo "version=$tag" >> "$GITHUB_OUTPUT"
-      - name: Cross-check against Cargo.toml
+      - name: Cross-check tag against every workspace Cargo.toml
+        # The grep+sed version assumed `version = "X"` with single
+        # whitespace; the workspace files actually use aligned columns
+        # (`version     = "X"`), making the regex miss and the
+        # extracted version blank. awk -F'"' is whitespace-insensitive
+        # and pulls the quoted value directly.
         run: |
-          cargo_ver="$(grep -E '^version =' crates/hsh/Cargo.toml | head -1 | sed -E 's/version = "([^"]+)"/\1/')"
-          if [ "$cargo_ver" != "${{ steps.extract.outputs.version }}" ]; then
-            echo "::error::tag ${{ steps.extract.outputs.version }} != crates/hsh Cargo.toml $cargo_ver"
-            exit 1
-          fi
-          echo "OK: tag and Cargo.toml agree on $cargo_ver"
+          tag_ver="${{ steps.extract.outputs.version }}"
+          fail=0
+          for manifest in crates/hsh/Cargo.toml crates/hsh-cli/Cargo.toml \
+                          crates/hsh-kms/Cargo.toml crates/hsh-digest/Cargo.toml; do
+            cargo_ver="$(awk -F'"' '/^[[:space:]]*version[[:space:]]*=/ {print $2; exit}' "$manifest")"
+            if [ "$cargo_ver" != "$tag_ver" ]; then
+              echo "::error::tag $tag_ver != $manifest $cargo_ver"
+              fail=1
+            else
+              echo "OK: $manifest = $cargo_ver"
+            fi
+          done
+          exit "$fail"
 
   # ---------------------------------------------------------------------
   # SBOM generation via cargo-about.
