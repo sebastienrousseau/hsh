@@ -29,7 +29,7 @@ getrandom     = "0.2"
 # Algorithms
 argon2     = { version = "0.5", default-features = false, features = ["alloc", "password-hash"] }
 base64     = "0.22.1"
-bcrypt     = "0.16.0"
+bcrypt     = "0.19.1"
 hmac       = "0.12"
 pbkdf2     = { version = "0.12", default-features = false, features = ["password-hash", "simple"] }
 scrypt     = { version = "0.11", default-features = false, features = ["simple"] }
@@ -39,7 +39,7 @@ blake3     = "1.5"
 digest     = { version = "0.10", features = ["alloc"] }
 serde      = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.143"
-log        = { version = "0.4.25", features = ["std"] }
+log        = { version = "0.4.29", features = ["std"] }
 
 # FIPS backend — `aws-lc-rs` with `features = ["fips"]` is the target
 # binding, but the AWS-LC FIPS sub-build needs Go + CMake + Xcode
@@ -50,7 +50,7 @@ log        = { version = "0.4.25", features = ["std"] }
 # See doc/FIPS.md.
 
 # Dev
-assert_cmd = "2.0.14"
+assert_cmd = "2.2.2"
 criterion  = "0.8.2"
 proptest   = "1.5"
 hex        = "0.4"
