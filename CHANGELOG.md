@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_No changes since v0.0.9._
+
+## [0.0.9] — 2026-05-23
+
 ### Late-cycle correctness fixes (P0)
 
 - **P0-1: scrypt policy params now honoured by `api::hash`.** The arm
@@ -202,8 +206,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A small number of pedantic warnings against the lib code itself
   (collect-then-join, `cast_possible_truncation` in the CLI's
   `calibrate`) are tracked for a hygiene PR in v0.0.10.
-
-## [0.0.9] — 2026-05-19
 
 ### Added (Phase 6)
 

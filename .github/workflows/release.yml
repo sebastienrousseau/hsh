@@ -156,7 +156,9 @@ jobs:
           path: artifacts/
 
   # ---------------------------------------------------------------------
-  # Publish to crates.io.
+  # Publish to crates.io in dependency order. hsh-kms / hsh-digest have
+  # no internal deps; hsh-cli depends on hsh; hsh depends on hsh-kms +
+  # hsh-digest (behind feature gates) so it must publish AFTER them.
   # ---------------------------------------------------------------------
   publish:
     runs-on: ubuntu-latest
@@ -171,7 +173,83 @@ jobs:
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: stable
-      - name: Cargo publish
-        run: cargo publish --token "${CARGO_REGISTRY_TOKEN}" -p hsh
+      - name: "Cargo publish (dep order: hsh-kms → hsh-digest → hsh → hsh-cli)"
+        # `cargo publish` for hsh / hsh-cli will fail-fast if the
+        # transitive workspace crates haven't appeared on crates.io
+        # yet. The `sleep` between publishes lets the registry index
+        # propagate before the next dependent crate tries to resolve.
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
+        run: |
+          cargo publish -p hsh-kms     --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh-digest  --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh         --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish -p hsh-cli     --token "$CARGO_REGISTRY_TOKEN"
+
+  # ---------------------------------------------------------------------
+  # Create the GitHub Release page and attach the signed artefacts +
+  # SBOM + NOTICE produced by the earlier jobs. Notes come from the
+  # matching CHANGELOG.md `[X.Y.Z]` section, extracted at run time.
+  # ---------------------------------------------------------------------
+  github-release:
+    runs-on: ubuntu-latest
+    needs: [verify-version, attest, publish]
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Download signed artefacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
+        with:
+          name: signed-artefacts
+          path: artifacts/
+      - name: Download SBOM
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
+        with:
+          name: sbom
+          path: sbom/
+        continue-on-error: true
+      - name: Extract release notes from CHANGELOG
+        id: notes
+        env:
+          VERSION: ${{ needs.verify-version.outputs.version }}
+        run: |
+          # Pull lines between `## [<VERSION>]` and the next `## [` header.
+          awk -v v="$VERSION" '
+            $0 ~ "^## \\[" v "\\]" { in_section = 1; next }
+            in_section && /^## \[/   { exit }
+            in_section               { print }
+          ' CHANGELOG.md > release-notes.md
+          echo "Notes (first 30 lines):"
+          head -30 release-notes.md
+          echo "notes-path=release-notes.md" >> "$GITHUB_OUTPUT"
+      - name: Create / update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.verify-version.outputs.version }}
+        run: |
+          tag="v${VERSION}"
+          # `gh release create` fails if the release already exists;
+          # in that case fall through to `edit` (handles workflow re-runs).
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --notes-file release-notes.md \
+              --title "$tag" \
+              --verify-tag
+          else
+            gh release create "$tag" \
+              --title "$tag" \
+              --notes-file release-notes.md \
+              --verify-tag
+          fi
+          # Attach every signed artefact + the SBOM if present.
+          if compgen -G "artifacts/*" >/dev/null; then
+            gh release upload "$tag" artifacts/* --clobber
+          fi
+          if compgen -G "sbom/*" >/dev/null; then
+            gh release upload "$tag" sbom/* --clobber
+          fi
