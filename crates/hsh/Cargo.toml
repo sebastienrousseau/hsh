@@ -1,6 +1,6 @@
 [package]
 name        = "hsh"
-version     = "0.0.9"
+version     = "0.0.10"
 description = "Enterprise password hashing for Rust: Argon2i / bcrypt / scrypt today, Argon2id / PHC / KMS / FIPS on the v0.1 roadmap."
 readme      = "../../README.md"
 build       = "build.rs"
@@ -76,7 +76,7 @@ rand_core = { workspace = true }
 getrandom = { workspace = true }
 
 # Pepper / KMS — optional, behind the `pepper` feature.
-hsh-kms = { version = "0.0.9", path = "../hsh-kms", optional = true }
+hsh-kms = { version = "0.0.10", path = "../hsh-kms", optional = true }
 
 [dev-dependencies]
 assert_cmd   = { workspace = true }

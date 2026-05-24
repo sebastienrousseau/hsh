@@ -1,6 +1,6 @@
 [package]
 name        = "hsh-cli"
-version     = "0.0.9"
+version     = "0.0.10"
 description = "Command-line companion for the `hsh` password-hashing library: hash / verify / rehash / inspect / calibrate."
 
 # CLI gets the modern edition; the lib stays on 2021 / MSRV 1.75 so it
@@ -31,8 +31,8 @@ path = "src/main.rs"
 insta = { version = "1.40", default-features = false, features = ["yaml"] }
 
 [dependencies]
-hsh        = { version = "0.0.9", path = "../hsh" }
-hsh-kms    = { version = "0.0.9", path = "../hsh-kms", optional = true }
+hsh        = { version = "0.0.10", path = "../hsh" }
+hsh-kms    = { version = "0.0.10", path = "../hsh-kms", optional = true }
 
 # Re-used directly for the `calibrate` subcommand's parameter ladder.
 argon2     = { workspace = true }

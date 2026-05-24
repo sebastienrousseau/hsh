@@ -48,7 +48,7 @@ jobs:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@6c1f7cf125e42770ff087ea443901b487cc5471a # v2.79.5
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage + enforce threshold
@@ -94,7 +94,7 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate
 
@@ -123,7 +123,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-hack
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@6c1f7cf125e42770ff087ea443901b487cc5471a # v2.79.5
         with:
           tool: cargo-hack
       - name: Check feature powerset (excl. hsh-digest)
@@ -152,7 +152,7 @@ jobs:
           toolchain: nightly
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-public-api
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@6c1f7cf125e42770ff087ea443901b487cc5471a # v2.79.5
         with:
           tool: cargo-public-api
       - name: Diff public API

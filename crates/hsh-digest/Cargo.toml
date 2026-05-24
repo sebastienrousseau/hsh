@@ -1,6 +1,6 @@
 [package]
 name        = "hsh-digest"
-version     = "0.0.9"
+version     = "0.0.10"
 description = "General-purpose cryptographic hashing primitives (SHA-2, SHA-3, BLAKE3) — NOT for password storage. Use `hsh::api` for passwords."
 build       = false
 

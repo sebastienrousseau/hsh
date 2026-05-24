@@ -7,7 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes since v0.0.9._
+### Planned (RustCrypto v0.11 / v0.6 wave lift)
+
+Six dependabot bumps gated on the wave landing together as a
+single PR rather than piecemeal:
+
+- `sha2` 0.10 → 0.11
+- `sha3` 0.10 → 0.12 (skipping 0.11)
+- `digest` 0.10 → 0.11
+- `hmac` 0.12 → 0.13
+- `password-hash` 0.5 → 0.6 (new `phc::PasswordHash` shape, no
+  lifetime parameter; `SaltString` removed; `Salt::as_str` gone)
+- `pbkdf2` 0.12 → 0.13 (cascades from password-hash 0.6)
+- `scrypt` 0.11 → 0.12 (cascades; `Scrypt` no longer unit type)
+- `argon2` 0.5 → 0.6 (cascades; `hash_password` replaced by
+  `hash_password_into`)
+
+Deferred until `argon2 0.6.0` exits release-candidate (currently
+`0.6.0-rc.8`); pinning a stable workspace to an RC dep is the
+wrong call. Will land as a dedicated workspace-lift PR within
+v0.0.10.
+
+## [0.0.10] — TBD
+
+### Changed (CI action bumps — rolls in dependabot PRs #178–#182)
+
+- `actions/checkout` continues at v6.0.2 (already current).
+- `actions/upload-artifact` continues at v7.0.1 (already current).
+- `codecov/codecov-action` continues at v6.0.1 (already current).
+- `peaceiris/actions-gh-pages` 4.0.0 → 4.1.0 (SHA-pinned).
+- `taiki-e/install-action` 2.79.2 → 2.79.5 (SHA-pinned).
+- `actions/download-artifact` 4.3.0 → 8.0.1 (SHA-pinned; major
+  jump for streaming-API improvements + smaller container image).
+- `actions/attest-build-provenance` 2.4.0 → 4.1.0 (SHA-pinned;
+  major-rev required by recent in-toto attestation format).
+- `actions/dependency-review-action` 4.9.0 → 5.0.0 (SHA-pinned).
+
+### Workspace
+
+- Crate versions bumped 0.0.9 → 0.0.10 across all four packages
+  (root + hsh / hsh-cli / hsh-kms / hsh-digest) + internal cross-
+  references updated.
 
 ## [0.0.9] — 2026-05-23
 

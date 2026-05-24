@@ -654,7 +654,7 @@ dependencies = [
 
 [[package]]
 name = "hsh"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "argon2",
  "assert_cmd",
@@ -681,7 +681,7 @@ dependencies = [
 
 [[package]]
 name = "hsh-cli"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "anyhow",
  "argon2",
@@ -696,7 +696,7 @@ dependencies = [
 
 [[package]]
 name = "hsh-digest"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "blake3",
  "digest",
@@ -711,7 +711,7 @@ dependencies = [
 
 [[package]]
 name = "hsh-kms"
-version = "0.0.9"
+version = "0.0.10"
 dependencies = [
  "hex",
  "hmac",
