@@ -138,7 +138,8 @@ fn fips_policy_mints_when_feature_enabled() {
     // graph and Backend::fips_available_in_build() returns true, so
     // api::hash mints a real PBKDF2-HMAC-SHA-256 hash via AWS-LC.
     let policy = Policy::fips_140_pbkdf2();
-    let hash = api::hash(&policy, "user pw").expect("FIPS hash must succeed");
+    let hash =
+        api::hash(&policy, "user pw").expect("FIPS hash must succeed");
     assert!(hash.starts_with("$pbkdf2-sha256$"));
 }
 

@@ -181,8 +181,16 @@ mod aws_lc {
             Prf::Sha256 => AwslcPrf::Sha256,
             Prf::Sha512 => AwslcPrf::Sha512,
         };
-        pbkdf2_derive(password, salt, prf, params.iterations, params.dk_len)
-            .map_err(|e| Error::hashing(HashingErrorKind::Pbkdf2, e.to_string()))
+        pbkdf2_derive(
+            password,
+            salt,
+            prf,
+            params.iterations,
+            params.dk_len,
+        )
+        .map_err(|e| {
+            Error::hashing(HashingErrorKind::Pbkdf2, e.to_string())
+        })
     }
 }
 

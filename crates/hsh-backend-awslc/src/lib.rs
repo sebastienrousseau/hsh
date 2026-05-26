@@ -65,14 +65,17 @@ pub enum DeriveError {
 }
 
 impl core::fmt::Display for DeriveError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+    fn fmt(
+        &self,
+        f: &mut core::fmt::Formatter<'_>,
+    ) -> core::fmt::Result {
         match self {
-            Self::IterationsZero => f.write_str(
-                "PBKDF2 iterations must be >= 1 (got 0)",
-            ),
-            Self::DkLenZero => f.write_str(
-                "PBKDF2 dk_len must be > 0 (got 0)",
-            ),
+            Self::IterationsZero => {
+                f.write_str("PBKDF2 iterations must be >= 1 (got 0)")
+            }
+            Self::DkLenZero => {
+                f.write_str("PBKDF2 dk_len must be > 0 (got 0)")
+            }
         }
     }
 }

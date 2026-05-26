@@ -689,10 +689,7 @@ fn inspect_backend_owasp_reports_native_satisfied() {
     // policy itself is Native and doesn't care either way, but the
     // assertion must track the feature state to stay green under
     // `cargo test --all-features`.
-    assert_eq!(
-        json["fips_available_in_build"],
-        cfg!(feature = "fips")
-    );
+    assert_eq!(json["fips_available_in_build"], cfg!(feature = "fips"));
     // Build provenance must be populated, not "unknown".
     let rustc = json["rustc"].as_str().expect("rustc string");
     assert!(

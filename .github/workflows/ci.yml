@@ -212,7 +212,17 @@ jobs:
       - name: cargo test --locked --workspace
         # --locked = fail if Cargo.lock would change.
         # --no-fail-fast = let the matrix see every failure, not just the first.
-        run: cargo test --locked --workspace --all-features --no-fail-fast
+        # Default features only: `--all-features` would transitively
+        # activate `hsh/fips` (via `hsh-cli/fips = ["hsh/fips"]`),
+        # which pulls in `hsh-backend-awslc` → aws-lc-rs FIPS. That
+        # sub-build needs Go + CMake + clang and isn't reliably set
+        # up on every cross-platform runner (macOS in particular hits
+        # the cmake/Xcode path). The dedicated `fips` job above runs
+        # the FIPS path on ubuntu-latest where the toolchain is
+        # preinstalled; the feature-checks job covers the powerset
+        # for non-FIPS features. This matrix only needs to confirm
+        # the default build works on each OS.
+        run: cargo test --locked --workspace --no-fail-fast
 
   fips:
     name: FIPS backend (aws-lc-rs)
