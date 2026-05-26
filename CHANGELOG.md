@@ -64,6 +64,12 @@ v0.0.10.
   picks up a new `fips_policy_mints_when_feature_enabled` test;
   the existing `fips_available_is_false_today` becomes
   feature-aware (`fips_available_mirrors_cargo_feature`).
+- **Dedicated `fips` job in `ci.yml`** runs on `ubuntu-latest`
+  (Go + CMake + clang preinstalled). Builds the backend crate
+  standalone, then `hsh --features fips`, then runs the integration
+  test suite + clippy gate under the FIPS feature. Uses a separate
+  rust-cache key (`fips-awslc`) so aws-lc-fips-sys build artefacts
+  don't churn the default cache.
 
 ### Changed (CI action bumps — rolls in dependabot PRs #178–#182)
 
