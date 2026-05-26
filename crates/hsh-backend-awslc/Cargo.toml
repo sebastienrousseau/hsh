@@ -1,0 +1,41 @@
+[package]
+name        = "hsh-backend-awslc"
+version     = "0.0.10"
+description = "FIPS 140-3 routing layer for the `hsh` password-hashing crate. Wraps aws-lc-rs' PBKDF2-HMAC-SHA-256/512 derive functions, which run inside AWS-LC FIPS 3.0 (CMVP Cert #4759)."
+readme      = "README.md"
+
+# Not inheriting from [workspace.package] because this crate is
+# intentionally excluded from the workspace `members` list — pulling in
+# aws-lc-rs with the FIPS sub-build would otherwise require the FIPS
+# toolchain (Go + CMake + clang) for every `cargo build --workspace`
+# invocation. See ../../Cargo.toml and doc/FIPS.md.
+authors       = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>", "The Hash (HSH) library contributors"]
+edition       = "2021"
+rust-version  = "1.75"
+license       = "MIT OR Apache-2.0"
+repository    = "https://github.com/sebastienrousseau/hsh"
+homepage      = "https://hshlib.com/"
+documentation = "https://docs.rs/hsh-backend-awslc"
+categories    = ["authentication", "cryptography"]
+keywords      = ["fips", "pbkdf2", "password", "compliance", "aws-lc-rs"]
+
+include = [
+    "/Cargo.toml",
+    "/README.md",
+    "/src/**",
+    "/tests/**",
+    "/../../LICENSE-APACHE",
+    "/../../LICENSE-MIT",
+]
+
+[lib]
+name       = "hsh_backend_awslc"
+path       = "src/lib.rs"
+crate-type = ["lib"]
+
+[dependencies]
+# aws-lc-rs with the `fips` feature routes primitives through the
+# AWS-LC FIPS 3.0 module (CMVP Cert #4759). Building this dependency
+# requires Go (>= 1.21), CMake (>= 3.18), and a recent clang on the
+# build host — see doc/FIPS.md for the deployment matrix.
+aws-lc-rs = { version = "1.17", features = ["fips"], default-features = false }

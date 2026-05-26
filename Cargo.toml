@@ -1,10 +1,14 @@
 [workspace]
 resolver = "2"
 members  = ["crates/hsh", "crates/hsh-cli", "crates/hsh-digest", "crates/hsh-kms"]
-# fuzz/ is a libfuzzer crate driven by cargo-fuzz (`cargo +nightly fuzz`);
-# it depends on the unstable libfuzzer runtime and must not be part of
-# the default `cargo build --workspace` set.
-exclude  = ["fuzz"]
+# Excluded from default `cargo build --workspace`:
+# - fuzz/: libfuzzer crate, needs nightly + cargo-fuzz.
+# - crates/hsh-backend-awslc: pulls aws-lc-rs with the FIPS sub-build
+#   (needs Go + CMake + recent clang on the build host). Pulled in only
+#   via `cargo build -p hsh --features fips` or by building the backend
+#   crate directly. Keeps the default workspace build cheap for
+#   contributors without the FIPS toolchain. See doc/FIPS.md.
+exclude  = ["fuzz", "crates/hsh-backend-awslc"]
 
 [workspace.package]
 authors       = ["Sebastien Rousseau <sebastian.rousseau@gmail.com>", "The Hash (HSH) library contributors"]

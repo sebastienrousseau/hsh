@@ -30,6 +30,41 @@ v0.0.10.
 
 ## [0.0.10] — TBD
 
+### Added (Phase 4 — FIPS 140-3 backend, closes #143)
+
+- **New crate `hsh-backend-awslc`** — companion crate that wraps
+  `aws-lc-rs` (v1.17, `features = ["fips"]`) so PBKDF2-HMAC-SHA-256
+  / SHA-512 derivations route through the AWS-LC FIPS 3.0 module
+  (CMVP Cert #4759). Exposes one function:
+  `pbkdf2_derive(password, salt, prf, iterations, dk_len)`.
+- **`hsh` `fips` Cargo feature is no longer a no-op marker.** It now
+  pulls `hsh-backend-awslc` into the dep graph and routes
+  `Pbkdf2::hash_with` through AWS-LC. Without the feature, the
+  pure-Rust RustCrypto path is used (unchanged). Output bytes are
+  identical from either provider — verified against RFC 6070
+  vectors in the new crate's test suite.
+- **`Backend::fips_available_in_build()`** now returns
+  `cfg!(feature = "fips")` (previously hardcoded `false`). The
+  runtime refusal in `api::hash` now lets FIPS-tagged minting
+  proceed when the build can actually satisfy the requirement.
+- **`Policy::fips_140_pbkdf2()` is production-usable** under
+  `--features fips`. Default builds still error out at runtime per
+  the no-fail-open contract.
+- **ADR-0004 updated**: status moved from "Accepted with deferred
+  Phase 4" to "Accepted, Phase 4 delivered in v0.0.10".
+- **doc/FIPS.md updated**: "what's delivered" section + new build
+  requirements table (Go ≥ 1.21, CMake ≥ 3.18, recent clang) +
+  documented macOS doctest dylib caveat.
+- The new crate is **excluded from the default workspace `members`**
+  so `cargo build --workspace` stays cheap for contributors without
+  the FIPS toolchain. Pulled in only via `hsh --features fips` or
+  by building the backend crate directly.
+- 7 RFC-6070-vector + parameter-validation tests in
+  `crates/hsh-backend-awslc/tests/derive.rs`. `test_pbkdf2.rs`
+  picks up a new `fips_policy_mints_when_feature_enabled` test;
+  the existing `fips_available_is_false_today` becomes
+  feature-aware (`fips_available_mirrors_cargo_feature`).
+
 ### Changed (CI action bumps — rolls in dependabot PRs #178–#182)
 
 - `actions/checkout` continues at v6.0.2 (already current).
