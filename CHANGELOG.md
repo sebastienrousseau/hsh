@@ -43,6 +43,17 @@ v0.0.10.
   major-rev required by recent in-toto attestation format).
 - `actions/dependency-review-action` 4.9.0 → 5.0.0 (SHA-pinned).
 
+### Changed (CI + Rust dep bumps — rolls in dependabot PRs #191–#195)
+
+- `sigstore/cosign-installer` 3.10.1 → 4.1.2 (SHA-pinned; major
+  jump — runner now ships on Node 20 + cosign v2.4 binary).
+- `github/codeql-action` 3.35.5 → 4.36.0 (SHA-pinned; major jump
+  — `init` / `autobuild` / `analyze` / `upload-sarif` all moved
+  to the v4 runtime, applied across `codeql.yml` + `scorecard.yml`).
+- `taiki-e/install-action` 2.79.5 → 2.79.7 (SHA-pinned).
+- `EmbarkStudios/cargo-deny-action` 2.0.18 → 2.0.19 (SHA-pinned).
+- `log` 0.4.29 → 0.4.30 (Cargo.toml + Cargo.lock).
+
 ### Workspace
 
 - Crate versions bumped 0.0.9 → 0.0.10 across all four packages
