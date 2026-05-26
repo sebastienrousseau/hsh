@@ -83,13 +83,16 @@ v0.0.10.
   timeline). The canonical 146-line root `SECURITY.md` covers
   reporting channel, SLA, threat model, scope, and coordinated
   disclosure; the duplicate was just hiding it from Scorecard.
+- **OpenSSF Best Practices badge** (Scorecard #218) — project
+  registered at https://www.bestpractices.dev/projects/12993,
+  questionnaire completed (67/67 passing-tier criteria at
+  Met/N-A), badge level is now `passing`
+  (`tiered_percentage: 100`). The badge is wired into the README
+  header. Scorecard's CII check credits the new level on its
+  next weekly run (Monday 05:00 UTC).
 
 ### Remaining open alerts (require GitHub UI / external action)
 
-- **CII Best Practices badge** (Scorecard #218) — project
-  registered at bestpractices.dev/projects/12993 and badge wired
-  into README. Questionnaire still in progress; Scorecard credit
-  arrives once the badge reaches `passing` (≥ 75% met).
 - **Code Review 2-reviewer rule** (Scorecard #216) — requires
   branch-protection config in repo Settings → Branches.
   Not branch-fixable.
