@@ -86,9 +86,10 @@ v0.0.10.
 
 ### Remaining open alerts (require GitHub UI / external action)
 
-- **CII Best Practices badge** (Scorecard #218) — register at
-  bestpractices.coreinfrastructure.org and complete the
-  questionnaire. Not branch-fixable.
+- **CII Best Practices badge** (Scorecard #218) — project
+  registered at bestpractices.dev/projects/12993 and badge wired
+  into README. Questionnaire still in progress; Scorecard credit
+  arrives once the badge reaches `passing` (≥ 75% met).
 - **Code Review 2-reviewer rule** (Scorecard #216) — requires
   branch-protection config in repo Settings → Branches.
   Not branch-fixable.

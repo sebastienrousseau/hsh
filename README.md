@@ -22,6 +22,7 @@
   <a href="https://codecov.io/gh/sebastienrousseau/hsh"><img src="https://img.shields.io/codecov/c/github/sebastienrousseau/hsh?style=for-the-badge&logo=codecov" alt="Coverage" /></a>
   <a href="https://lib.rs/crates/hsh"><img src="https://img.shields.io/badge/lib.rs-hsh-orange.svg?style=for-the-badge" alt="lib.rs" /></a>
   <a href="https://securityscorecards.dev/viewer/?uri=github.com/sebastienrousseau/hsh"><img src="https://img.shields.io/ossf-scorecard/github.com/sebastienrousseau/hsh?style=for-the-badge&label=OpenSSF" alt="OpenSSF Scorecard" /></a>
+  <a href="https://www.bestpractices.dev/projects/12993"><img src="https://www.bestpractices.dev/projects/12993/badge" alt="OpenSSF Best Practices" /></a>
   <a href="https://slsa.dev/spec/v1.0/levels"><img src="https://img.shields.io/badge/SLSA-Level%203-brightgreen?style=for-the-badge" alt="SLSA Level 3" /></a>
 </p>
 
