@@ -251,11 +251,14 @@ jobs:
       - name: cargo build -p hsh-backend-awslc
         # Validate the companion crate compiles standalone first — gives
         # a clean failure surface if aws-lc-rs FIPS itself broke.
-        run: cargo build --locked --manifest-path crates/hsh-backend-awslc/Cargo.toml
+        # `--locked` is intentionally omitted: hsh-backend-awslc is not
+        # a workspace member and ships without its own Cargo.lock, so
+        # the first build generates one and `--locked` would block that.
+        run: cargo build --manifest-path crates/hsh-backend-awslc/Cargo.toml
       - name: cargo test -p hsh-backend-awslc
         # RFC-6070 vectors + parameter validation. Exercises the AWS-LC
         # PBKDF2 derive function directly, independent of `hsh`.
-        run: cargo test --locked --manifest-path crates/hsh-backend-awslc/Cargo.toml
+        run: cargo test --manifest-path crates/hsh-backend-awslc/Cargo.toml
       - name: cargo build -p hsh --features fips
         # Pulls hsh-backend-awslc into the dep graph and flips
         # Backend::fips_available_in_build() to true.
