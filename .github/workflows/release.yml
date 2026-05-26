@@ -6,11 +6,11 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
 
+# Default to read-only at workflow level; jobs elevate per-need
+# (attest → id-token+attestations write; github-release → contents
+# write; publish → environment-scoped crates-io token).
 permissions:
-  contents: write          # required to attach release artefacts
-  id-token: write          # required for sigstore keyless signing
-  attestations: write      # required for SLSA L3 build provenance
-  packages: write          # required to push images, if we add Docker later
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -130,7 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: sbom
     permissions:
-      contents: write
+      contents: read
       id-token: write
       attestations: write
     steps:

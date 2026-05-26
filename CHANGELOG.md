@@ -54,6 +54,50 @@ v0.0.10.
 - `EmbarkStudios/cargo-deny-action` 2.0.18 → 2.0.19 (SHA-pinned).
 - `log` 0.4.29 → 0.4.30 (Cargo.toml + Cargo.lock).
 
+### Security (Scorecard + CodeQL alert cleanup)
+
+- **CodeQL `rust/unused-variable`** (#204) — hoisted the
+  feature-gated `use digest::Digest as _;` from each `Hasher`
+  method body to module level. The cfg-gated `use` between the
+  parameter declaration and its match-arm use sites was confusing
+  the CodeQL Rust extractor into mis-flagging the `bytes`
+  parameter; the hoist preserves behaviour and de-duplicates the
+  import across `new` / `update` / `finalize`.
+- **Scorecard `TokenPermissions`** (#207 #209 #210 #211) — added
+  workflow-level `permissions: contents: read` to `ci.yml`,
+  tightened `release.yml` top-level from
+  `contents+id-token+attestations+packages: write` to
+  `contents: read` (jobs elevate per-need), dropped the unused
+  `packages: write` claim, and reduced the `attest` job from
+  `contents: write` to `contents: read` (it never used contents
+  write — attest-build-provenance + cosign use OIDC, upload
+  uses artifact storage).
+- **Scorecard `PinnedDependencies`** (#212 #213 #214 #215) —
+  SHA-pinned the two reusable-workflow calls into
+  `sebastienrousseau/pipelines` (`@main` → SHA), and pinned
+  both Dockerfile base images
+  (`rust:1.85-alpine` + `gcr.io/distroless/static-debian12:nonroot`)
+  by SHA-256 digest.
+- **Scorecard `SecurityPolicy`** (#217) — removed the truncated
+  `.github/SECURITY.md` (26 lines, no hyperlinks, no disclosure
+  timeline). The canonical 146-line root `SECURITY.md` covers
+  reporting channel, SLA, threat model, scope, and coordinated
+  disclosure; the duplicate was just hiding it from Scorecard.
+
+### Remaining open alerts (require GitHub UI / external action)
+
+- **CII Best Practices badge** (Scorecard #218) — register at
+  bestpractices.coreinfrastructure.org and complete the
+  questionnaire. Not branch-fixable.
+- **Code Review 2-reviewer rule** (Scorecard #216) — requires
+  branch-protection config in repo Settings → Branches.
+  Not branch-fixable.
+- **`github-release` job `contents: write`** (Scorecard #208) —
+  legitimately required for `gh release create/edit/upload`.
+- **`docs` job `contents: write`** (Scorecard #206) — required
+  by the reusable workflow's `peaceiris/actions-gh-pages` step
+  to push the rendered docs to the `gh-pages` branch.
+
 ### Workspace
 
 - Crate versions bumped 0.0.9 → 0.0.10 across all four packages

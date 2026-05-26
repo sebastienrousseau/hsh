@@ -71,6 +71,14 @@ pub mod error;
 
 pub use error::DigestError;
 
+// Bring the `digest::Digest` trait into scope at module level so
+// `update` / `finalize` methods resolve on the sha2 / sha3 hashers.
+// Hoisted out of each function body so static analysers don't trip
+// on cfg-gated `use` statements interleaved with parameter usage
+// (CodeQL Rust extractor false-positive on `rust/unused-variable`).
+#[cfg(any(feature = "sha2", feature = "sha3"))]
+use digest::Digest as _;
+
 /// Supported general-purpose hash algorithms.
 ///
 /// Variants are gated by feature flag — see crate-level docs.
@@ -207,8 +215,6 @@ impl Hasher {
     /// feature-gated; kept as `Result` for forward compatibility when
     /// runtime-selectable algorithms land.
     pub fn new(algorithm: Algorithm) -> Result<Self, DigestError> {
-        #[cfg(any(feature = "sha2", feature = "sha3"))]
-        use digest::Digest;
         let inner = match algorithm {
             #[cfg(feature = "sha2")]
             Algorithm::Sha256 => {
@@ -265,8 +271,6 @@ impl Hasher {
 
     /// Feeds bytes into the hasher state.
     pub fn update(&mut self, bytes: &[u8]) {
-        #[cfg(any(feature = "sha2", feature = "sha3"))]
-        use digest::Digest;
         match &mut self.inner {
             #[cfg(feature = "sha2")]
             HasherInner::Sha256(h) => h.update(bytes),
@@ -290,8 +294,6 @@ impl Hasher {
     /// Consumes the hasher and returns the digest bytes.
     #[must_use]
     pub fn finalize(self) -> Vec<u8> {
-        #[cfg(any(feature = "sha2", feature = "sha3"))]
-        use digest::Digest;
         match self.inner {
             #[cfg(feature = "sha2")]
             HasherInner::Sha256(h) => h.finalize().to_vec(),

@@ -13,16 +13,16 @@
 #       -f pkg/docker/Dockerfile .
 # ---------------------------------------------------------------------------
 
-ARG RUST_VERSION=1.85
-
-FROM rust:${RUST_VERSION}-alpine AS builder
+# Base images pinned by digest (Scorecard PinnedDependencies). Update
+# the digest + comment together when rolling forward to a new tag.
+FROM rust:1.85-alpine@sha256:4333721398de61f53ccbe53b0b855bcc4bb49e55828e8f652d7a8ac33dd0c118 AS builder
 RUN apk add --no-cache musl-dev
 WORKDIR /src
 COPY . .
 RUN cargo build --release --bin hsh \
     --target "$(uname -m)-unknown-linux-musl"
 
-FROM gcr.io/distroless/static-debian12:nonroot
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:d093aa3e30dbadd3efe1310db061a14da60299baff8450a17fe0ccc514a16639
 LABEL org.opencontainers.image.title="hsh"
 LABEL org.opencontainers.image.description="Enterprise password hashing on the command line."
 LABEL org.opencontainers.image.url="https://github.com/sebastienrousseau/hsh"
