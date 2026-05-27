@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="`hsh-kms` — pepper / KMS integration for `hsh`"><title>hsh_kms - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-b7b9f40b.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="hsh_kms" data-themes="" data-resource-suffix="" data-rustdoc-version="1.95.0 (59807616e 2026-04-14)" data-channel="1.95.0" data-search-js="search-63369b7b.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate hsh_kms</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../hsh_kms/index.html">hsh_kms</a><span class="version">0.0.10</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#hsh-kms--pepper--kms-integration-for-hsh" title="`hsh-kms` — pepper / KMS integration for `hsh`"><code>hsh-kms</code> — pepper / KMS integration for <code>hsh</code></a><ul><li><a href="#the-pepper-pattern" title="The pepper pattern">The pepper pattern</a></li><li><a href="#backends" title="Backends">Backends</a></li><li><a href="#example" title="Example">Example</a></li></ul></li></ul><h3><a href="#reexports">Crate Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1>Crate <span>hsh_kms</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/hsh_kms/lib.rs.html#1-272">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="hsh-kms--pepper--kms-integration-for-hsh"><a class="doc-anchor" href="#hsh-kms--pepper--kms-integration-for-hsh">§</a><code>hsh-kms</code> — pepper / KMS integration for <code>hsh</code></h2>
+<p>This crate provides the <a href="trait.Pepper.html" title="trait hsh_kms::Pepper"><code>Pepper</code></a> trait and a small set of
+pluggable backends that let an application “pepper” its passwords
+with a secret key held outside the password database — typically in
+AWS KMS, Google Cloud KMS, Azure Key Vault, or HashiCorp Vault.</p>
+<h3 id="the-pepper-pattern"><a class="doc-anchor" href="#the-pepper-pattern">§</a>The pepper pattern</h3>
+<p>A <em>pepper</em> is a server-side secret applied to every password before
+it is hashed. Unlike a per-password salt (which lives next to the
+hash), the pepper is <strong>the same for every password</strong> and lives in a
+separate trust boundary — usually a KMS / HSM that the password
+database cannot read.</p>
+<p>Concretely, <a href="trait.Pepper.html#tymethod.apply" title="method hsh_kms::Pepper::apply"><code>Pepper::apply</code></a> computes
+<code>HMAC-SHA-256(key_at(version), password)</code> and returns the 32-byte
+tag, which the <code>hsh</code> crate then feeds into Argon2id / bcrypt /
+scrypt as if it were the user’s password.</p>
+<h4 id="why"><a class="doc-anchor" href="#why">§</a>Why</h4>
+<ul>
+<li><strong>Defence in depth</strong> — an attacker who steals only the password
+DB cannot brute-force credentials offline because they’re missing
+the pepper.</li>
+<li><strong>Rotatable</strong> — bump <a href="struct.KeyVersion.html" title="struct hsh_kms::KeyVersion"><code>KeyVersion</code></a> periodically; on each
+successful login under the old version, <code>hsh::api::verify_and_upgrade</code>
+re-hashes under the new version transparently.</li>
+<li><strong>Compliance</strong> — PCI DSS 4.0 §3.5.1.1 effectively requires this
+for PAN hashing; many SOC 2 / ISO 27001 auditors expect it for
+password storage too.</li>
+</ul>
+<h3 id="backends"><a class="doc-anchor" href="#backends">§</a>Backends</h3>
+<ul>
+<li><a href="struct.LocalPepper.html" title="struct hsh_kms::LocalPepper"><code>LocalPepper</code></a> — keys held in process memory. Safe for tests,
+short-lived workloads, or apps without a KMS.</li>
+<li><code>aws::fetch_pepper</code> (feature <code>aws-kms</code>) — fetch a key from AWS
+KMS via the <code>aws-sdk-kms</code> crate, returning a <a href="struct.LocalPepper.html" title="struct hsh_kms::LocalPepper"><code>LocalPepper</code></a>
+snapshot.</li>
+<li><code>gcp::fetch_pepper</code> (feature <code>gcp-kms</code>) — likewise for GCP Cloud
+KMS.</li>
+<li><code>azure::fetch_pepper</code> (feature <code>azure-key-vault</code>).</li>
+<li><code>vault::fetch_pepper</code> (feature <code>hashicorp-vault</code>).</li>
+</ul>
+<p>Provider implementations are currently <strong>stubs</strong> that document the
+intended interface; the real network calls land incrementally as
+they get integration-tested against the cloud providers.</p>
+<h3 id="example"><a class="doc-anchor" href="#example">§</a>Example</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>hsh_kms::{KeyVersion, LocalPepper, Pepper};
+
+<span class="kw">let </span>pepper = LocalPepper::builder()
+    .add(KeyVersion::new(<span class="number">1</span>), <span class="string">b"the-server-pepper-v1-DO-NOT-COMMIT"</span>.to_vec())
+    .current(KeyVersion::new(<span class="number">1</span>))
+    .build()
+    .unwrap();
+
+<span class="kw">let </span>tag = pepper.apply(KeyVersion::new(<span class="number">1</span>), <span class="string">b"correct horse"</span>).unwrap();
+<span class="macro">assert_eq!</span>(tag.len(), <span class="number">32</span>);</code></pre></div></div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.PepperError"><code>pub use error::<a class="enum" href="error/enum.PepperError.html" title="enum hsh_kms::error::PepperError">PepperError</a>;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="aws/index.html" title="mod hsh_kms::aws">aws</a></dt><dd>AWS KMS pepper provider — <strong>stub</strong>.</dd><dt><a class="mod" href="azure/index.html" title="mod hsh_kms::azure">azure</a></dt><dd>Azure Key Vault pepper provider — <strong>stub</strong>.</dd><dt><a class="mod" href="error/index.html" title="mod hsh_kms::error">error</a></dt><dd>Structured error type for the <code>hsh-kms</code> crate.</dd><dt><a class="mod" href="gcp/index.html" title="mod hsh_kms::gcp">gcp</a></dt><dd>Google Cloud KMS pepper provider — <strong>stub</strong>.</dd><dt><a class="mod" href="vault/index.html" title="mod hsh_kms::vault">vault</a></dt><dd>HashiCorp Vault pepper provider — <strong>stub</strong>.</dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.KeyVersion.html" title="struct hsh_kms::KeyVersion">KeyVersion</a></dt><dd>A monotonically increasing key version used to identify which pepper
+was applied to a given password hash. Stored alongside the hash so
+rotation is non-destructive.</dd><dt><a class="struct" href="struct.LocalPepper.html" title="struct hsh_kms::LocalPepper">Local<wbr>Pepper</a></dt><dd>In-memory pepper provider. <strong>Keys live in process memory</strong> — use a
+real KMS for production secrets.</dd><dt><a class="struct" href="struct.LocalPepperBuilder.html" title="struct hsh_kms::LocalPepperBuilder">Local<wbr>Pepper<wbr>Builder</a></dt><dd>Builder for <a href="struct.LocalPepper.html" title="struct hsh_kms::LocalPepper"><code>LocalPepper</code></a>.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Pepper.html" title="trait hsh_kms::Pepper">Pepper</a></dt><dd>A pepper provider — produces an HMAC-SHA-256 tag over the password
+keyed by the secret material for a given <a href="struct.KeyVersion.html" title="struct hsh_kms::KeyVersion"><code>KeyVersion</code></a>.</dd></dl></section></div></main></body></html>

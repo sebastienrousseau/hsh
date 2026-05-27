@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["print_kv","resolve_password","strip_trailing_newline"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Hash","HashBuilder"],"type":["Salt"]};
