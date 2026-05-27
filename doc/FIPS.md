@@ -11,7 +11,7 @@ playbook.
 | ------------------------------------------------------- | ------ |
 | Can I write code today that requires FIPS validation?   | **Yes** — use `Policy::fips_140_pbkdf2()`. |
 | Will it silently fall back to non-FIPS crypto?          | **No** — `hsh` returns a typed error if the build can't satisfy the requirement. |
-| Is the routing actually validated today?                | **Not yet.** PBKDF2 runs via the pure-Rust RustCrypto `pbkdf2` crate. The `aws-lc-rs` routing lands as a Phase 4 follow-up. |
+| Is the routing actually validated today?                | **Yes, with the `fips` Cargo feature.** PBKDF2 runs via `aws-lc-rs` inside AWS-LC FIPS 3.0 (CMVP Cert #4759). Without the feature, the runtime check refuses to mint. |
 | What hashes work in FIPS mode?                          | **PBKDF2-HMAC-SHA-256/512 only.** Argon2 / bcrypt / scrypt have no FIPS-validated implementation anywhere. |
 | Can I verify existing Argon2/bcrypt/scrypt hashes under FIPS? | **Yes** — verification under a FIPS policy still works; only *minting* is restricted. The verifier signals `Outcome::Valid { rehashed: Some(new_phc) }` so old hashes migrate to PBKDF2 on next login. |
 
@@ -44,67 +44,73 @@ PBKDF2 hash from a validated module, or you get an error.
 This isn't a build-system gap — it's a standards gap. Argon2 was not
 included in the validation cycles for any of the major FIPS modules.
 
-## What's delivered in v0.0.9
+## What's delivered
 
 - `Backend::{Native, Fips140Required}` and `Backend::is_fips()`.
-- `Backend::fips_available_in_build()` — hardcoded `false`.
+- `Backend::fips_available_in_build()` — returns `true` when the
+  `fips` Cargo feature is on (`cfg!(feature = "fips")`), `false`
+  otherwise.
 - `Policy.backend` field.
 - `Policy::fips_140_pbkdf2()` preset: PBKDF2-HMAC-SHA-256, 600 000
-  iterations (OWASP-2025 minimum), 32-byte output, `Backend::Fips140Required`.
+  iterations (OWASP-2025 minimum), 32-byte output,
+  `Backend::Fips140Required`.
 - `PrimaryAlgorithm::Pbkdf2` + a working PBKDF2-HMAC-SHA-256/512
-  implementation via pure-Rust RustCrypto.
-- PHC string format `$pbkdf2-sha256$i=<iters>,l=<len>$<salt>$<hash>`.
+  implementation via pure-Rust RustCrypto (default build) or AWS-LC
+  FIPS 3.0 (with the `fips` feature).
+- PHC string format `$pbkdf2-sha256$i=<iters>,l=<len>$<salt>$<hash>`
+  — identical bytes from either provider.
 - Algorithm-drift, iteration-drift, and PRF-drift detection in
   `api::verify_and_upgrade`.
-- `fips` Cargo feature — currently a no-op marker (see below).
+- `crates/hsh-backend-awslc` — companion crate that wraps
+  `aws-lc-rs`. Excluded from default workspace `members`; pulled in
+  via `--features fips` on the `hsh` crate.
 - ADR-0004 documenting the strategy.
 
-## What lands in the Phase 4 follow-up
+## Build requirements (with `--features fips`)
 
-A new `crates/hsh-backend-awslc` workspace member that:
+The first build of `hsh` (or downstream) with `--features fips`
+compiles the AWS-LC FIPS sub-module from source. Required on the
+**build host** (not on the runtime host):
 
-- Depends on `aws-lc-rs = { version = "1.13", features = ["fips"] }`.
-- Routes `Pbkdf2::hash_with` through `aws_lc_rs::pbkdf2::derive`.
-- Flips `Backend::fips_available_in_build()` to `true`.
+| Tool   | Version  | macOS                           | Linux                                  |
+|--------|----------|---------------------------------|----------------------------------------|
+| Go     | ≥ 1.21   | `brew install go`               | distro package or `mise use go@1.21`   |
+| CMake  | ≥ 3.18   | `brew install cmake`            | distro package                         |
+| clang  | ≥ 14     | Xcode Command Line Tools        | distro `clang` / `clang-14`            |
 
-It's a pure-additive change. Application code written today against
-`Policy::fips_140_pbkdf2()` works unchanged once the backend lands —
-the runtime refusal stops firing because the build can satisfy the
-requirement.
+First build takes 2–4 minutes; subsequent builds are cached.
 
-## Why the follow-up is separate
+### macOS dylib caveat for doctests
 
-The AWS-LC FIPS sub-build requires Go ≥ 1.21, CMake ≥ 3.18, recent
-clang, and on macOS the full Xcode toolchain. That's not reliably
-available on contributor laptops or default CI runners, so pulling
-`aws-lc-rs` into the default workspace would break the build for
-~half the contributor base.
+`aws-lc-fips-sys` links AWS-LC as a dynamic library
+(`libaws_lc_fips_*_crypto.dylib`). Regular `cargo test` and `cargo
+run` set up the rpath correctly, but **rustdoc doctests** run from a
+temp directory and the dynamic loader can't find the dylib (the
+error reads `Library not loaded: @rpath/libaws_lc_fips_*_crypto.dylib`).
+The fix is to run doctests **without** the `fips` feature — the
+pure-Rust PBKDF2 path is identical for documentation purposes. CI
+follows this split:
 
-Pushing it into a separate crate keeps `hsh`'s default build cheap
-while preserving the strict no-fail-open contract.
+```sh
+# Integration + unit tests under FIPS feature (works fine):
+cargo test -p hsh --features fips --lib --tests
 
-## Deployment playbook (today)
+# Doctests without the FIPS feature (avoids the dylib loader issue):
+cargo test -p hsh --doc
+```
 
-If you need FIPS *today*, you have three options:
+This is an aws-lc-rs / macOS runtime-loader limitation, not a
+correctness issue. The output of PBKDF2 derivation is bit-identical
+under both providers (verified against RFC 6070 vectors in
+`crates/hsh-backend-awslc/tests/derive.rs`).
 
-1. **Wait** for the `hsh-backend-awslc` follow-up. The shape of the
-   API won't change.
-2. **Vendor your own** `Pbkdf2::hash_with` replacement that calls
-   `aws-lc-rs` directly, then submit it back as the follow-up.
-3. **Apply a compensating control** — bcrypt or Argon2id under a
-   non-FIPS policy, plus a documented justification to your auditor
-   explaining that PBKDF2 is the only validated KDF and your team
-   has determined the additional brute-force resistance of Argon2id
-   outweighs the validation gap. NIST SP 800-63B Rev. 4 explicitly
-   permits this with a documented risk acceptance.
-
-## Deployment playbook (post-follow-up)
+## Deployment playbook
 
 ```toml
 [dependencies]
-hsh                = { version = "0.0.10", features = ["fips"] }
-hsh-backend-awslc  = "0.0.10"   # pulls in aws-lc-rs + flips
-                                # fips_available_in_build to true
+hsh = { version = "0.0.10", features = ["fips"] }
+# hsh-backend-awslc is pulled in transitively; no need to list it
+# explicitly unless you want to use its derive function directly.
 ```
 
 ```rust
@@ -115,6 +121,19 @@ let stored = api::hash(&policy, password)?;
 // stored is now $pbkdf2-sha256$i=600000,l=32$<salt>$<hash>,
 // derived through aws-lc-rs's FIPS-validated module.
 ```
+
+If you can't ship the FIPS toolchain to your build host yet, you
+have two options:
+
+1. **Cross-compile** in CI using the toolchain on a Linux runner and
+   ship the binary artefact — avoids needing the toolchain on every
+   contributor laptop.
+2. **Apply a compensating control** — bcrypt or Argon2id under a
+   non-FIPS policy, plus a documented justification to your auditor
+   explaining that PBKDF2 is the only validated KDF and your team
+   has determined the additional brute-force resistance of Argon2id
+   outweighs the validation gap. NIST SP 800-63B Rev. 4 explicitly
+   permits this with a documented risk acceptance.
 
 ## Migration path
 

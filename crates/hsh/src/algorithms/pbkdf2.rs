@@ -9,12 +9,14 @@
 //!
 //! ## Routing
 //!
-//! - **Today (v0.0.9)**: pure-Rust RustCrypto `pbkdf2` regardless of
-//!   the `fips` feature. The feature is a forward-compat marker — see
-//!   ADR-0004 and `doc/FIPS.md`.
-//! - **Phase 4 follow-up**: the planned `hsh-backend-awslc` crate
-//!   routes PBKDF2 derive through `aws-lc-rs`'s FIPS 140-3 Level 1
-//!   validated module. Public API stays unchanged.
+//! - **Default build** (no `fips` feature): pure-Rust RustCrypto
+//!   `pbkdf2`. Sufficient for any caller that doesn't have a FIPS
+//!   140-3 compliance requirement.
+//! - **`fips` feature enabled**: derivations route through the
+//!   `hsh-backend-awslc` companion crate, which wraps `aws-lc-rs`
+//!   PBKDF2 inside the AWS-LC FIPS 3.0 module (CMVP Cert #4759).
+//!   Public API stays identical; only the underlying primitive
+//!   provider changes. See ADR-0004 and `doc/FIPS.md`.
 
 use crate::error::{Error, Result};
 use crate::models::hash_algorithm::HashingAlgorithm;
@@ -144,15 +146,59 @@ impl Pbkdf2 {
             ));
         }
 
-        // The `fips` feature is currently a marker only — see
-        // doc/FIPS.md and ADR-0004. Once the dedicated
-        // `hsh-backend-awslc` crate lands, this branch will route
-        // through the FIPS-validated module without changing the
-        // public API.
-        rust_crypto::derive(password, salt, params)
+        // When the `fips` feature is enabled, route through the
+        // AWS-LC FIPS 3.0 module via the `hsh-backend-awslc` crate.
+        // Otherwise fall back to the pure-Rust RustCrypto path. The
+        // observable output is identical for the same inputs — both
+        // paths implement RFC 8018 PBKDF2 — but only the FIPS route
+        // satisfies CMVP-validated-module compliance requirements.
+        #[cfg(feature = "fips")]
+        {
+            aws_lc::derive(password, salt, params)
+        }
+        #[cfg(not(feature = "fips"))]
+        {
+            rust_crypto::derive(password, salt, params)
+        }
     }
 }
 
+#[cfg(feature = "fips")]
+mod aws_lc {
+    //! PBKDF2 derive via `hsh-backend-awslc` → `aws-lc-rs` → AWS-LC
+    //! FIPS 3.0 module (CMVP Cert #4759).
+
+    use super::{Pbkdf2Params, Prf};
+    use crate::error::{Error, HashingErrorKind, Result};
+    use hsh_backend_awslc::{pbkdf2_derive, Prf as AwslcPrf};
+
+    pub(super) fn derive(
+        password: &[u8],
+        salt: &[u8],
+        params: Pbkdf2Params,
+    ) -> Result<Vec<u8>> {
+        let prf = match params.prf {
+            Prf::Sha256 => AwslcPrf::Sha256,
+            Prf::Sha512 => AwslcPrf::Sha512,
+        };
+        pbkdf2_derive(
+            password,
+            salt,
+            prf,
+            params.iterations,
+            params.dk_len,
+        )
+        .map_err(|e| {
+            Error::hashing(HashingErrorKind::Pbkdf2, e.to_string())
+        })
+    }
+}
+
+// The pure-Rust module stays compiled even when the `fips` feature is
+// on, so parity tests can compare both paths. The `allow(dead_code)`
+// suppresses the workspace-level `dead_code = deny` lint when only the
+// FIPS path is reachable from the dispatcher above.
+#[allow(dead_code)]
 mod rust_crypto {
     //! Pure-Rust PBKDF2 derive via the RustCrypto `pbkdf2` crate.
 

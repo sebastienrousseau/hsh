@@ -121,6 +121,7 @@ fn fips_policy_refuses_to_mint_argon2id() {
     );
 }
 
+#[cfg(not(feature = "fips"))]
 #[test]
 fn fips_policy_refuses_when_feature_not_enabled() {
     let policy = Policy::fips_140_pbkdf2();
@@ -130,11 +131,30 @@ fn fips_policy_refuses_when_feature_not_enabled() {
     );
 }
 
+#[cfg(feature = "fips")]
+#[test]
+fn fips_policy_mints_when_feature_enabled() {
+    // With the `fips` feature on, hsh-backend-awslc is in the dep
+    // graph and Backend::fips_available_in_build() returns true, so
+    // api::hash mints a real PBKDF2-HMAC-SHA-256 hash via AWS-LC.
+    let policy = Policy::fips_140_pbkdf2();
+    let hash =
+        api::hash(&policy, "user pw").expect("FIPS hash must succeed");
+    assert!(hash.starts_with("$pbkdf2-sha256$"));
+}
+
 #[test]
 fn backend_is_fips_round_trips() {
     assert!(Backend::Fips140Required.is_fips());
     assert!(!Backend::Native.is_fips());
-    assert!(!Backend::fips_available_in_build());
+    // fips_available_in_build is now feature-gated: false in the
+    // default build, true when the `fips` feature pulls in
+    // hsh-backend-awslc → aws-lc-rs.
+    assert_eq!(
+        Backend::fips_available_in_build(),
+        cfg!(feature = "fips"),
+        "fips_available_in_build must mirror the `fips` Cargo feature"
+    );
 }
 
 #[test]

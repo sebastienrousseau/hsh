@@ -52,12 +52,14 @@ impl Backend {
     }
 
     /// Returns `true` if this build can actually satisfy a FIPS
-    /// requirement. Today this is **always `false`** — the `fips`
-    /// feature is a forward-compat marker, not a delivered route.
-    /// The eventual `hsh-backend-awslc` crate will flip this true when
-    /// compiled in. See ADR-0004 + `doc/FIPS.md`.
+    /// requirement. True when the `fips` Cargo feature is enabled,
+    /// which pulls in the `hsh-backend-awslc` companion crate and
+    /// routes PBKDF2 through AWS-LC FIPS 3.0 (CMVP Cert #4759).
+    /// False otherwise — [`crate::api::hash`] will refuse to mint a
+    /// FIPS-tagged hash when this returns false. See ADR-0004 +
+    /// `doc/FIPS.md`.
     #[must_use]
     pub const fn fips_available_in_build() -> bool {
-        false
+        cfg!(feature = "fips")
     }
 }

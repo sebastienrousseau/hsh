@@ -39,6 +39,12 @@ allow = [
     "ISC",
     "MIT",
     "MPL-2.0",
+    # OpenSSL: required by `aws-lc-fips-sys`, which declares
+    # `ISC AND (Apache-2.0 OR ISC) AND OpenSSL`. AWS-LC is BoringSSL-
+    # derived and inherits the OpenSSL licence on the original boring
+    # crypto sources; the bulk is ISC/Apache. FSF Free/Libre and
+    # GPL-compatible per OSI. Required for the FIPS routing.
+    "OpenSSL",
     "Unicode-3.0",
     "Unicode-DFS-2016",
     "Unlicense",

@@ -7,7 +7,147 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_No changes since v0.0.9._
+### Planned (RustCrypto v0.11 / v0.6 wave lift)
+
+Six dependabot bumps gated on the wave landing together as a
+single PR rather than piecemeal:
+
+- `sha2` 0.10 → 0.11
+- `sha3` 0.10 → 0.12 (skipping 0.11)
+- `digest` 0.10 → 0.11
+- `hmac` 0.12 → 0.13
+- `password-hash` 0.5 → 0.6 (new `phc::PasswordHash` shape, no
+  lifetime parameter; `SaltString` removed; `Salt::as_str` gone)
+- `pbkdf2` 0.12 → 0.13 (cascades from password-hash 0.6)
+- `scrypt` 0.11 → 0.12 (cascades; `Scrypt` no longer unit type)
+- `argon2` 0.5 → 0.6 (cascades; `hash_password` replaced by
+  `hash_password_into`)
+
+Deferred until `argon2 0.6.0` exits release-candidate (currently
+`0.6.0-rc.8`); pinning a stable workspace to an RC dep is the
+wrong call. Will land as a dedicated workspace-lift PR within
+v0.0.10.
+
+## [0.0.10] — TBD
+
+### Added (Phase 4 — FIPS 140-3 backend, closes #143)
+
+- **New crate `hsh-backend-awslc`** — companion crate that wraps
+  `aws-lc-rs` (v1.17, `features = ["fips"]`) so PBKDF2-HMAC-SHA-256
+  / SHA-512 derivations route through the AWS-LC FIPS 3.0 module
+  (CMVP Cert #4759). Exposes one function:
+  `pbkdf2_derive(password, salt, prf, iterations, dk_len)`.
+- **`hsh` `fips` Cargo feature is no longer a no-op marker.** It now
+  pulls `hsh-backend-awslc` into the dep graph and routes
+  `Pbkdf2::hash_with` through AWS-LC. Without the feature, the
+  pure-Rust RustCrypto path is used (unchanged). Output bytes are
+  identical from either provider — verified against RFC 6070
+  vectors in the new crate's test suite.
+- **`Backend::fips_available_in_build()`** now returns
+  `cfg!(feature = "fips")` (previously hardcoded `false`). The
+  runtime refusal in `api::hash` now lets FIPS-tagged minting
+  proceed when the build can actually satisfy the requirement.
+- **`Policy::fips_140_pbkdf2()` is production-usable** under
+  `--features fips`. Default builds still error out at runtime per
+  the no-fail-open contract.
+- **ADR-0004 updated**: status moved from "Accepted with deferred
+  Phase 4" to "Accepted, Phase 4 delivered in v0.0.10".
+- **doc/FIPS.md updated**: "what's delivered" section + new build
+  requirements table (Go ≥ 1.21, CMake ≥ 3.18, recent clang) +
+  documented macOS doctest dylib caveat.
+- The new crate is **excluded from the default workspace `members`**
+  so `cargo build --workspace` stays cheap for contributors without
+  the FIPS toolchain. Pulled in only via `hsh --features fips` or
+  by building the backend crate directly.
+- 7 RFC-6070-vector + parameter-validation tests in
+  `crates/hsh-backend-awslc/tests/derive.rs`. `test_pbkdf2.rs`
+  picks up a new `fips_policy_mints_when_feature_enabled` test;
+  the existing `fips_available_is_false_today` becomes
+  feature-aware (`fips_available_mirrors_cargo_feature`).
+- **Dedicated `fips` job in `ci.yml`** runs on `ubuntu-latest`
+  (Go + CMake + clang preinstalled). Builds the backend crate
+  standalone, then `hsh --features fips`, then runs the integration
+  test suite + clippy gate under the FIPS feature. Uses a separate
+  rust-cache key (`fips-awslc`) so aws-lc-fips-sys build artefacts
+  don't churn the default cache.
+
+### Changed (CI action bumps — rolls in dependabot PRs #178–#182)
+
+- `actions/checkout` continues at v6.0.2 (already current).
+- `actions/upload-artifact` continues at v7.0.1 (already current).
+- `codecov/codecov-action` continues at v6.0.1 (already current).
+- `peaceiris/actions-gh-pages` 4.0.0 → 4.1.0 (SHA-pinned).
+- `taiki-e/install-action` 2.79.2 → 2.79.5 (SHA-pinned).
+- `actions/download-artifact` 4.3.0 → 8.0.1 (SHA-pinned; major
+  jump for streaming-API improvements + smaller container image).
+- `actions/attest-build-provenance` 2.4.0 → 4.1.0 (SHA-pinned;
+  major-rev required by recent in-toto attestation format).
+- `actions/dependency-review-action` 4.9.0 → 5.0.0 (SHA-pinned).
+
+### Changed (CI + Rust dep bumps — rolls in dependabot PRs #191–#195)
+
+- `sigstore/cosign-installer` 3.10.1 → 4.1.2 (SHA-pinned; major
+  jump — runner now ships on Node 20 + cosign v2.4 binary).
+- `github/codeql-action` 3.35.5 → 4.36.0 (SHA-pinned; major jump
+  — `init` / `autobuild` / `analyze` / `upload-sarif` all moved
+  to the v4 runtime, applied across `codeql.yml` + `scorecard.yml`).
+- `taiki-e/install-action` 2.79.5 → 2.79.7 (SHA-pinned).
+- `EmbarkStudios/cargo-deny-action` 2.0.18 → 2.0.19 (SHA-pinned).
+- `log` 0.4.29 → 0.4.30 (Cargo.toml + Cargo.lock).
+
+### Security (Scorecard + CodeQL alert cleanup)
+
+- **CodeQL `rust/unused-variable`** (#204) — hoisted the
+  feature-gated `use digest::Digest as _;` from each `Hasher`
+  method body to module level. The cfg-gated `use` between the
+  parameter declaration and its match-arm use sites was confusing
+  the CodeQL Rust extractor into mis-flagging the `bytes`
+  parameter; the hoist preserves behaviour and de-duplicates the
+  import across `new` / `update` / `finalize`.
+- **Scorecard `TokenPermissions`** (#207 #209 #210 #211) — added
+  workflow-level `permissions: contents: read` to `ci.yml`,
+  tightened `release.yml` top-level from
+  `contents+id-token+attestations+packages: write` to
+  `contents: read` (jobs elevate per-need), dropped the unused
+  `packages: write` claim, and reduced the `attest` job from
+  `contents: write` to `contents: read` (it never used contents
+  write — attest-build-provenance + cosign use OIDC, upload
+  uses artifact storage).
+- **Scorecard `PinnedDependencies`** (#212 #213 #214 #215) —
+  SHA-pinned the two reusable-workflow calls into
+  `sebastienrousseau/pipelines` (`@main` → SHA), and pinned
+  both Dockerfile base images
+  (`rust:1.85-alpine` + `gcr.io/distroless/static-debian12:nonroot`)
+  by SHA-256 digest.
+- **Scorecard `SecurityPolicy`** (#217) — removed the truncated
+  `.github/SECURITY.md` (26 lines, no hyperlinks, no disclosure
+  timeline). The canonical 146-line root `SECURITY.md` covers
+  reporting channel, SLA, threat model, scope, and coordinated
+  disclosure; the duplicate was just hiding it from Scorecard.
+- **OpenSSF Best Practices badge** (Scorecard #218) — project
+  registered at https://www.bestpractices.dev/projects/12993,
+  questionnaire completed (67/67 passing-tier criteria at
+  Met/N-A), badge level is now `passing`
+  (`tiered_percentage: 100`). The badge is wired into the README
+  header. Scorecard's CII check credits the new level on its
+  next weekly run (Monday 05:00 UTC).
+
+### Remaining open alerts (require GitHub UI / external action)
+
+- **Code Review 2-reviewer rule** (Scorecard #216) — requires
+  branch-protection config in repo Settings → Branches.
+  Not branch-fixable.
+- **`github-release` job `contents: write`** (Scorecard #208) —
+  legitimately required for `gh release create/edit/upload`.
+- **`docs` job `contents: write`** (Scorecard #206) — required
+  by the reusable workflow's `peaceiris/actions-gh-pages` step
+  to push the rendered docs to the `gh-pages` branch.
+
+### Workspace
+
+- Crate versions bumped 0.0.9 → 0.0.10 across all four packages
+  (root + hsh / hsh-cli / hsh-kms / hsh-digest) + internal cross-
+  references updated.
 
 ## [0.0.9] — 2026-05-23
 

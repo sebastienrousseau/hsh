@@ -684,7 +684,12 @@ fn inspect_backend_owasp_reports_native_satisfied() {
     assert_eq!(json["backend"], "Native");
     assert_eq!(json["primary_algorithm"], "Argon2id");
     assert_eq!(json["readiness"], "satisfied");
-    assert_eq!(json["fips_available_in_build"], false);
+    // `fips_available_in_build` mirrors the `fips` Cargo feature in
+    // the hsh / hsh-cli build (see ADR-0004 + doc/FIPS.md). The OWASP
+    // policy itself is Native and doesn't care either way, but the
+    // assertion must track the feature state to stay green under
+    // `cargo test --all-features`.
+    assert_eq!(json["fips_available_in_build"], cfg!(feature = "fips"));
     // Build provenance must be populated, not "unknown".
     let rustc = json["rustc"].as_str().expect("rustc string");
     assert!(
@@ -696,8 +701,7 @@ fn inspect_backend_owasp_reports_native_satisfied() {
 }
 
 #[test]
-fn inspect_backend_fips_reports_unsatisfied_without_validated_runtime()
-{
+fn inspect_backend_fips_reports_readiness_consistent_with_feature() {
     let output = hsh()
         .args(["--json", "inspect-backend", "--policy", "fips"])
         .output()
@@ -708,10 +712,21 @@ fn inspect_backend_fips_reports_unsatisfied_without_validated_runtime()
     assert_eq!(json["backend"], "Fips140Required");
     assert_eq!(json["primary_algorithm"], "Pbkdf2");
     let readiness = json["readiness"].as_str().expect("readiness");
-    assert!(
-        readiness.starts_with("unsatisfied"),
-        "expected unsatisfied readiness without aws-lc-rs, got: {readiness}"
-    );
+    if cfg!(feature = "fips") {
+        // hsh-backend-awslc is in the dep graph → AWS-LC FIPS routing
+        // is wired up → the FIPS policy is genuinely satisfiable.
+        assert!(
+            readiness.starts_with("satisfied"),
+            "expected satisfied readiness with `fips` feature on, got: {readiness}"
+        );
+    } else {
+        // No FIPS routing compiled in → the FIPS policy correctly
+        // reports unsatisfied (fail-closed contract per ADR-0004).
+        assert!(
+            readiness.starts_with("unsatisfied"),
+            "expected unsatisfied readiness without `fips` feature, got: {readiness}"
+        );
+    }
 }
 
 #[test]

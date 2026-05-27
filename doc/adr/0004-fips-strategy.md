@@ -1,10 +1,11 @@
 # ADR-0004 — FIPS 140-3 strategy
 
-- **Status:** Accepted (with a documented Phase 4 follow-up for the
-  actual `aws-lc-rs` routing).
-- **Date:** 2026-05-19
+- **Status:** Accepted. Phase 4 follow-up (`hsh-backend-awslc`)
+  delivered in v0.0.10.
+- **Date:** 2026-05-19 (Phase 4 wired up 2026-05-26)
 - **Deciders:** Sebastien Rousseau
 - **Tracking issue:** [#143](https://github.com/sebastienrousseau/hsh/issues/143)
+  (closed in v0.0.10)
 
 ## Context
 
@@ -67,40 +68,48 @@ gets a FIPS-validated hash or they get a typed error.
 - A `fips` Cargo feature, currently a no-op marker so callers can lock
   the flag into their `Cargo.toml` today.
 
-### What lands in the Phase 4 follow-up
+### What the Phase 4 follow-up delivered (v0.0.10)
 
-A separate `crates/hsh-backend-awslc` workspace member that:
+A new `crates/hsh-backend-awslc` companion crate that:
 
-- Depends on `aws-lc-rs = { version = "1.13", features = ["fips"] }`.
-- Re-implements `crate::algorithms::pbkdf2::Pbkdf2::hash_with` via
-  `aws_lc_rs::pbkdf2::derive`.
-- Flips `Backend::fips_available_in_build()` to return `true` when
-  `hsh-backend-awslc` is in the dependency graph.
-- Ships its own CI matrix that exercises the AWS-LC FIPS sub-build on
-  Linux x86_64 / aarch64 where the toolchain (Go ≥ 1.21, CMake ≥ 3.18,
-  recent clang) is reliably available.
+- Depends on `aws-lc-rs = { version = "1.17", features = ["fips"] }`.
+- Exposes a stable `pbkdf2_derive(password, salt, prf, iterations,
+  dk_len)` function backed by `aws_lc_rs::pbkdf2::derive`.
+- Is **excluded from the default workspace** (`members = […]` does
+  not include it) so contributors without the FIPS toolchain still
+  get a working `cargo build --workspace`.
+- Is pulled into `hsh` only when the `fips` Cargo feature is enabled
+  (`hsh = { features = ["fips"] }`). With that flag,
+  `Backend::fips_available_in_build()` flips to `true` (via
+  `cfg!(feature = "fips")`) and `Pbkdf2::hash_with` routes through
+  AWS-LC instead of the pure-Rust path.
+- Validates parity with the pure-Rust path against RFC 6070-style
+  test vectors in `crates/hsh-backend-awslc/tests/derive.rs`.
+- Carries documented build prerequisites (Go ≥ 1.21, CMake ≥ 3.18,
+  recent clang) in `doc/FIPS.md` and the crate README.
 
-The follow-up is deferred because the AWS-LC FIPS sub-build needs Go
-+ CMake + Xcode tooling that isn't universally available on
-contributor laptops; pushing it into a separate crate keeps `hsh`'s
-default build cheap while preserving the strict "no fail-open"
-contract.
+Keeping the backend as a non-member opt-in preserves the original
+trade-off: the strict "no fail-open" contract holds, default builds
+remain cheap, and downstream consumers can opt into the FIPS path
+with a one-line Cargo feature flip.
 
 ## Consequences
 
 **Accepted trade-offs:**
 
-- Until `hsh-backend-awslc` ships, `Policy::fips_140_pbkdf2()` is
-  effectively unusable in production — it errors at runtime. That's
-  the **correct** behaviour: fail closed, never silently fall back to
-  pure-Rust crypto under a FIPS contract.
 - The PBKDF2 PHC format we emit is hand-rolled rather than going
   through `pbkdf2`'s native PHC encoder. Reason: routing through the
   RustCrypto encoder would tightly couple the verify path to its
-  internals, making the later swap to `aws-lc-rs` harder.
-- The `fips` Cargo feature is a "promise" — enabling it today does
-  nothing observable. We document this prominently to avoid the
-  misleading-marketing trap.
+  internals. With the v0.0.10 swap to `aws-lc-rs`, this choice pays
+  off — both backends emit identical PHC strings.
+- The `fips` Cargo feature requires a heavyweight build toolchain
+  (Go + CMake + clang). Contributors and CI runners without it can
+  still build everything else; only `--features fips` triggers the
+  AWS-LC sub-build.
+- On macOS, rustdoc doctests can't find the AWS-LC dylib at runtime.
+  Doctests run **without** the `fips` feature; integration tests
+  (which `cargo` sets the rpath for correctly) cover the FIPS path.
+  See `doc/FIPS.md` "macOS dylib caveat".
 
 **Benefits:**
 
@@ -130,13 +139,21 @@ contract.
 
 ## Compliance
 
-- [`Backend::fips_available_in_build`](../../crates/hsh/src/backend.rs) is
-  hardcoded `false` today so the runtime check is unambiguous.
+- [`Backend::fips_available_in_build`](../../crates/hsh/src/backend.rs)
+  returns `cfg!(feature = "fips")` — true when `hsh-backend-awslc` is
+  in the dep graph, false otherwise. The runtime check in
+  `api::hash_unpeppered` uses this to refuse FIPS-tagged minting
+  whenever the build can't satisfy the requirement.
 - [`crate::api::hash_unpeppered`](../../crates/hsh/src/api.rs) refuses
   to mint Argon2/bcrypt/scrypt under a FIPS policy and refuses to mint
   anything when the feature isn't compiled in.
-- 8 integration tests in `crates/hsh/tests/test_pbkdf2.rs` cover both
-  refusal paths and the PBKDF2 round-trip / drift cases.
+- 9 integration tests in `crates/hsh/tests/test_pbkdf2.rs` cover both
+  refusal paths, the PBKDF2 round-trip / drift cases, and the
+  feature-on minting path.
+- 7 integration tests in
+  `crates/hsh-backend-awslc/tests/derive.rs` validate the AWS-LC
+  PBKDF2 wrapper against RFC 6070-style test vectors and confirm
+  parameter validation.
 
 ## References
 

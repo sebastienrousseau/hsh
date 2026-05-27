@@ -23,9 +23,14 @@ fn backend_default_is_native() {
 }
 
 #[test]
-fn fips_available_is_false_today() {
-    // Hardcoded false until hsh-backend-awslc lands.
-    assert!(!Backend::fips_available_in_build());
+fn fips_available_mirrors_cargo_feature() {
+    // True when the `fips` feature pulls hsh-backend-awslc into the
+    // dep graph (which in turn routes PBKDF2 through aws-lc-rs FIPS
+    // 3.0); false otherwise.
+    assert_eq!(
+        Backend::fips_available_in_build(),
+        cfg!(feature = "fips")
+    );
 }
 
 // ---------------------------------------------------------------- Outcome

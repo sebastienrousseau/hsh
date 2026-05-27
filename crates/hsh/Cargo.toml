@@ -1,7 +1,7 @@
 [package]
 name        = "hsh"
-version     = "0.0.9"
-description = "Enterprise password hashing for Rust: Argon2i / bcrypt / scrypt today, Argon2id / PHC / KMS / FIPS on the v0.1 roadmap."
+version     = "0.0.10"
+description = "Enterprise password hashing for Rust: Argon2id / bcrypt / scrypt / PBKDF2 with PHC strings, KMS-backed pepper, and FIPS 140-3 routing through aws-lc-rs (CMVP Cert #4759)."
 readme      = "../../README.md"
 build       = "build.rs"
 
@@ -76,7 +76,12 @@ rand_core = { workspace = true }
 getrandom = { workspace = true }
 
 # Pepper / KMS — optional, behind the `pepper` feature.
-hsh-kms = { version = "0.0.9", path = "../hsh-kms", optional = true }
+hsh-kms = { version = "0.0.10", path = "../hsh-kms", optional = true }
+
+# FIPS 140-3 routing — optional, behind the `fips` feature.
+# This dep pulls in aws-lc-rs with the FIPS sub-build, which needs
+# Go + CMake + recent clang on the build host. See doc/FIPS.md.
+hsh-backend-awslc = { version = "0.0.10", path = "../hsh-backend-awslc", optional = true }
 
 [dev-dependencies]
 assert_cmd   = { workspace = true }
@@ -100,16 +105,21 @@ compat-v0_0_x = []
 # don't want it.
 pepper = ["dep:hsh-kms"]
 
-# Marker feature for the future FIPS 140-3 routing through `aws-lc-rs`.
-# **Today this feature is a no-op** — enabling it does NOT route through
-# a FIPS-validated module. It exists so callers can lock in the
-# intended build flag now while the `hsh-backend-awslc` follow-up crate
-# bakes (see doc/FIPS.md). When the real backend lands, this feature
-# will pull it in transparently.
-fips = []
+# FIPS 140-3 routing through aws-lc-rs (CMVP Cert #4759). Enabling
+# this feature pulls in the `hsh-backend-awslc` companion crate, which
+# routes PBKDF2-HMAC-SHA-{256,512} derivations through AWS-LC FIPS 3.0.
+# Build host must have Go (>= 1.21), CMake (>= 3.18), and a recent
+# clang. Argon2id / bcrypt / scrypt do NOT gain FIPS validation from
+# this feature — no CMVP-validated implementation of those exists
+# anywhere. See doc/FIPS.md + ADR-0004.
+fips = ["dep:hsh-backend-awslc"]
 
 [package.metadata.docs.rs]
-all-features    = true
+# docs.rs builders don't ship the FIPS toolchain (Go + CMake), so we
+# enable everything *except* `fips`. The pure-Rust PBKDF2 path that
+# `default` exercises documents the same public API surface as the
+# `fips` path — the difference is invisible at the type level.
+features        = ["compat-v0_0_x", "pepper"]
 targets         = ["x86_64-unknown-linux-gnu"]
 rustdoc-args    = ["--cfg", "docsrs", "--generate-link-to-definition"]
 

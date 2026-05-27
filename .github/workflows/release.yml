@@ -6,11 +6,11 @@ on:
     tags:
       - "v[0-9]+.[0-9]+.[0-9]+*"
 
+# Default to read-only at workflow level; jobs elevate per-need
+# (attest → id-token+attestations write; github-release → contents
+# write; publish → environment-scoped crates-io token).
 permissions:
-  contents: write          # required to attach release artefacts
-  id-token: write          # required for sigstore keyless signing
-  attestations: write      # required for SLSA L3 build provenance
-  packages: write          # required to push images, if we add Docker later
+  contents: read
 
 concurrency:
   group: release-${{ github.ref }}
@@ -65,17 +65,23 @@ jobs:
           tag="${GITHUB_REF#refs/tags/v}"
           echo "Tag version: $tag"
           echo "version=$tag" >> "$GITHUB_OUTPUT"
-      - name: Cross-check tag against every workspace Cargo.toml
+      - name: Cross-check tag against every publishable Cargo.toml
         # The grep+sed version assumed `version = "X"` with single
         # whitespace; the workspace files actually use aligned columns
         # (`version     = "X"`), making the regex miss and the
         # extracted version blank. awk -F'"' is whitespace-insensitive
         # and pulls the quoted value directly.
+        #
+        # hsh-backend-awslc is intentionally a non-workspace member but
+        # is published alongside the workspace crates — its version
+        # must stay in lockstep because `hsh`'s optional dep on it
+        # references the same version literal.
         run: |
           tag_ver="${{ steps.extract.outputs.version }}"
           fail=0
           for manifest in crates/hsh/Cargo.toml crates/hsh-cli/Cargo.toml \
-                          crates/hsh-kms/Cargo.toml crates/hsh-digest/Cargo.toml; do
+                          crates/hsh-kms/Cargo.toml crates/hsh-digest/Cargo.toml \
+                          crates/hsh-backend-awslc/Cargo.toml; do
             cargo_ver="$(awk -F'"' '/^[[:space:]]*version[[:space:]]*=/ {print $2; exit}' "$manifest")"
             if [ "$cargo_ver" != "$tag_ver" ]; then
               echo "::error::tag $tag_ver != $manifest $cargo_ver"
@@ -130,7 +136,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: sbom
     permissions:
-      contents: write
+      contents: read
       id-token: write
       attestations: write
     steps:
@@ -150,11 +156,11 @@ jobs:
             || echo "no binary — library-only release"
           (cd artifacts && find . -type f -exec sha256sum {} +) > artifacts/SHA256SUMS || true
       - name: Generate SLSA build provenance
-        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           subject-path: artifacts/
       - name: Install cosign
-        uses: sigstore/cosign-installer@7e8b541eb2e61bf99390e1afd4be13a184e9ebc5 # v3.10.1
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Keyless sign every artefact
         run: |
           for f in artifacts/*; do
@@ -168,9 +174,13 @@ jobs:
           path: artifacts/
 
   # ---------------------------------------------------------------------
-  # Publish to crates.io in dependency order. hsh-kms / hsh-digest have
-  # no internal deps; hsh-cli depends on hsh; hsh depends on hsh-kms +
-  # hsh-digest (behind feature gates) so it must publish AFTER them.
+  # Publish to crates.io in dependency order:
+  #   hsh-kms / hsh-digest / hsh-backend-awslc — no internal deps, can
+  #     publish first in any order
+  #   hsh — depends on hsh-kms + hsh-digest (behind feature gates) and
+  #     hsh-backend-awslc (behind the `fips` feature gate); must publish
+  #     AFTER all three
+  #   hsh-cli — depends on hsh; must publish LAST
   # ---------------------------------------------------------------------
   publish:
     runs-on: ubuntu-latest
@@ -185,17 +195,32 @@ jobs:
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
         with:
           toolchain: stable
-      - name: "Cargo publish (dep order: hsh-kms → hsh-digest → hsh → hsh-cli)"
-        # `cargo publish` for hsh / hsh-cli will fail-fast if the
-        # transitive workspace crates haven't appeared on crates.io
-        # yet. The `sleep` between publishes lets the registry index
-        # propagate before the next dependent crate tries to resolve.
+      - name: Install FIPS build toolchain
+        # hsh-backend-awslc's verify step (cargo publish runs `cargo build`
+        # before uploading) needs Go + CMake + clang to compile the
+        # aws-lc-fips-sys sub-build. ubuntu-latest preinstalls all three.
+        # Print versions so a missing-toolchain regression surfaces here
+        # rather than as a confusing aws-lc-fips-sys error.
+        run: |
+          go version
+          cmake --version | head -1
+          clang --version | head -1
+      - name: "Cargo publish (dep order: kms → digest → backend-awslc → hsh → cli)"
+        # `cargo publish` for hsh / hsh-cli fails-fast if the transitive
+        # crates haven't appeared on crates.io yet. The `sleep` between
+        # publishes lets the registry index propagate before the next
+        # dependent crate tries to resolve. hsh-backend-awslc is a
+        # non-workspace member, so it's published via --manifest-path
+        # rather than -p.
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_API_TOKEN }}
         run: |
           cargo publish -p hsh-kms     --token "$CARGO_REGISTRY_TOKEN"
           sleep 30
           cargo publish -p hsh-digest  --token "$CARGO_REGISTRY_TOKEN"
+          sleep 30
+          cargo publish --manifest-path crates/hsh-backend-awslc/Cargo.toml \
+                        --token "$CARGO_REGISTRY_TOKEN"
           sleep 30
           cargo publish -p hsh         --token "$CARGO_REGISTRY_TOKEN"
           sleep 30
@@ -215,12 +240,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - name: Download signed artefacts
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: signed-artefacts
           path: artifacts/
       - name: Download SBOM
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.1.7
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: sbom
           path: sbom/

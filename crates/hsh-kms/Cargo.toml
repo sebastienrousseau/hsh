@@ -1,6 +1,6 @@
 [package]
 name        = "hsh-kms"
-version     = "0.0.9"
+version     = "0.0.10"
 description = "Pepper / KMS integration for the hsh crate: HMAC-SHA-256 pepper application with versioned keys and pluggable KMS backends."
 build       = false
 

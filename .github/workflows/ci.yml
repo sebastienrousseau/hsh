@@ -8,12 +8,13 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# Minimum permissions are declared per-job (workflow level intentionally
-# omitted so reusable callers can still claim what they need).
+# Default to read-only at workflow level; jobs elevate per-need.
+permissions:
+  contents: read
 
 jobs:
   ci:
-    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@main
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@99a39f7d02e76beb2b935fa07b7cd6a46d8bbc65 # main
     permissions:
       contents: read
       pull-requests: read
@@ -48,7 +49,7 @@ jobs:
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@d9be7d8cda89035c9c843f78bd44d4f72d8403d4 # v2.79.7
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage + enforce threshold
@@ -94,13 +95,13 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4.9.0
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
         with:
           fail-on-severity: moderate
 
   docs:
     if: github.ref == 'refs/heads/main'
-    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@main
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@99a39f7d02e76beb2b935fa07b7cd6a46d8bbc65 # main
     permissions:
       contents: write
       pages: write
@@ -123,7 +124,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-hack
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@d9be7d8cda89035c9c843f78bd44d4f72d8403d4 # v2.79.7
         with:
           tool: cargo-hack
       - name: Check feature powerset (excl. hsh-digest)
@@ -152,7 +153,7 @@ jobs:
           toolchain: nightly
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
       - name: Install cargo-public-api
-        uses: taiki-e/install-action@213ccc1a076163c093f914550b94feb90fab916d # v2.79.2
+        uses: taiki-e/install-action@d9be7d8cda89035c9c843f78bd44d4f72d8403d4 # v2.79.7
         with:
           tool: cargo-public-api
       - name: Diff public API
@@ -211,4 +212,74 @@ jobs:
       - name: cargo test --locked --workspace
         # --locked = fail if Cargo.lock would change.
         # --no-fail-fast = let the matrix see every failure, not just the first.
-        run: cargo test --locked --workspace --all-features --no-fail-fast
+        # Default features only: `--all-features` would transitively
+        # activate `hsh/fips` (via `hsh-cli/fips = ["hsh/fips"]`),
+        # which pulls in `hsh-backend-awslc` → aws-lc-rs FIPS. That
+        # sub-build needs Go + CMake + clang and isn't reliably set
+        # up on every cross-platform runner (macOS in particular hits
+        # the cmake/Xcode path). The dedicated `fips` job above runs
+        # the FIPS path on ubuntu-latest where the toolchain is
+        # preinstalled; the feature-checks job covers the powerset
+        # for non-FIPS features. This matrix only needs to confirm
+        # the default build works on each OS.
+        run: cargo test --locked --workspace --no-fail-fast
+
+  fips:
+    name: FIPS backend (aws-lc-rs)
+    # Linux only: aws-lc-fips-sys needs Go + CMake + clang and AWS-LC's
+    # FIPS sub-build doesn't support Windows. macOS works locally but
+    # ubuntu-latest ships with all three preinstalled, so this is the
+    # cheapest reliable runner.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9 # master
+        with:
+          toolchain: stable
+      - name: Verify FIPS build toolchain
+        # ubuntu-latest preinstalls Go, CMake, and clang at versions
+        # above the aws-lc-fips-sys minima. Print versions so a future
+        # runner-image change that drops one of these surfaces here
+        # rather than as a confusing aws-lc-fips-sys build failure.
+        run: |
+          go version
+          cmake --version | head -1
+          clang --version | head -1
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
+        with:
+          # Dedicated cache key so the heavyweight aws-lc-fips-sys
+          # build artefacts don't churn the default workspace cache.
+          key: fips-awslc
+          # aws-lc-fips-sys' build script lives outside cargo's target/
+          # tree by default; ensure rust-cache picks it up.
+          cache-targets: true
+          cache-on-failure: true
+      - name: cargo build -p hsh-backend-awslc
+        # Validate the companion crate compiles standalone first — gives
+        # a clean failure surface if aws-lc-rs FIPS itself broke.
+        # `--locked` is intentionally omitted: hsh-backend-awslc is not
+        # a workspace member and ships without its own Cargo.lock, so
+        # the first build generates one and `--locked` would block that.
+        run: cargo build --manifest-path crates/hsh-backend-awslc/Cargo.toml
+      - name: cargo test -p hsh-backend-awslc
+        # RFC-6070 vectors + parameter validation. Exercises the AWS-LC
+        # PBKDF2 derive function directly, independent of `hsh`.
+        run: cargo test --manifest-path crates/hsh-backend-awslc/Cargo.toml
+      - name: cargo build -p hsh --features fips
+        # Pulls hsh-backend-awslc into the dep graph and flips
+        # Backend::fips_available_in_build() to true.
+        run: cargo build --locked -p hsh --features fips
+      - name: cargo test -p hsh --features fips --lib --tests
+        # Library + integration tests under the FIPS feature. Doctests
+        # are excluded because aws-lc-fips-sys ships as a dylib and
+        # rustdoc's temp-dir test harness can't resolve it on macOS;
+        # on Linux they work, but we keep the same invocation across
+        # platforms for symmetry with doc/FIPS.md's documented contract.
+        run: cargo test --locked -p hsh --features fips --lib --tests
+      - name: cargo clippy -p hsh --features fips
+        # Same -D warnings gate as the main CI, scoped to the FIPS path.
+        run: cargo clippy --locked -p hsh --features fips --all-targets -- -D warnings
