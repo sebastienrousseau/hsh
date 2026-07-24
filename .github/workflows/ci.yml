@@ -101,7 +101,7 @@ jobs:
 
   docs:
     if: github.ref == 'refs/heads/main'
-    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@99a39f7d02e76beb2b935fa07b7cd6a46d8bbc65 # main
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@3df3a03745c05e13331e8f2cf9d46e2ea27b6358 # main
     permissions:
       contents: write
       pages: write
