@@ -1,6 +1,6 @@
 [package]
 name        = "hsh"
-version     = "0.0.10"
+version     = "0.0.11"
 description = "Enterprise password hashing for Rust: Argon2id / bcrypt / scrypt / PBKDF2 with PHC strings, KMS-backed pepper, and FIPS 140-3 routing through aws-lc-rs (CMVP Cert #4759)."
 readme      = "../../README.md"
 build       = "build.rs"
@@ -76,12 +76,12 @@ rand_core = { workspace = true }
 getrandom = { workspace = true }
 
 # Pepper / KMS — optional, behind the `pepper` feature.
-hsh-kms = { version = "0.0.10", path = "../hsh-kms", optional = true }
+hsh-kms = { version = "0.0.11", path = "../hsh-kms", optional = true }
 
 # FIPS 140-3 routing — optional, behind the `fips` feature.
 # This dep pulls in aws-lc-rs with the FIPS sub-build, which needs
 # Go + CMake + recent clang on the build host. See doc/FIPS.md.
-hsh-backend-awslc = { version = "0.0.10", path = "../hsh-backend-awslc", optional = true }
+hsh-backend-awslc = { version = "0.0.11", path = "../hsh-backend-awslc", optional = true }
 
 [dev-dependencies]
 assert_cmd   = { workspace = true }

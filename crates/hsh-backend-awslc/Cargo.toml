@@ -1,6 +1,6 @@
 [package]
 name        = "hsh-backend-awslc"
-version     = "0.0.10"
+version     = "0.0.11"
 description = "FIPS 140-3 routing layer for the `hsh` password-hashing crate. Wraps aws-lc-rs' PBKDF2-HMAC-SHA-256/512 derive functions, which run inside AWS-LC FIPS 3.0 (CMVP Cert #4759)."
 readme      = "README.md"
 
