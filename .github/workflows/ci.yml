@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   ci:
-    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@3df3a03745c05e13331e8f2cf9d46e2ea27b6358 # main
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@d3d082405a06d3ec471e6f6b7a1bbc8f1137d386 # main
     permissions:
       contents: read
       pull-requests: read
