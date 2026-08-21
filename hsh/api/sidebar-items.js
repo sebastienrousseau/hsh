@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["hash","verify_and_upgrade"]};
