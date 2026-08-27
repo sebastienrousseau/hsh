@@ -376,7 +376,7 @@ fn verify_bcrypt(
     let policy_is_bcrypt =
         matches!(policy.primary, PrimaryAlgorithm::Bcrypt);
     let cost_drift = policy_is_bcrypt
-        && !parse_bcrypt_cost(mcf)
+        && !crate::algorithms::bcrypt::stored_cost(mcf)
             .map(|c| policy.bcrypt_satisfies(c))
             .unwrap_or(false);
     let prehash_drift =
@@ -495,15 +495,6 @@ fn needs_rehash(
 /// Parses a bcrypt MCF cost factor (the two-digit field between the
 /// second and third `$`). Returns `None` if the input is not a
 /// recognisable bcrypt MCF string.
-fn parse_bcrypt_cost(stored: &str) -> Option<u32> {
-    // Expected layout: `$2{a,b,x,y}$<cost>$<salt+hash>`.
-    let mut parts = stored.splitn(4, '$');
-    let _empty = parts.next()?; // leading ""
-    let _ident = parts.next()?; // "2a"/"2b"/"2x"/"2y"
-    let cost_str = parts.next()?;
-    cost_str.parse::<u32>().ok()
-}
-
 /// Extracts scrypt `(log_n, r, p, dk_len)` from a parsed PHC. Returns
 /// `None` if a required field is missing or unparseable; the caller
 /// treats `None` as a rehash trigger.

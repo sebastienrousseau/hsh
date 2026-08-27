@@ -45,6 +45,56 @@ use serde::{Deserialize, Serialize};
 /// Maximum password length bcrypt can handle without silent truncation.
 pub const BCRYPT_MAX_INPUT_BYTES: usize = 72;
 
+/// The highest bcrypt cost factor accepted when *verifying* a stored
+/// hash, unless a caller opts into a different bound.
+///
+/// bcrypt encodes its work factor in the hash string itself, so
+/// verification cost is dictated by the stored value rather than by
+/// local policy. Anything that can influence what gets stored — or that
+/// simply submits a crafted string to a verification endpoint — can
+/// therefore choose how much CPU the check burns. Cost is a base-2
+/// exponent, so the growth is steep. Measured on one x86-64 laptop,
+/// release build, `bcrypt::verify`:
+///
+/// | cost | verify |
+/// |-----:|-------:|
+/// |   10 |  57 ms |
+/// |   12 | 196 ms |
+/// |   14 | 784 ms |
+/// |   16 |  3.0 s |
+/// |   18 | 18.4 s |
+/// |   20 |    73 s |
+///
+/// Fuzzing found `$2x$29$…` — 512x the work of cost 20 — stalling a
+/// single verification for over 29 minutes.
+///
+/// 16 is the default ceiling: it admits every cost a real deployment is
+/// likely to use (OWASP puts the 2025 minimum at 10; high-security
+/// setups reach 12–14) with headroom, while bounding one verification
+/// to a few seconds rather than half an hour. Callers who deliberately
+/// store higher-cost hashes should use
+/// [`Bcrypt::verify_with_max_cost`] rather than raise this.
+pub const MAX_VERIFY_COST: u32 = 16;
+
+/// Reads the cost factor out of a bcrypt hash string.
+///
+/// The format is `$2<variant>$<cost>$<22-char salt><31-char digest>`,
+/// so the cost is the second `$`-delimited field. Returns `None` if the
+/// string is not shaped like a bcrypt hash; callers treat that as "not
+/// ours to reject" and let the underlying implementation report it.
+pub(crate) fn stored_cost(stored: &str) -> Option<u32> {
+    let mut parts = stored.split('$');
+    // A leading `$` means the first field is empty.
+    if parts.next() != Some("") {
+        return None;
+    }
+    let variant = parts.next()?;
+    if !matches!(variant, "2" | "2a" | "2b" | "2x" | "2y") {
+        return None;
+    }
+    parts.next()?.parse().ok()
+}
+
 /// Pre-hash algorithm to apply when the password exceeds 72 bytes.
 #[derive(
     Clone,
@@ -159,6 +209,49 @@ impl Bcrypt {
         stored: &str,
         prehash: PrehashAlgorithm,
     ) -> Result<bool> {
+        Self::verify_with_max_cost(
+            password,
+            stored,
+            prehash,
+            MAX_VERIFY_COST,
+        )
+    }
+
+    /// Verifies `password` against a bcrypt hash string, refusing any
+    /// stored cost above `max_cost`.
+    ///
+    /// [`verify`](Self::verify) delegates here with
+    /// [`MAX_VERIFY_COST`]. Use this directly only when the stored
+    /// hashes are known to carry a higher work factor by design, and
+    /// keep the bound as low as those hashes allow: it is the only
+    /// thing standing between a verification endpoint and an
+    /// attacker-chosen amount of CPU.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::InvalidHashString`] if the stored hash
+    /// advertises a cost above `max_cost`, before any work is done, and
+    /// [`Error::Verification`] if the underlying check fails.
+    pub fn verify_with_max_cost(
+        password: &str,
+        stored: &str,
+        prehash: PrehashAlgorithm,
+        max_cost: u32,
+    ) -> Result<bool> {
+        // Check the advertised work factor before doing any of it. The
+        // cost lives in the stored string, so without this an untrusted
+        // value decides how long verification runs.
+        if let Some(cost) = stored_cost(stored) {
+            if cost > max_cost {
+                return Err(Error::InvalidHashString(
+                    format!(
+                        "bcrypt cost {cost} exceeds the maximum accepted for verification ({max_cost})"
+                    )
+                    .into(),
+                ));
+            }
+        }
+
         let payload = prepare_payload(password.as_bytes(), prehash)?;
         bcrypt::verify(&payload, stored).map_err(|_| {
             Error::Verification("bcrypt verify failed".into())
@@ -189,5 +282,72 @@ fn prepare_payload(
                 .encode(digest)
                 .into_bytes())
         }
+    }
+}
+
+#[cfg(test)]
+mod verify_cost_tests {
+    //! Unit tests for the cost guard's parsing half.
+    //!
+    //! Anything that passes a password to `Bcrypt::verify` lives in
+    //! `tests/test_bcrypt_cost_bound.rs` instead. `crates/*/src/` is
+    //! analysed by CodeQL as production code, where a hard-coded
+    //! password is a critical finding; `crates/*/tests/**` is excluded
+    //! precisely because fixtures there are expected to carry them.
+    //! See `.github/codeql/codeql-config.yml`.
+
+    use super::*;
+
+    /// The cost carried by the input libFuzzer found stalling
+    /// `fuzz_phc_parse` for over 29 minutes.
+    const FUZZ_TIMEOUT_COST: u32 = 29;
+
+    #[test]
+    fn reads_the_cost_from_each_variant_prefix() {
+        for prefix in ["2", "2a", "2b", "2x", "2y"] {
+            let stored = format!("${prefix}$12$abcdefghijklmnopqrstuv");
+            assert_eq!(
+                stored_cost(&stored),
+                Some(12),
+                "prefix {prefix}"
+            );
+        }
+    }
+
+    #[test]
+    fn ignores_strings_that_are_not_bcrypt() {
+        assert_eq!(
+            stored_cost("$argon2id$v=19$m=8,t=1,p=1$c2FsdA$aGFzaA"),
+            None
+        );
+        assert_eq!(stored_cost("not-a-hash"), None);
+        assert_eq!(stored_cost(""), None);
+        assert_eq!(stored_cost("$2b$notanumber$abc"), None);
+    }
+
+    #[test]
+    fn the_fuzz_input_cost_is_above_the_default_bound() {
+        let stored = format!(
+            "$2x${FUZZ_TIMEOUT_COST}$rrjrrdrjrrdrh..jrrdrh..n....jrrdrh..."
+        );
+        let cost = stored_cost(&stored).expect("bcrypt string");
+        assert_eq!(cost, FUZZ_TIMEOUT_COST);
+        assert!(cost > MAX_VERIFY_COST, "must be refused by default");
+        assert!(
+            cost <= 31,
+            "must be admitted once the bound is raised"
+        );
+    }
+
+    #[test]
+    fn the_bound_is_inclusive_at_the_ceiling() {
+        let at =
+            format!("$2b${MAX_VERIFY_COST}$abcdefghijklmnopqrstuv");
+        let over = format!(
+            "$2b${}$abcdefghijklmnopqrstuv",
+            MAX_VERIFY_COST + 1
+        );
+        assert_eq!(stored_cost(&at), Some(MAX_VERIFY_COST));
+        assert_eq!(stored_cost(&over), Some(MAX_VERIFY_COST + 1));
     }
 }
