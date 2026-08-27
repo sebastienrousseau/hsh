@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["DEFAULT_OUTPUT_LEN"],"fn":["owasp_minimum_2025","rfc9106_first_recommended","verify"],"struct":["Argon2d","Argon2i","Argon2id"]};
