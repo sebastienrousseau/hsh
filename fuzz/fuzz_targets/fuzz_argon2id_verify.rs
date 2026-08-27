@@ -42,7 +42,7 @@ fuzz_target!(|data: &[u8]| {
         return;
     };
     let stored = reference_hash();
-    let Ok((outcome, _)) = hsh::api::verify_and_upgrade(&weak_test_policy(), candidate, stored) else {
+    let Ok(outcome) = hsh::api::verify_and_upgrade(&weak_test_policy(), candidate, stored) else {
         return;
     };
     // The only way an arbitrary candidate equals the reference is if it
