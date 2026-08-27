@@ -40,7 +40,7 @@ fuzz_target!(|data: &[u8]| {
     let Ok(stored) = hsh::api::hash(&policy, pwd) else {
         return;
     };
-    let Ok((outcome, _)) = hsh::api::verify_and_upgrade(&policy, pwd, &stored) else {
+    let Ok(outcome) = hsh::api::verify_and_upgrade(&policy, pwd, &stored) else {
         return;
     };
     assert!(outcome.is_valid(), "round-trip failed for {pwd:?}");

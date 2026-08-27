@@ -110,6 +110,32 @@ jobs:
       type: rust
       redirect-crate: hsh
 
+  fuzz-targets-build:
+    name: Fuzz targets compile
+    # The fuzz crate is its own workspace, so nothing in this pipeline
+    # builds it and it drifts from the API silently. It had been broken
+    # since `verify_and_upgrade` stopped returning a tuple: two of the
+    # four targets failed to compile, and because the nightly fuzz run
+    # reports a build failure the same way it reports a crash, that read
+    # as "fuzzing found something" for weeks. Type-checking here is
+    # cheap and catches the drift on the PR that causes it.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@6c977a6ca4077a0ceb28ffbe03f59d46e9ac8772 # master
+        with:
+          toolchain: nightly
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          workspaces: fuzz
+      - name: Check every fuzz target
+        working-directory: fuzz
+        run: cargo check --all-targets
+
   feature-checks:
     name: Feature permutations (cargo-hack)
     runs-on: ubuntu-latest
