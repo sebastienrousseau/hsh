@@ -287,12 +287,20 @@ fn prepare_payload(
 
 #[cfg(test)]
 mod verify_cost_tests {
+    //! Unit tests for the cost guard's parsing half.
+    //!
+    //! Anything that passes a password to `Bcrypt::verify` lives in
+    //! `tests/test_bcrypt_cost_bound.rs` instead. `crates/*/src/` is
+    //! analysed by CodeQL as production code, where a hard-coded
+    //! password is a critical finding; `crates/*/tests/**` is excluded
+    //! precisely because fixtures there are expected to carry them.
+    //! See `.github/codeql/codeql-config.yml`.
+
     use super::*;
 
-    /// The exact input libFuzzer found stalling `fuzz_phc_parse` for
-    /// over 29 minutes: a bcrypt string advertising cost 29.
-    const FUZZ_TIMEOUT_INPUT: &str =
-        "$2x$29$rrjrrdrjrrdrh..jrrdrh..n.................jrrdrh......";
+    /// The cost carried by the input libFuzzer found stalling
+    /// `fuzz_phc_parse` for over 29 minutes.
+    const FUZZ_TIMEOUT_COST: u32 = 29;
 
     #[test]
     fn reads_the_cost_from_each_variant_prefix() {
@@ -318,72 +326,28 @@ mod verify_cost_tests {
     }
 
     #[test]
-    fn the_fuzz_input_is_rejected_rather_than_computed() {
-        let err = Bcrypt::verify(
-            "candidate-password-123",
-            FUZZ_TIMEOUT_INPUT,
-            PrehashAlgorithm::None,
-        )
-        .expect_err("a cost-29 hash must be refused");
+    fn the_fuzz_input_cost_is_above_the_default_bound() {
+        let stored = format!(
+            "$2x${FUZZ_TIMEOUT_COST}$rrjrrdrjrrdrh..jrrdrh..n....jrrdrh..."
+        );
+        let cost = stored_cost(&stored).expect("bcrypt string");
+        assert_eq!(cost, FUZZ_TIMEOUT_COST);
+        assert!(cost > MAX_VERIFY_COST, "must be refused by default");
         assert!(
-            matches!(err, Error::InvalidHashString(_)),
-            "expected InvalidHashString, got {err:?}"
+            cost <= 31,
+            "must be admitted once the bound is raised"
         );
     }
 
     #[test]
-    fn rejection_is_immediate() {
-        // The point of the bound is that it costs nothing to enforce.
-        // At cost 31 the work would be astronomically large, so simply
-        // returning is proof the digest was never computed.
-        let stored = "$2b$31$rrjrrdrjrrdrh..jrrdrh..n.................jrrdrh......";
-        assert!(Bcrypt::verify("pw", stored, PrehashAlgorithm::None)
-            .is_err());
-    }
-
-    #[test]
     fn the_bound_is_inclusive_at_the_ceiling() {
-        // Deliberately does not run a verification at the ceiling: at
-        // cost 16 that is ~3s in release and minutes in a debug test
-        // binary. The guard's behaviour is fully determined by
-        // `stored_cost` and the comparison, so both are checked
-        // directly and cheaply.
         let at =
             format!("$2b${MAX_VERIFY_COST}$abcdefghijklmnopqrstuv");
         let over = format!(
             "$2b${}$abcdefghijklmnopqrstuv",
             MAX_VERIFY_COST + 1
         );
-
         assert_eq!(stored_cost(&at), Some(MAX_VERIFY_COST));
         assert_eq!(stored_cost(&over), Some(MAX_VERIFY_COST + 1));
-
-        // A cheap max_cost proves the comparison is `>` and not `>=`:
-        // equal is allowed through, one greater is refused.
-        let err = Bcrypt::verify_with_max_cost(
-            "pw",
-            &at,
-            PrehashAlgorithm::None,
-            4,
-        )
-        .expect_err("cost above the bound must be refused");
-        assert!(matches!(err, Error::InvalidHashString(_)));
-    }
-
-    #[test]
-    fn raising_the_bound_stops_the_guard_firing() {
-        // Characterises the guard without invoking bcrypt. Calling
-        // `verify_with_max_cost(.., 31)` on this input would prove the
-        // same thing, but only by performing the cost-29 verification
-        // the guard exists to prevent -- an earlier draft of this test
-        // did exactly that and hung the suite.
-        let cost =
-            stored_cost(FUZZ_TIMEOUT_INPUT).expect("bcrypt string");
-        assert_eq!(cost, 29);
-        assert!(cost > MAX_VERIFY_COST, "must be refused by default");
-        assert!(
-            cost <= 31,
-            "must be admitted once the bound is raised"
-        );
     }
 }
