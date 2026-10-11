@@ -738,7 +738,7 @@ dependencies = [
 
 [[package]]
 name = "hsh"
-version = "0.0.11"
+version = "0.0.12"
 dependencies = [
  "argon2",
  "assert_cmd",
@@ -766,14 +766,14 @@ dependencies = [
 
 [[package]]
 name = "hsh-backend-awslc"
-version = "0.0.11"
+version = "0.0.12"
 dependencies = [
  "aws-lc-rs",
 ]
 
 [[package]]
 name = "hsh-cli"
-version = "0.0.11"
+version = "0.0.12"
 dependencies = [
  "anyhow",
  "argon2",
@@ -788,7 +788,7 @@ dependencies = [
 
 [[package]]
 name = "hsh-digest"
-version = "0.0.11"
+version = "0.0.12"
 dependencies = [
  "blake3",
  "digest",
@@ -803,7 +803,7 @@ dependencies = [
 
 [[package]]
 name = "hsh-kms"
-version = "0.0.11"
+version = "0.0.12"
 dependencies = [
  "hex",
  "hmac",
