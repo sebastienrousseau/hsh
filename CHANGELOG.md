@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.12] - 2026-10-11
+
+### Changed
+
+- Bumped workspace crates to version 0.0.12.
+- Updated dependencies: `thiserror` to 2.0.12, `log` to 0.4.27, `clap` to 4.5.32, `clap_complete` to 4.5.46.
+- Updated GitHub Actions: `actions/cache` (v4.3.0), `actions/upload-artifact` (v4.6.2), `actions/download-artifact` (v4.3.1), `actions/dependency-review-action` (v4.8.2), `aquasecurity/trivy-action` (v0.34.0), `codecov/codecov-action` (v5.5.3), `crate-ci/typos` (v1.43.3), `ossf/scorecard-action` (v2.4.4), `softprops/action-gh-release` (v2.6.0).
+- Standardized toolchain configuration in `rust-toolchain.toml`.
+
 ## [0.0.11] — 2026-07-24
 
 ### Planned (RustCrypto v0.11 / v0.6 wave lift)
