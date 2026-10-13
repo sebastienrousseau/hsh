@@ -30,7 +30,7 @@ hsh-kms = "0.0.9"
 hsh     = { version = "0.0.9", features = ["pepper"] }
 ```
 
-MSRV **1.75** stable. `no_std`-friendly for `LocalPepper`; KMS providers require `std` + `tokio`.
+MSRV **1.89** stable. `no_std`-friendly for `LocalPepper`; KMS providers require `std` + `tokio`.
 
 ### Provider features
 

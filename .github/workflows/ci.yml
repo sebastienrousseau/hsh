@@ -134,7 +134,9 @@ jobs:
           workspaces: fuzz
       - name: Check every fuzz target
         working-directory: fuzz
-        run: cargo check --all-targets
+        # `+nightly` because rust-toolchain.toml selects stable, and a
+        # toolchain file beats the `rustup default` the step above sets.
+        run: cargo +nightly check --all-targets
 
   feature-checks:
     name: Feature permutations (cargo-hack)
@@ -191,8 +193,8 @@ jobs:
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
 
-  msrv-1-88:
-    name: MSRV — workspace minimum (1.88)
+  msrv-1-89:
+    name: MSRV, workspace minimum (1.89)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -202,19 +204,17 @@ jobs:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
         with:
-          toolchain: "1.88"
+          toolchain: "1.89"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          key: msrv-1.88
-      - name: Workspace check at 1.88 floor
-        # The *workspace* effective floor is 1.88:
-        # - `hsh-cli` uses edition = "2024" (needs Cargo 1.85+).
-        # - The `rpassword` 7.5+ dep uses `let` chains (stable in 1.88).
-        # The library crates declare `rust-version = "1.75"` for
-        # downstream consumability (documentation only — downstream
-        # consumers depend on the lib crates without pulling `hsh-cli`
-        # into their workspace, so they keep the 1.75 floor).
-        run: cargo +1.88 check --locked --workspace --all-features
+          key: msrv-1.89
+      - name: Workspace check at 1.89 floor
+        # Every crate declares `rust-version = "1.89"`, the floor shared
+        # by the maintainer's Rust crates. `hsh-cli` alone would need
+        # 1.88 (edition 2024, and `rpassword` 7.5+ uses let chains).
+        # `+1.89` because rust-toolchain.toml selects stable and would
+        # otherwise win over the toolchain installed above.
+        run: cargo +1.89 check --locked --workspace --all-features
 
   cross-platform:
     name: Test (${{ matrix.os }})
