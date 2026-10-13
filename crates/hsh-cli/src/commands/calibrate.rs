@@ -17,7 +17,9 @@ use hsh::algorithms::pbkdf2::{Pbkdf2Params, Prf};
 use hsh::algorithms::scrypt::ScryptParams;
 use hsh::policy::{Policy, PolicyBuilder, PrimaryAlgorithm};
 
-const PROBE_PASSWORD: &str = "calibration-probe-1234567890";
+/// Length of the input every calibration run hashes. The timings depend
+/// on the length and the parameters, never on the bytes.
+const PROBE_LEN: usize = 28;
 
 pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
     let target = u128::from(args.target_ms);
@@ -186,11 +188,33 @@ impl LadderEntry {
 }
 
 fn time_hash(policy: &Policy) -> u128 {
+    let probe = probe_input();
     let start = Instant::now();
     // Best-effort — if hash() errors (e.g. FIPS preset without feature),
     // record a sentinel so we don't crash the calibrate loop.
-    let _ = hsh::api::hash(policy, PROBE_PASSWORD);
+    let _ = hsh::api::hash(policy, &probe);
     start.elapsed().as_millis()
+}
+
+/// A fresh, throwaway calibration input of `PROBE_LEN` hex characters.
+///
+/// It was a hard-coded string, which CodeQL rightly reports as a
+/// hard-coded password in production code. Nothing secret depends on
+/// it, so `RandomState`'s per-process keys are random enough; the point
+/// is only that no fixed value ships in the binary.
+fn probe_input() -> String {
+    use std::fmt::Write as _;
+    use std::hash::{BuildHasher, Hasher};
+
+    let mut probe = String::with_capacity(PROBE_LEN + 16);
+    while probe.len() < PROBE_LEN {
+        let mut hasher = std::collections::hash_map::RandomState::new()
+            .build_hasher();
+        hasher.write_usize(probe.len());
+        let _ = write!(probe, "{:016x}", hasher.finish());
+    }
+    probe.truncate(PROBE_LEN);
+    probe
 }
 
 /// Keeps the `(params, took)` whose `took` is closest to `target_ms`.
@@ -217,7 +241,17 @@ fn consider(
 
 #[cfg(test)]
 mod tests {
-    use super::consider;
+    use super::{PROBE_LEN, consider, probe_input};
+
+    #[test]
+    fn probe_input_has_the_fixed_length_and_is_not_a_constant() {
+        let first = probe_input();
+        let second = probe_input();
+        assert_eq!(first.len(), PROBE_LEN);
+        assert_eq!(second.len(), PROBE_LEN);
+        assert!(first.bytes().all(|b| b.is_ascii_hexdigit()));
+        assert_ne!(first, second);
+    }
 
     #[test]
     fn consider_picks_closest_to_target() {
