@@ -28,7 +28,7 @@
 cargo install hsh-cli
 ```
 
-MSRV **1.85** stable. Edition 2024. Provides the `hsh` binary.
+MSRV **1.89** stable. Edition 2024. Provides the `hsh` binary.
 
 Packaging for Docker / Homebrew / Debian / Arch / Scoop is shipped under [`pkg/`](../../pkg/); each tagged release materialises ready-to-publish artefacts via [`release.yml`](../../.github/workflows/release.yml).
 

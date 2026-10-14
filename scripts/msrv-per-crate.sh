@@ -7,11 +7,11 @@
 #
 # Workspace-wide `cargo +<msrv> check` only enforces the floor of
 # the workspace root. With satellite crates that can declare higher
-# floors (`hsh-cli` is 1.88 due to rpassword's let-chains; the
-# libraries declare 1.75 for downstream consumability), the
+# floors (today every crate declares 1.89, but a library may go
+# back below the workspace floor for downstream consumability), the
 # workspace check leaves drift undetected — a library adopting a
-# 1.85-only feature wouldn't break the gate until a downstream user
-# pinned to 1.75.
+# feature newer than its own floor wouldn't break the gate until a
+# downstream user pinned to that floor.
 #
 # This script walks each `crates/*/Cargo.toml`, reads its
 # `rust-version` field, and runs `cargo +<msrv> check
@@ -68,8 +68,8 @@ for m in "${MANIFESTS[@]}"; do
     fi
 
     # For library crates whose declared MSRV is below the workspace
-    # effective floor (e.g. hsh / hsh-kms / hsh-digest declare 1.75
-    # while hsh-cli forces the workspace to 1.88), we cannot load
+    # effective floor (e.g. a library declaring 1.75 while hsh-cli
+    # forces the workspace to 1.88 or later), we cannot load
     # the workspace at the lower toolchain. Check the crate in
     # isolation via --manifest-path.
     if ! cargo +"$msrv" check --locked --manifest-path "$m" \

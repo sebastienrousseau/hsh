@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   ci:
-    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@7061363af0a1da9d60c5901bd2874ac83ff7e34e # main
+    uses: sebastienrousseau/pipelines/.github/workflows/rust-ci.yml@980375f1d96368885ff65cc4c7f1ff355a5a4095 # main 2026-10-14
     permissions:
       contents: read
       pull-requests: read
@@ -43,13 +43,13 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: stable
           components: llvm-tools-preview
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
+        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
         with:
           tool: cargo-llvm-cov
       - name: Generate coverage + enforce threshold
@@ -101,7 +101,7 @@ jobs:
 
   docs:
     if: github.ref == 'refs/heads/main'
-    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@7061363af0a1da9d60c5901bd2874ac83ff7e34e # main
+    uses: sebastienrousseau/pipelines/.github/workflows/docs.yml@980375f1d96368885ff65cc4c7f1ff355a5a4095 # main 2026-10-14
     permissions:
       contents: write
       pages: write
@@ -126,7 +126,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: nightly
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
@@ -134,7 +134,9 @@ jobs:
           workspaces: fuzz
       - name: Check every fuzz target
         working-directory: fuzz
-        run: cargo check --all-targets
+        # `+nightly` because rust-toolchain.toml selects stable, and a
+        # toolchain file beats the `rustup default` the step above sets.
+        run: cargo +nightly check --all-targets
 
   feature-checks:
     name: Feature permutations (cargo-hack)
@@ -145,12 +147,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-hack
-        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
+        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
         with:
           tool: cargo-hack
       - name: Check feature powerset (excl. hsh-digest)
@@ -174,12 +176,12 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: nightly
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - name: Install cargo-public-api
-        uses: taiki-e/install-action@4076c08d76dba979c11a7285295b0716c1d67908 # v2.87.15
+        uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.27
         with:
           tool: cargo-public-api
       - name: Diff public API
@@ -191,8 +193,43 @@ jobs:
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-kms || true
           cargo public-api --diff-git-checkouts origin/main HEAD --simplified -p hsh-digest || true
 
-  msrv-1-88:
-    name: MSRV — workspace minimum (1.88)
+  cargo-vet:
+    name: cargo-vet
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        with:
+          # Pinned by SHA, the action cannot read the toolchain from the
+          # ref, so it is named here.
+          toolchain: stable
+      # Pinned: releases before 0.10 reject a `[[trusted.*]]` entry that
+      # names a `trusted-publisher` instead of a `user-id`.
+      - uses: taiki-e/install-action@ab6895351a88b908e96a4697860d4ffea5e57dbe # v2.87.15, installs cargo-vet
+        with:
+          tool: cargo-vet@0.10.2
+      - run: cargo vet --locked
+      # Exemptions may shrink, never grow. A new dependency arrives with
+      # an audit or a trust entry, not with another exemption.
+      - name: Exemption ratchet
+        run: |
+          set -euo pipefail
+          baseline="$(tr -d '[:space:]' < supply-chain/exemptions-baseline.txt)"
+          current="$(cargo vet --locked 2>&1 | grep -oE '[0-9]+ exempted' | grep -oE '[0-9]+' || true)"
+          current="${current:-0}"
+          echo "exempted: $current (baseline $baseline)"
+          if [ "$current" -gt "$baseline" ]; then
+            echo "::error::exemptions grew from $baseline to $current"
+            exit 1
+          fi
+
+  msrv-1-89:
+    name: MSRV, workspace minimum (1.89)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -200,21 +237,19 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
-          toolchain: "1.88"
+          toolchain: "1.89"
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          key: msrv-1.88
-      - name: Workspace check at 1.88 floor
-        # The *workspace* effective floor is 1.88:
-        # - `hsh-cli` uses edition = "2024" (needs Cargo 1.85+).
-        # - The `rpassword` 7.5+ dep uses `let` chains (stable in 1.88).
-        # The library crates declare `rust-version = "1.75"` for
-        # downstream consumability (documentation only — downstream
-        # consumers depend on the lib crates without pulling `hsh-cli`
-        # into their workspace, so they keep the 1.75 floor).
-        run: cargo +1.88 check --locked --workspace --all-features
+          key: msrv-1.89
+      - name: Workspace check at 1.89 floor
+        # Every crate declares `rust-version = "1.89"`, the floor shared
+        # by the maintainer's Rust crates. `hsh-cli` alone would need
+        # 1.88 (edition 2024, and `rpassword` 7.5+ uses let chains).
+        # `+1.89` because rust-toolchain.toml selects stable and would
+        # otherwise win over the toolchain installed above.
+        run: cargo +1.89 check --locked --workspace --all-features
 
   cross-platform:
     name: Test (${{ matrix.os }})
@@ -229,7 +264,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
@@ -263,7 +298,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: dtolnay/rust-toolchain@02cb101ec7c40f2c49e1d9714d64511d8e1b74de # master
+      - uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
         with:
           toolchain: stable
       - name: Verify FIPS build toolchain

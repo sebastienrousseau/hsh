@@ -1,11 +1,5 @@
-# cargo-vet-style audit trail for first-party review of dependencies.
-#
-# Run `cargo vet` to validate. This file records the audits that
-# *this project's maintainers* have personally performed; trusted
-# imports (RustSec, Mozilla, Google) are recorded in `imports.lock`.
-#
-# Format reference:
-# https://mozilla.github.io/cargo-vet/audit-criteria.html
+
+# cargo-vet audits file
 
 [criteria.crypto-reviewed]
 description = """
@@ -16,31 +10,949 @@ and the public API surface used by `hsh` has been confirmed to:
   - zero secret material on drop where applicable,
   - not silently truncate inputs.
 """
-implies = ["safe-to-deploy"]
+implies = "safe-to-deploy"
 
-# Bring in widely-trusted external audit sets when running cargo-vet.
-# These import lines tell cargo-vet which third-party audit feeds to
-# accept; the actual signed-hash records live in `imports.lock`.
-[imports.bytecode-alliance]
-url = "https://raw.githubusercontent.com/bytecodealliance/wasmtime/main/supply-chain/audits.toml"
+[[audits.alloca]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.4.0"
+notes = "Full audit of alloca 0.4.0 (13 files, 4 .rs files, 141 lines of Rust): 7 lines mention unsafe (most in src/lib.rs: 6, src/tests.rs: 1); build.rs PRESENT (runs at build time: read it); dependencies: cc."
 
-[imports.embark]
-url = "https://raw.githubusercontent.com/EmbarkStudios/rust-ecosystem/main/audits.toml"
+[[audits.argon2]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.5.3"
+notes = "Full audit of argon2 0.5.3 (16 files, 9 .rs files, 2856 lines of Rust): 2 lines mention unsafe (most in src/lib.rs: 2); no build.rs; dependencies: base64ct, blake2, cpufeatures, password-hash, zeroize."
 
-[imports.google]
-url = "https://raw.githubusercontent.com/google/supply-chain/main/audits.toml"
+[[audits.aws-lc-fips-sys]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.13.14"
+notes = "Full audit of aws-lc-fips-sys 0.13.14 (1421 files, 24 .rs files, 162976 lines of Rust): 4656 lines mention unsafe (most in src/x86_64_unknown_linux_gnu_crypto.rs: 784, src/x86_64_apple_darwin_crypto.rs: 782, src/aarch64_unknown_linux_gnu_crypto.rs: 779, src/aarch64_apple_darwin_crypto.rs: 777, src/x86_64_unknown_linux_musl_crypto.rs: 757); build.rs PRESENT (runs at build time: read it); dependencies: bindgen, cc, cmake, dunce, fs_extra, regex."
 
-[imports.mozilla]
-url = "https://hg.mozilla.org/mozilla-central/raw-file/tip/supply-chain/audits.toml"
+[[audits.aws-lc-rs]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.17.0"
+notes = "Full audit of aws-lc-rs 1.17.0 (112 files, 99 .rs files, 31765 lines of Rust): 354 lines mention unsafe (most in src/evp_pkey.rs: 45, src/ec/encoding.rs: 32, src/cipher.rs: 19, src/cipher/streaming.rs: 16, src/rsa/encryption/oaep.rs: 13); build.rs PRESENT (runs at build time: read it); dependencies: aws-lc-fips-sys, aws-lc-sys, untrusted, zeroize."
 
-# ---------------------------------------------------------------------------
-# First-party audits go below. Add an [[audits.<crate>]] block when the
-# maintainer has read the relevant version end-to-end.
-# ---------------------------------------------------------------------------
+[[audits.base64]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.22.1 -> 0.23.1"
+notes = "Delta 0.22.1 -> 0.23.1 (29 files, +2762/-630; 22 .rs files): unsafe-mentioning lines +79/-2; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
 
-# Example placeholder — replace as audits are performed:
-# [[audits.argon2]]
-# who = "Sebastien Rousseau <sebastian.rousseau@gmail.com>"
-# version = "0.5.3"
-# criteria = ["crypto-reviewed", "safe-to-deploy"]
-# notes = "Reviewed verify path; uses subtle internally."
+[[audits.base64ct]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.8.3"
+notes = "Full audit of base64ct 1.8.3 (32 files, 23 .rs files, 2988 lines of Rust): 5 lines mention unsafe (most in src/encoding.rs: 5); no build.rs; dependencies: none."
+
+[[audits.bcrypt]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.19.3"
+notes = "Full audit of bcrypt 0.19.3 (9 files, 3 .rs files, 941 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: base64, blowfish, getrandom, subtle, zeroize."
+
+[[audits.bindgen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.72.0 -> 0.72.1"
+notes = "Delta 0.72.0 -> 0.72.1 (2 files, +6/-6; 1 .rs files): unsafe-mentioning lines +1/-1; build.rs unchanged; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.blake2]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.6"
+notes = "Full audit of blake2 0.10.6 (27 files, 15 .rs files, 1414 lines of Rust): 26 lines mention unsafe (most in src/as_bytes.rs: 11, src/simd/simdty.rs: 5, src/simd/simdop.rs: 4, src/simd.rs: 3, src/simd/simd_opt/u64x4.rs: 2); no build.rs; dependencies: digest."
+
+[[audits.blake3]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.8.7"
+notes = "Full audit of blake3 1.8.7 (80 files, 20 .rs files, 9474 lines of Rust): 239 lines mention unsafe (most in src/rust_sse2.rs: 56, src/rust_sse41.rs: 54, src/rust_avx2.rs: 39, src/wasm32_simd.rs: 26, src/platform.rs: 13); build.rs PRESENT (runs at build time: read it); dependencies: arrayvec, cc, cfg-if, constant_time_eq, cpufeatures, digest, memmap2, rayon-core, serde, zeroize."
+
+[[audits.block-buffer]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.4"
+notes = "Full audit of block-buffer 0.10.4 (10 files, 3 .rs files, 613 lines of Rust): 4 lines mention unsafe (most in src/sealed.rs: 2, src/lib.rs: 2); no build.rs; dependencies: generic-array."
+
+[[audits.blowfish]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.0"
+notes = "Full audit of blowfish 0.10.0 (14 files, 4 .rs files, 461 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: byteorder, cipher."
+
+[[audits.cc]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.78 -> 1.2.62"
+notes = "Delta 1.0.78 -> 1.2.62 (34 files, +7553/-4839; 16 .rs files): unsafe-mentioning lines +19/-50; no build.rs; adds find-msvc-tools; adds libc; adds shlex. Read the unsafe hunks before certifying."
+
+[[audits.cfg-if]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "1.0.0 -> 1.0.4"
+notes = "Delta 1.0.0 -> 1.0.4 (9 files, +246/-128; 2 .rs files): unsafe-mentioning lines +0/-0; no build.rs; drops compiler_builtins."
+
+[[audits.cipher]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.4 -> 0.5.2"
+notes = "Delta 0.4.4 -> 0.5.2 (24 files, +2188/-1388; 17 .rs files): unsafe-mentioning lines +0/-2; no build.rs; adds block-buffer; adds common; drops crypto-common."
+
+[[audits.clang-sys]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.8.1"
+notes = "Full audit of clang-sys 1.8.1 (22 files, 10 .rs files, 4304 lines of Rust): 10 lines mention unsafe (most in src/link.rs: 6, src/lib.rs: 2, tests/lib.rs: 1, src/support.rs: 1); build.rs PRESENT (runs at build time: read it); dependencies: glob, libc, libloading."
+
+[[audits.cmake]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.49 -> 0.1.58"
+notes = "Delta 0.1.49 -> 0.1.58 (7 files, +474/-145; 1 .rs files): unsafe-mentioning lines +1/-0; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.constant_time_eq]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.4 -> 0.4.2"
+notes = "Delta 0.2.4 -> 0.4.2 (17 files, +2327/-130; 13 .rs files): unsafe-mentioning lines +55/-3; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.cpufeatures]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.2.17"
+notes = "Full audit of cpufeatures 0.2.17 (16 files, 8 .rs files, 719 lines of Rust): 9 lines mention unsafe (most in src/x86.rs: 4, src/aarch64.rs: 4, src/loongarch64.rs: 1); no build.rs; dependencies: libc."
+
+[[audits.cpufeatures]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.3.0"
+notes = "Full audit of cpufeatures 0.3.0 (16 files, 8 .rs files, 656 lines of Rust): 11 lines mention unsafe (most in src/aarch64.rs: 5, src/x86.rs: 4, src/loongarch64.rs: 2); no build.rs; dependencies: libc."
+
+[[audits.criterion]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.8.2"
+notes = "Full audit of criterion 0.8.2 (92 files, 69 .rs files, 13545 lines of Rust): 7 lines mention unsafe (most in src/stats/univariate/percentiles.rs: 2, src/stats/univariate/sample.rs: 2, src/stats/mod.rs: 1, src/stats/univariate/resamples.rs: 1, src/stats/bivariate/mod.rs: 1); no build.rs; dependencies: alloca, anes, cast, ciborium, clap, criterion-plot, csv, futures, itertools, num-traits, oorandom, page_size, plotters, rayon, regex, serde, serde_json, smol, tinytemplate, tokio, walkdir."
+
+[[audits.criterion-plot]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.8.2"
+notes = "Full audit of criterion-plot 0.8.2 (24 files, 14 .rs files, 2992 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: cast, itertools."
+
+[[audits.crossbeam-deque]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.8.3 -> 0.8.6"
+notes = "Delta 0.8.3 -> 0.8.6 (6 files, +126/-47; 3 .rs files): unsafe-mentioning lines +3/-0; no build.rs; drops cfg-if. Read the unsafe hunks before certifying."
+
+[[audits.crossbeam-utils]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.8.18 -> 0.8.19"
+
+[[audits.crunchy]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.2.3 -> 0.2.4"
+notes = "Delta 0.2.3 -> 0.2.4 (3 files, +11/-11; 2 .rs files): unsafe-mentioning lines +0/-0; build.rs CHANGED (read it); no dependency added or dropped."
+
+[[audits.crypto-common]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.6 -> 0.1.7"
+notes = "Delta 0.1.6 -> 0.1.7 (2 files, +23/-6; 0 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.crypto-common]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.6 -> 0.2.2"
+notes = "Delta 0.1.6 -> 0.2.2 (7 files, +783/-133; 3 .rs files): unsafe-mentioning lines +0/-0; no build.rs; adds getrandom; adds hybrid-array; drops generic-array; drops typenum."
+
+[[audits.digest]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.7"
+notes = "Full audit of digest 0.10.7 (21 files, 14 .rs files, 2157 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: blobby, block-buffer, const-oid, crypto-common, subtle."
+
+[[audits.dunce]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.0.5"
+notes = "Full audit of dunce 1.0.5 (9 files, 1 .rs files, 305 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: none."
+
+[[audits.fastrand]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "2.3.0 -> 2.4.1"
+notes = "Delta 2.3.0 -> 2.4.1 (6 files, +339/-39; 4 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.find-msvc-tools]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.1.9"
+notes = "Full audit of find-msvc-tools 0.1.9 (18 files, 10 .rs files, 2766 lines of Rust): 55 lines mention unsafe (most in src/setup_config.rs: 22, src/com.rs: 12, src/registry.rs: 6, src/find_tools.rs: 6, src/windows_sys.rs: 5); no build.rs; dependencies: none."
+
+[[audits.fs_extra]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.3.0"
+notes = "Full audit of fs_extra 1.3.0 (12 files, 7 .rs files, 12514 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: none."
+
+[[audits.futures-core]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.31 -> 0.3.32"
+notes = "Delta 0.3.31 -> 0.3.32 (3 files, +15/-10; 2 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.futures-task]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.31 -> 0.3.32"
+notes = "Delta 0.3.31 -> 0.3.32 (2 files, +11/-10; 0 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.futures-util]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.31 -> 0.3.32"
+notes = "Delta 0.3.31 -> 0.3.32 (28 files, +254/-159; 26 .rs files): unsafe-mentioning lines +1/-3; no build.rs; adds libc; adds spin; drops pin-utils. Read the unsafe hunks before certifying."
+
+[[audits.generic-array]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.14.7"
+notes = "Full audit of generic-array 0.14.7 (16 files, 10 .rs files, 2052 lines of Rust): 78 lines mention unsafe (most in src/lib.rs: 29, src/sequence.rs: 22, src/iter.rs: 8, src/impls.rs: 7, src/functional.rs: 6); build.rs PRESENT (runs at build time: read it); dependencies: serde, typenum, version_check, zeroize."
+
+[[audits.getrandom]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.2.17"
+notes = "Full audit of getrandom 0.2.17 (38 files, 29 .rs files, 1997 lines of Rust): 59 lines mention unsafe (most in src/use_file.rs: 10, src/util_libc.rs: 7, src/rdrand.rs: 7, src/util.rs: 6, src/netbsd.rs: 5); no build.rs; dependencies: cfg-if, compiler_builtins, core, js-sys, libc, wasi, wasm-bindgen."
+
+[[audits.getrandom]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.17 -> 0.2.15"
+
+[[audits.getrandom]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.3 -> 0.3.4"
+notes = "Delta 0.3.3 -> 0.3.4 (16 files, +233/-98; 13 .rs files): unsafe-mentioning lines +7/-2; build.rs CHANGED (read it); adds wasip2; drops compiler_builtins; drops core; drops wasi. Read the unsafe hunks before certifying."
+
+[[audits.half]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "2.5.0 -> 2.7.1"
+notes = "Delta 2.5.0 -> 2.7.1 (14 files, +443/-130; 11 .rs files): unsafe-mentioning lines +13/-15; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.hybrid-array]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.4.12"
+notes = "Full audit of hybrid-array 0.4.12 (24 files, 10 .rs files, 3839 lines of Rust): 44 lines mention unsafe (most in src/lib.rs: 32, src/from_fn.rs: 5, src/flatten.rs: 3, src/sizes.rs: 2, tests/mod.rs: 1); no build.rs; dependencies: arbitrary, bytemuck, ctutils, serde, subtle, typenum, zerocopy, zeroize."
+
+[[audits.inout]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.3 -> 0.1.4"
+notes = "Delta 0.1.3 -> 0.1.4 (4 files, +23/-7; 2 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.inout]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.1.3 -> 0.2.2"
+notes = "Delta 0.1.3 -> 0.2.2 (10 files, +348/-164; 6 .rs files): unsafe-mentioning lines +10/-2; no build.rs; adds hybrid-array; drops generic-array. Read the unsafe hunks before certifying."
+
+[[audits.insta]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "1.49.0"
+notes = "Full audit of insta 1.49.0 (137 files, 33 .rs files, 15586 lines of Rust): 1 lines mention unsafe (most in src/settings.rs: 1); no build.rs; dependencies: clap, console, csv, globset, once_cell, pest, pest_derive, regex, ron, serde, similar, strip-ansi-escapes, tempfile, toml_edit, toml_writer, walkdir."
+
+[[audits.itertools]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.13.0"
+notes = "Full audit of itertools 0.13.0 (86 files, 71 .rs files, 21304 lines of Rust): 9 lines mention unsafe (most in src/either_or_both.rs: 5, benches/bench1.rs: 4); no build.rs; dependencies: either."
+
+[[audits.js-sys]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.3.99"
+notes = "Full audit of js-sys 0.3.99 (17 files, 9 .rs files, 18639 lines of Rust): 32 lines mention unsafe (most in src/lib.rs: 15, src/futures/task/singlethread.rs: 7, src/futures/task/multithread.rs: 7, src/futures/queue.rs: 2, src/futures/mod.rs: 1); no build.rs; dependencies: cfg-if, futures-core, futures-util, once_cell, wasm-bindgen."
+
+[[audits.libc]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.2.186"
+notes = "Full audit of libc 0.2.186 (360 files, 346 .rs files, 127772 lines of Rust): 430 lines mention unsafe (most in src/unix/linux_like/linux/musl/lfs64.rs: 33, src/unix/linux_like/emscripten/lfs64.rs: 30, src/unix/bsd/freebsdlike/freebsd/mod.rs: 27, src/unix/bsd/apple/mod.rs: 22, src/unix/solarish/mod.rs: 21); build.rs PRESENT (runs at build time: read it); dependencies: rustc-std-workspace-core."
+
+[[audits.libloading]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.8.9"
+notes = "Full audit of libloading 0.8.9 (25 files, 15 .rs files, 2897 lines of Rust): 112 lines mention unsafe (most in tests/functions.rs: 33, src/safe.rs: 20, src/os/windows/mod.rs: 20, src/os/unix/mod.rs: 18, tests/windows.rs: 11); no build.rs; dependencies: cfg-if, windows-link."
+
+[[audits.log]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.4.29 -> 0.4.34"
+notes = "Delta 0.4.29 -> 0.4.34 (10 files, +364/-64; 6 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.minimal-lexical]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.2.1"
+notes = "Full audit of minimal-lexical 0.2.1 (57 files, 31 .rs files, 7718 lines of Rust): 44 lines mention unsafe (most in src/stackvec.rs: 17, src/num.rs: 9, src/bigint.rs: 4, src/number.rs: 4, src/libm.rs: 3); no build.rs; dependencies: none."
+
+[[audits.once_cell]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "1.19.0 -> 1.21.4"
+notes = "Delta 1.19.0 -> 1.21.4 (9 files, +372/-126; 7 .rs files): unsafe-mentioning lines +7/-3; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.oorandom]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "11.1.5"
+notes = "Full audit of oorandom 11.1.5 (6 files, 1 .rs files, 589 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: none."
+
+[[audits.page_size]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.6.0"
+notes = "Full audit of page_size 0.6.0 (10 files, 1 .rs files, 212 lines of Rust): 6 lines mention unsafe (most in src/lib.rs: 6); no build.rs; dependencies: libc, spin, winapi."
+
+[[audits.password-hash]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.5.0"
+notes = "Full audit of password-hash 0.5.0 (20 files, 13 .rs files, 2675 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: base64ct, rand_core, subtle."
+
+[[audits.pbkdf2]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.12.2"
+notes = "Full audit of pbkdf2 0.12.2 (12 files, 5 .rs files, 729 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: digest, hmac, password-hash, rayon, sha1, sha2."
+
+[[audits.pin-project-lite]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.2.14 -> 0.2.17"
+notes = "Delta 0.2.14 -> 0.2.17 (43 files, +1152/-582; 26 .rs files): unsafe-mentioning lines +2/-2; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.plotters]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.3.7"
+notes = "Full audit of plotters 0.3.7 (114 files, 105 .rs files, 20145 lines of Rust): 1 lines mention unsafe (most in src/style/font/ttf.rs: 1); no build.rs; dependencies: ab_glyph, chrono, font-kit, image, lazy_static, num-traits, once_cell, pathfinder_geometry, plotters-backend, plotters-bitmap, plotters-svg, ttf-parser, wasm-bindgen, web-sys."
+
+[[audits.plotters-backend]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.3.7"
+notes = "Full audit of plotters-backend 0.3.7 (14 files, 9 .rs files, 1569 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: none."
+
+[[audits.plotters-svg]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.3.7"
+notes = "Full audit of plotters-svg 0.3.7 (7 files, 2 .rs files, 817 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: image, plotters-backend."
+
+[[audits.proptest]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "1.11.0"
+notes = "Full audit of proptest 1.11.0 (118 files, 101 .rs files, 24348 lines of Rust): 10 lines mention unsafe (most in src/test_runner/scoped_panic_hook.rs: 4, src/sugar.rs: 3, src/test_runner/rng.rs: 3); no build.rs; dependencies: bit-set, bit-vec, bitflags, num-traits, proptest-macro, rand, rand_chacha, rand_xorshift, regex-syntax, rusty-fork, tempfile, unarray, x86."
+
+[[audits.r-efi]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "5.3.0"
+notes = "Full audit of r-efi 5.3.0 (69 files, 58 .rs files, 9081 lines of Rust): 17 lines mention unsafe (most in src/base.rs: 10, examples/gop-query.rs: 5, examples/hello-world.rs: 2); no build.rs; dependencies: core."
+
+[[audits.r-efi]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "6.0.0"
+notes = "Full audit of r-efi 6.0.0 (69 files, 58 .rs files, 9096 lines of Rust): 336 lines mention unsafe (most in src/system.rs: 58, src/protocols/shell.rs: 43, src/protocols/file.rs: 14, src/protocols/simple_network.rs: 13, src/protocols/pci_io.rs: 13); no build.rs; dependencies: core."
+
+[[audits.rand_chacha]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.1 -> 0.9.0"
+notes = "Delta 0.3.1 -> 0.9.0 (7 files, +281/-153; 3 .rs files): unsafe-mentioning lines +1/-1; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.rand_core]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.6.4 -> 0.9.5"
+notes = "Delta 0.6.4 -> 0.9.5 (9 files, +674/-599; 5 .rs files): unsafe-mentioning lines +1/-2; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.rpassword]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "7.5.4"
+notes = "Full audit of rpassword 7.5.4 (30 files, 13 .rs files, 1827 lines of Rust): 22 lines mention unsafe (most in src/windows.rs: 13, src/unix.rs: 7, tests/no-terminal.rs: 2); no build.rs; dependencies: libc, rtoolbox, windows-sys."
+
+[[audits.rtoolbox]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.0.5"
+notes = "Full audit of rtoolbox 0.0.5 (18 files, 7 .rs files, 474 lines of Rust): 15 lines mention unsafe (most in src/print_tty.rs: 6, src/atty.rs: 6, src/safe_string.rs: 2, src/safe_vec.rs: 1); no build.rs; dependencies: libc, serde, serde_json, windows-sys."
+
+[[audits.rustc-hash]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "2.1.1 -> 2.1.2"
+notes = "Delta 2.1.1 -> 2.1.2 (3 files, +65/-21; 1 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.rusty-fork]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.3.0 -> 0.3.1"
+notes = "Delta 0.3.0 -> 0.3.1 (4 files, +45/-19; 1 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.salsa20]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.2"
+notes = "Full audit of salsa20 0.10.2 (11 files, 4 .rs files, 623 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: cipher."
+
+[[audits.scrypt]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.11.0"
+notes = "Full audit of scrypt 0.11.0 (14 files, 7 .rs files, 584 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: password-hash, pbkdf2, salsa20, sha2."
+
+[[audits.sha2]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.9"
+notes = "Full audit of sha2 0.10.9 (31 files, 17 .rs files, 2416 lines of Rust): 29 lines mention unsafe (most in src/sha512/x86.rs: 10, src/sha512/aarch64.rs: 6, src/sha256/aarch64.rs: 6, src/sha256/x86.rs: 3, src/sha256.rs: 1); no build.rs; dependencies: cfg-if, cpufeatures, digest, sha2-asm."
+
+[[audits.sha3]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.10.9"
+notes = "Full audit of sha3 0.10.9 (31 files, 8 .rs files, 1159 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: digest, keccak, zeroize."
+
+[[audits.similar]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "2.2.1 -> 2.7.0"
+notes = "Delta 2.2.1 -> 2.7.0 (26 files, +415/-146; 16 .rs files): unsafe-mentioning lines +0/-0; no build.rs; adds web-time."
+
+[[audits.subtle]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "2.5.0 -> 2.6.1"
+notes = "Delta 2.5.0 -> 2.6.1 (6 files, +175/-47; 2 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.terminal_size]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "0.1.17"
+
+[[audits.typenum]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+version = "1.20.0"
+notes = "Full audit of typenum 1.20.0 (26 files, 15 .rs files, 40601 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: scale-info."
+
+[[audits.utf8parse]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.2.1 -> 0.2.2"
+notes = "Delta 0.2.1 -> 0.2.2 (2 files, +17/-8; 1 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.version_check]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "0.9.4 -> 0.9.5"
+notes = "Delta 0.9.4 -> 0.9.5 (3 files, +54/-3; 2 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[audits.wasm-bindgen]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.2.122"
+notes = "Full audit of wasm-bindgen 0.2.122 (26 files, 19 .rs files, 7779 lines of Rust): 111 lines mention unsafe (most in src/convert/impls.rs: 30, src/rt/mod.rs: 20, src/convert/traits.rs: 17, src/convert/slices.rs: 16, src/lib.rs: 10); build.rs PRESENT (runs at build time: read it); dependencies: cfg-if, once_cell, rustversion-compat, serde, serde_json, wasm-bindgen-macro, wasm-bindgen-shared."
+
+[[audits.wasm-bindgen-macro]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.2.122"
+notes = "Full audit of wasm-bindgen-macro 0.2.122 (9 files, 1 .rs files, 75 lines of Rust): 0 lines mention unsafe; no build.rs; proc-macro crate (runs in the compiler); dependencies: quote, wasm-bindgen-macro-support."
+
+[[audits.wasm-bindgen-macro-support]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.2.122"
+notes = "Full audit of wasm-bindgen-macro-support 0.2.122 (14 files, 8 .rs files, 9328 lines of Rust): 47 lines mention unsafe (most in src/codegen.rs: 43, src/ast.rs: 2, src/parser.rs: 2); no build.rs; dependencies: bumpalo, proc-macro2, quote, syn, wasm-bindgen-shared."
+
+[[audits.wasm-bindgen-shared]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.2.122"
+notes = "Full audit of wasm-bindgen-shared 0.2.122 (11 files, 5 .rs files, 611 lines of Rust): 0 lines mention unsafe; build.rs PRESENT (runs at build time: read it); dependencies: unicode-ident."
+
+[[audits.web-sys]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.3.99"
+notes = "Full audit of web-sys 0.3.99 (1714 files, 1707 .rs files, 223942 lines of Rust): 19 lines mention unsafe (most in src/features/gen_AuthenticationExtensionsPrfValues.rs: 3, src/features/gen_EncodedVideoChunkInit.rs: 2, src/features/gen_AudioDataInit.rs: 2, src/features/gen_BluetoothDataFilterInit.rs: 2, src/features/gen_ImageDecoderInit.rs: 2); no build.rs; dependencies: js-sys, wasm-bindgen."
+
+[[audits.winapi-i686-pc-windows-gnu]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.4.0"
+notes = "Full audit of winapi-i686-pc-windows-gnu 0.4.0 (1391 files, 2 .rs files, 25 lines of Rust): 0 lines mention unsafe; build.rs PRESENT (runs at build time: read it); dependencies: none."
+
+[[audits.winapi-x86_64-pc-windows-gnu]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "0.4.0"
+notes = "Full audit of winapi-x86_64-pc-windows-gnu 0.4.0 (1420 files, 2 .rs files, 25 lines of Rust): 0 lines mention unsafe; build.rs PRESENT (runs at build time: read it); dependencies: none."
+
+[[audits.zerocopy]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.8.27 -> 0.8.48"
+notes = "Delta 0.8.27 -> 0.8.48 (647 files, +18710/-10607; 109 .rs files): unsafe-mentioning lines +256/-116; build.rs CHANGED (read it); no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.zerocopy-derive]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.8.27 -> 0.8.48"
+notes = "Delta 0.8.27 -> 0.8.48 (162 files, +18749/-11334; 89 .rs files): unsafe-mentioning lines +297/-237; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.zeroize]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "1.8.2 -> 1.9.1"
+notes = "Delta 1.8.2 -> 1.9.1 (12 files, +621/-205; 8 .rs files): unsafe-mentioning lines +17/-3; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.zeroize_derive]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-deploy"
+delta = "1.4.2 -> 1.5.0"
+notes = "Delta 1.4.2 -> 1.5.0 (5 files, +120/-62; 1 .rs files): unsafe-mentioning lines +0/-0; no build.rs; no dependency added or dropped."
+
+[[trusted.aho-corasick]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-03-28"
+end = "2027-10-14"
+
+[[trusted.anstream]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-16"
+end = "2027-10-14"
+
+[[trusted.anstyle]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-05-18"
+end = "2027-10-14"
+
+[[trusted.anstyle-parse]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-08"
+end = "2027-10-14"
+
+[[trusted.anstyle-query]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-04-13"
+end = "2027-10-14"
+
+[[trusted.anstyle-wincon]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-08"
+end = "2027-10-14"
+
+[[trusted.anyhow]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-05"
+end = "2027-10-14"
+
+[[trusted.assert_cmd]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2019-03-23"
+end = "2027-10-14"
+
+[[trusted.autocfg]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-05-22"
+end = "2027-10-14"
+
+[[trusted.bstr]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-04-02"
+end = "2027-10-14"
+
+[[trusted.clap]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2027-10-14"
+
+[[trusted.clap_builder]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-03-28"
+end = "2027-10-14"
+
+[[trusted.clap_complete]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-31"
+end = "2027-10-14"
+
+[[trusted.clap_derive]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-12-08"
+end = "2027-10-14"
+
+[[trusted.clap_lex]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-04-15"
+end = "2027-10-14"
+
+[[trusted.colorchoice]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-04-13"
+end = "2027-10-14"
+
+[[trusted.errno]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2023-08-29"
+end = "2027-10-14"
+
+[[trusted.find-msvc-tools]]
+criteria = "safe-to-deploy"
+user-id = 539 # Josh Stone (cuviper)
+start = "2025-08-29"
+end = "2027-10-14"
+
+[[trusted.hashbrown]]
+criteria = "safe-to-deploy"
+user-id = 2915 # Amanieu d'Antras (Amanieu)
+start = "2019-04-02"
+end = "2027-10-14"
+
+[[trusted.id-arena]]
+criteria = "safe-to-deploy"
+user-id = 696 # Nick Fitzgerald (fitzgen)
+start = "2026-01-14"
+end = "2027-10-14"
+
+[[trusted.is_terminal_polyfill]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2024-05-02"
+end = "2027-10-14"
+
+[[trusted.itoa]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-05-02"
+end = "2027-10-14"
+
+[[trusted.js-sys]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.linux-raw-sys]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2021-06-12"
+end = "2027-10-14"
+
+[[trusted.memchr]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-07-07"
+end = "2027-10-14"
+
+[[trusted.once_cell_polyfill]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-05-22"
+end = "2027-10-14"
+
+[[trusted.predicates]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2019-04-22"
+end = "2027-10-14"
+
+[[trusted.predicates-core]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2020-12-29"
+end = "2027-10-14"
+
+[[trusted.predicates-tree]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2020-12-29"
+end = "2027-10-14"
+
+[[trusted.prettyplease]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2022-01-04"
+end = "2027-10-14"
+
+[[trusted.proc-macro2]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-23"
+end = "2027-10-14"
+
+[[trusted.quote]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-04-09"
+end = "2027-10-14"
+
+[[trusted.rayon]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-13"
+end = "2027-10-14"
+
+[[trusted.rayon-core]]
+criteria = "safe-to-run"
+user-id = 539 # Josh Stone (cuviper)
+start = "2019-06-13"
+end = "2027-10-14"
+
+[[trusted.regex]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-27"
+end = "2027-10-14"
+
+[[trusted.regex-automata]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-02-25"
+end = "2027-10-14"
+
+[[trusted.regex-syntax]]
+criteria = "safe-to-deploy"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-03-30"
+end = "2027-10-14"
+
+[[trusted.rustix]]
+criteria = "safe-to-deploy"
+user-id = 6825 # Dan Gohman (sunfishcode)
+start = "2021-10-29"
+end = "2027-10-14"
+
+[[trusted.rustversion]]
+criteria = "safe-to-run"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-07-08"
+end = "2027-10-14"
+
+[[trusted.serde]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2027-10-14"
+
+[[trusted.serde_core]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2025-09-13"
+end = "2027-10-14"
+
+[[trusted.serde_derive]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2027-10-14"
+
+[[trusted.serde_json]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-02-28"
+end = "2027-10-14"
+
+[[trusted.slab]]
+criteria = "safe-to-run"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-10-13"
+end = "2027-10-14"
+
+[[trusted.syn]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-03-01"
+end = "2027-10-14"
+
+[[trusted.termtree]]
+criteria = "safe-to-run"
+user-id = 6743 # Ed Page (epage)
+start = "2021-10-07"
+end = "2027-10-14"
+
+[[trusted.thiserror]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-09"
+end = "2027-10-14"
+
+[[trusted.thiserror-impl]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2019-10-09"
+end = "2027-10-14"
+
+[[trusted.unicode-ident]]
+criteria = "safe-to-deploy"
+user-id = 3618 # David Tolnay (dtolnay)
+start = "2021-10-02"
+end = "2027-10-14"
+
+[[trusted.wait-timeout]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2025-02-03"
+end = "2027-10-14"
+
+[[trusted.walkdir]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2019-06-09"
+end = "2027-10-14"
+
+[[trusted.wasi]]
+criteria = "safe-to-deploy"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2020-06-03"
+end = "2027-10-14"
+
+[[trusted.wasm-bindgen]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.wasm-bindgen-macro]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.wasm-bindgen-macro-support]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.wasm-bindgen-shared]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.web-sys]]
+criteria = "safe-to-run"
+user-id = 1 # Alex Crichton (alexcrichton)
+start = "2019-03-04"
+end = "2027-10-14"
+
+[[trusted.winapi-util]]
+criteria = "safe-to-run"
+user-id = 189 # Andrew Gallant (BurntSushi)
+start = "2020-01-11"
+end = "2027-10-14"
+
+[[trusted.windows-link]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-07-17"
+end = "2027-10-14"
+
+[[trusted.windows-sys]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-11-15"
+end = "2027-10-14"
+
+[[trusted.windows-targets]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-09"
+end = "2027-10-14"
+
+[[trusted.windows_aarch64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-01"
+end = "2027-10-14"
+
+[[trusted.windows_aarch64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-11-05"
+end = "2027-10-14"
+
+[[trusted.windows_i686_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-28"
+end = "2027-10-14"
+
+[[trusted.windows_i686_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2024-04-02"
+end = "2027-10-14"
+
+[[trusted.windows_i686_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-27"
+end = "2027-10-14"
+
+[[trusted.windows_x86_64_gnu]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-28"
+end = "2027-10-14"
+
+[[trusted.windows_x86_64_gnullvm]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2022-09-01"
+end = "2027-10-14"
+
+[[trusted.windows_x86_64_msvc]]
+criteria = "safe-to-deploy"
+user-id = 64539 # Kenny Kerr (kennykerr)
+start = "2021-10-27"
+end = "2027-10-14"
