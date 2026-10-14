@@ -38,7 +38,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .argon2(argon2::Params::new(m, 2, 1, Some(32)).unwrap())
                 .build()
                 .unwrap();
-                let took = time_hash(&policy);
+                let took = time_hash(&policy)?;
                 let params = format!("argon2id m={m} t=2 p=1");
                 ladder.push(LadderEntry::new(&params, took, target));
                 consider(&mut best, params, took, target);
@@ -53,7 +53,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 .bcrypt(BcryptParams::new(cost))
                 .build()
                 .unwrap();
-                let took = time_hash(&policy);
+                let took = time_hash(&policy)?;
                 let params = format!("bcrypt cost={cost}");
                 ladder.push(LadderEntry::new(&params, took, target));
                 consider(&mut best, params, took, target);
@@ -73,7 +73,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 })
                 .build()
                 .unwrap();
-                let took = time_hash(&policy);
+                let took = time_hash(&policy)?;
                 let params = format!("scrypt log_n={log_n} r=8 p=1");
                 ladder.push(LadderEntry::new(&params, took, target));
                 consider(&mut best, params, took, target);
@@ -95,7 +95,7 @@ pub(crate) fn run(args: CalibrateArgs, json: bool) -> Result<()> {
                 })
                 .build()
                 .unwrap();
-                let took = time_hash(&policy);
+                let took = time_hash(&policy)?;
                 let params = format!("pbkdf2-sha256 iters={iters}");
                 ladder.push(LadderEntry::new(&params, took, target));
                 consider(&mut best, params, took, target);
@@ -187,34 +187,24 @@ impl LadderEntry {
     }
 }
 
-fn time_hash(policy: &Policy) -> u128 {
-    let probe = probe_input();
+fn time_hash(policy: &Policy) -> Result<u128> {
+    let probe = probe_input()?;
     let start = Instant::now();
     // Best-effort — if hash() errors (e.g. FIPS preset without feature),
     // record a sentinel so we don't crash the calibrate loop.
     let _ = hsh::api::hash(policy, &probe);
-    start.elapsed().as_millis()
+    Ok(start.elapsed().as_millis())
 }
 
-/// A fresh, throwaway calibration input of `PROBE_LEN` hex characters.
+/// A fresh, throwaway calibration input of `PROBE_LEN` characters drawn
+/// from the OS CSPRNG, through the same helper `hsh` uses for salts.
 ///
-/// It was a hard-coded string, which CodeQL rightly reports as a
-/// hard-coded password in production code. Nothing secret depends on
-/// it, so `RandomState`'s per-process keys are random enough; the point
-/// is only that no fixed value ships in the binary.
-fn probe_input() -> String {
-    use std::fmt::Write as _;
-    use std::hash::{BuildHasher, Hasher};
-
-    let mut probe = String::with_capacity(PROBE_LEN + 16);
-    while probe.len() < PROBE_LEN {
-        let mut hasher = std::collections::hash_map::RandomState::new()
-            .build_hasher();
-        hasher.write_usize(probe.len());
-        let _ = write!(probe, "{:016x}", hasher.finish());
-    }
-    probe.truncate(PROBE_LEN);
-    probe
+/// It was first a hard-coded string, then a value derived from
+/// `RandomState`; CodeQL reported both as a hard-coded password, because
+/// the second still hashed a constant. Nothing secret depends on the
+/// probe; the point is that no fixed value reaches the password argument.
+fn probe_input() -> Result<String> {
+    Ok(hsh::models::hash::Hash::generate_random_string(PROBE_LEN)?)
 }
 
 /// Keeps the `(params, took)` whose `took` is closest to `target_ms`.
@@ -245,12 +235,21 @@ mod tests {
 
     #[test]
     fn probe_input_has_the_fixed_length_and_is_not_a_constant() {
-        let first = probe_input();
-        let second = probe_input();
+        let first = probe_input().expect("OS RNG");
+        let second = probe_input().expect("OS RNG");
         assert_eq!(first.len(), PROBE_LEN);
         assert_eq!(second.len(), PROBE_LEN);
-        assert!(first.bytes().all(|b| b.is_ascii_hexdigit()));
-        assert_ne!(first, second);
+        assert!(first.bytes().all(|b| b.is_ascii_alphanumeric()));
+    }
+
+    #[test]
+    fn two_calibration_probes_differ() {
+        // 28 characters from a 62-symbol alphabet: a collision here means
+        // the probe is not coming from the RNG.
+        assert_ne!(
+            probe_input().expect("OS RNG"),
+            probe_input().expect("OS RNG")
+        );
     }
 
     #[test]
