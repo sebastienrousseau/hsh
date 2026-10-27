@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AlgoArg","Command","PresetPolicy"],"struct":["CalibrateArgs","Cli","CompletionsArgs","HashArgs","InspectArgs","InspectBackendArgs","RehashArgs","VerifyArgs"]};
