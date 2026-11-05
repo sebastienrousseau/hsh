@@ -84,6 +84,16 @@ criteria = "safe-to-deploy"
 version = "0.10.0"
 notes = "Full audit of blowfish 0.10.0 (14 files, 4 .rs files, 461 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: byteorder, cipher."
 
+[[audits.borsh]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "1.5.7 -> 1.8.1"
+
+[[audits.borsh-derive]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+version = "1.8.1"
+
 [[audits.cc]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-deploy"
@@ -364,11 +374,21 @@ criteria = "safe-to-run"
 version = "0.3.7"
 notes = "Full audit of plotters-svg 0.3.7 (7 files, 2 .rs files, 817 lines of Rust): 0 lines mention unsafe; no build.rs; dependencies: image, plotters-backend."
 
+[[audits.proc-macro-crate]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "2.0.1 -> 3.5.0"
+
 [[audits.proptest]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-run"
 version = "1.11.0"
 notes = "Full audit of proptest 1.11.0 (118 files, 101 .rs files, 24348 lines of Rust): 10 lines mention unsafe (most in src/test_runner/scoped_panic_hook.rs: 4, src/sugar.rs: 3, src/test_runner/rng.rs: 3); no build.rs; dependencies: bit-set, bit-vec, bitflags, num-traits, proptest-macro, rand, rand_chacha, rand_xorshift, regex-syntax, rusty-fork, tempfile, unarray, x86."
+
+[[audits.proptest]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "1.11.0 -> 1.12.0"
 
 [[audits.r-efi]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
@@ -393,6 +413,11 @@ who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
 criteria = "safe-to-run"
 delta = "0.6.4 -> 0.9.5"
 notes = "Delta 0.6.4 -> 0.9.5 (9 files, +674/-599; 5 .rs files): unsafe-mentioning lines +1/-2; no build.rs; no dependency added or dropped. Read the unsafe hunks before certifying."
+
+[[audits.rand_xorshift]]
+who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
+criteria = "safe-to-run"
+delta = "0.4.0 -> 0.5.0"
 
 [[audits.rpassword]]
 who = "Sebastien Rousseau <sebastienrousseau@users.noreply.github.com>"
@@ -602,6 +627,12 @@ criteria = "safe-to-run"
 user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-04-02"
 end = "2027-10-14"
+
+[[trusted.bytes]]
+criteria = "safe-to-deploy"
+user-id = 6741 # Alice Ryhl (Darksonn)
+start = "2021-01-11"
+end = "2027-11-04"
 
 [[trusted.clap]]
 criteria = "safe-to-deploy"
@@ -831,6 +862,24 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-10-09"
 end = "2027-10-14"
 
+[[trusted.toml_datetime]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2022-10-21"
+end = "2027-11-04"
+
+[[trusted.toml_edit]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2021-09-13"
+end = "2027-11-04"
+
+[[trusted.toml_parser]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2025-07-08"
+end = "2027-11-04"
+
 [[trusted.unicode-ident]]
 criteria = "safe-to-deploy"
 user-id = 3618 # David Tolnay (dtolnay)
@@ -956,3 +1005,9 @@ criteria = "safe-to-deploy"
 user-id = 64539 # Kenny Kerr (kennykerr)
 start = "2021-10-27"
 end = "2027-10-14"
+
+[[trusted.winnow]]
+criteria = "safe-to-deploy"
+user-id = 6743 # Ed Page (epage)
+start = "2023-02-22"
+end = "2027-11-04"
