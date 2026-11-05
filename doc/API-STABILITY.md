@@ -71,9 +71,9 @@ major bump. Currently-declared marker features (`k12`, `ascon`,
 
 ## MSRV policy
 
-- `hsh` (library): MSRV **1.75**. Bumps are minor-version events,
+- `hsh` (library): MSRV **1.89**. Bumps are minor-version events,
   announced one release in advance via a `Cargo.toml` warning.
-- `hsh-cli` (binary): MSRV **1.85**. Bumps are minor-version events.
+- `hsh-cli` (binary): MSRV **1.89**. Bumps are minor-version events.
 - `hsh-kms`, `hsh-digest`: track `hsh`'s MSRV.
 
 ## `#[non_exhaustive]` policy

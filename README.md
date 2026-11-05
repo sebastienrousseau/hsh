@@ -136,13 +136,13 @@ never silently breaks downstream users pinned to the core's floor.
 
 | Crate | MSRV | Why |
 |---|---|---|
-| [`hsh`](crates/hsh/) (core lib) | **1.75.0** | The committed floor for `default-features = false` + the standard `pepper` feature. Library; broad consumability is the goal. |
-| [`hsh-kms`](crates/hsh-kms/) | 1.75.0 | Same floor; KMS providers slot in behind feature flags. |
-| [`hsh-digest`](crates/hsh-digest/) | 1.75.0 | Same floor; re-exports RustCrypto primitives. |
-| [`hsh-cli`](crates/hsh-cli/) (binary) | 1.85.0 | Edition 2024; `clap` 4.5 + derive macros require a recent stable. |
+| [`hsh`](crates/hsh/) (core lib) | **1.89.0** | The floor shared by the maintainer's Rust crates, for `default-features = false` and the standard `pepper` feature alike. |
+| [`hsh-kms`](crates/hsh-kms/) | 1.89.0 | Same floor; KMS providers slot in behind feature flags. |
+| [`hsh-digest`](crates/hsh-digest/) | 1.89.0 | Same floor; re-exports RustCrypto primitives. |
+| [`hsh-cli`](crates/hsh-cli/) (binary) | 1.89.0 | Same floor. Edition 2024 and the `rpassword` let chains alone need 1.88. |
 
 `rust-toolchain.toml` selects `stable` for local development; the
-1.75.0 floor on the core surface is enforced by the dedicated
+1.89.0 floor is enforced across the workspace by the dedicated
 MSRV CI job on every PR.
 
 ---
@@ -389,7 +389,7 @@ table below groups the inventory by capability theme.
 
 | Theme | Headline deliverables |
 | :--- | :--- |
-| **Foundation** | Cargo workspace; per-crate MSRV (1.75 lib / 1.85 CLI); `#![forbid(unsafe_code)]` workspace-wide ([ADR-0006](doc/adr/0006-zero-unsafe-policy.md)) |
+| **Foundation** | Cargo workspace; per-crate MSRV (1.89 for every crate); `#![forbid(unsafe_code)]` workspace-wide ([ADR-0006](doc/adr/0006-zero-unsafe-policy.md)) |
 | **Algorithms** | Argon2id (RFC 9106), Argon2i / Argon2d (verify-only legacy), bcrypt (with 72-byte safety rail), scrypt (RFC 7914), PBKDF2-HMAC-SHA-256 / SHA-512 (RFC 8018) |
 | **General hashing** | `hsh-digest` ships SHA-256 / 384 / 512, SHA3-256 / 384 / 512, BLAKE3-256; KangarooTwelve / TurboSHAKE (per [RFC 9861][rfc9861], published Oct 2025) and Ascon-Hash256 / Ascon-XOF128 (per [NIST SP 800-232][sp800232], finalised Aug 2025) are *published standards* whose Rust implementations are currently stubbed — implementation tracked as a Phase 6 follow-up |
 | **Storage formats** | PHC strings for Argon2id / scrypt / PBKDF2; MCF (`$2b$…`) for bcrypt; bespoke `hsh-pepper:<keyver>:<inner>` wrapper for peppered hashes |

@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.13] - Unreleased
+
+### Changed
+
+- **The MSRV is now Rust 1.89 for every crate** (the libraries were
+  1.75, `hsh-cli` 1.88), the floor shared by the maintainer's Rust
+  crates. The workspace and `hsh-backend-awslc` manifests, the MSRV CI
+  job, the README table, the crate READMEs, `doc/API-STABILITY.md`, the
+  Arch `makedepends` and the Docker builder image move together.
+  `doc/API-STABILITY.md` announces library MSRV bumps one release ahead;
+  this one was not, on the maintainer's instruction.
+
+### Fixed
+
+- The fuzz-target type check in CI runs on nightly as intended;
+  `rust-toolchain.toml` had been selecting stable for it.
+
 ## [0.0.12] - 2026-10-11
 
 ### Changed

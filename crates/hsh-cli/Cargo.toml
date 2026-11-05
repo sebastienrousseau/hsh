@@ -3,13 +3,12 @@ name        = "hsh-cli"
 version     = "0.0.12"
 description = "Command-line companion for the `hsh` password-hashing library: hash / verify / rehash / inspect / calibrate."
 
-# CLI gets the modern edition; the lib stays on 2021 / MSRV 1.75 so it
-# remains broadly consumable.
+# CLI gets the modern edition; the libs stay on edition 2021.
 edition       = "2024"
-# Bumped from 1.85 → 1.88 because the `rpassword` 7.5+ dep started
-# using let chains (stable in 1.88). The lib crates' 1.75 floor is
-# unaffected because they don't pull rpassword.
-rust-version  = "1.88"
+# 1.89, the floor shared by every crate in the workspace and by the
+# maintainer's other Rust crates. The CLI alone needs 1.88: the
+# `rpassword` 7.5+ dep uses let chains (stable in 1.88).
+rust-version  = "1.89"
 
 authors.workspace       = true
 license.workspace       = true

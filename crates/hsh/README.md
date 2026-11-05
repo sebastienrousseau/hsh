@@ -35,7 +35,7 @@
 hsh = "0.0.9"
 ```
 
-MSRV **1.75** stable. Works on Linux, macOS, Windows.
+MSRV **1.89** stable. Works on Linux, macOS, Windows.
 
 For the command-line tool, see [`hsh-cli`](../hsh-cli/).
 

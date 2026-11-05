@@ -15,7 +15,7 @@
 
 # Base images pinned by digest (Scorecard PinnedDependencies). Update
 # the digest + comment together when rolling forward to a new tag.
-FROM rust:1.85-alpine@sha256:4333721398de61f53ccbe53b0b855bcc4bb49e55828e8f652d7a8ac33dd0c118 AS builder
+FROM rust:1.89-alpine@sha256:4b800f2e72e04be908e5f634c504c741bd943b763d1d8ad7b096cc340e1b5b46 AS builder
 RUN apk add --no-cache musl-dev
 WORKDIR /src
 COPY . .

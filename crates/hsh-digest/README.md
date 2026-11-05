@@ -33,7 +33,7 @@
 hsh-digest = "0.0.9"
 ```
 
-MSRV **1.75** stable.
+MSRV **1.89** stable.
 
 ### Feature flags
 
