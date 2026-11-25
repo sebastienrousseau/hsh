@@ -40,8 +40,8 @@ MSRV **1.89** stable.
 | Feature   | Status        | Pulls in           | Notes                                                  |
 | --------- | ------------- | ------------------ | ------------------------------------------------------ |
 | `default` | —             | `sha2 sha3 blake3` | The sensible defaults                                  |
-| `sha2`    | ✅            | `sha2` 0.10        | SHA-256, SHA-384, SHA-512 (FIPS 180-4)                 |
-| `sha3`    | ✅            | `sha3` 0.10        | SHA3-256, SHA3-384, SHA3-512 (FIPS 202)                |
+| `sha2`    | ✅            | `sha2` 0.11        | SHA-256, SHA-384, SHA-512 (FIPS 180-4)                 |
+| `sha3`    | ✅            | `sha3` 0.12        | SHA3-256, SHA3-384, SHA3-512 (FIPS 202)                |
 | `blake3`  | ✅            | `blake3` 1.5       | BLAKE3-256                                             |
 | `k12`     | 🚧 reserved   | (future) `k12`     | KangarooTwelve / TurboSHAKE128/256 (RFC 9861, Oct 2025) |
 | `ascon`   | 🚧 reserved   | (future) `ascon-hash` | Ascon-Hash256 / Ascon-XOF128 (NIST SP 800-232 Aug 2025) |

@@ -64,6 +64,11 @@ user-id = 539
 user-login = "cuviper"
 user-name = "Josh Stone"
 
+[[publisher.block-buffer]]
+version = "0.12.1"
+when = "2026-06-11"
+trusted-publisher = "github:RustCrypto/utils"
+
 [[publisher.bstr]]
 version = "1.12.1"
 when = "2025-10-26"
@@ -93,8 +98,8 @@ user-login = "emilio"
 user-name = "Emilio Cobos Álvarez"
 
 [[publisher.clap]]
-version = "4.6.7"
-when = "2026-09-14"
+version = "4.6.9"
+when = "2026-11-20"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -107,15 +112,15 @@ user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_complete]]
-version = "4.6.11"
-when = "2026-09-15"
+version = "4.6.12"
+when = "2026-11-16"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
 [[publisher.clap_derive]]
-version = "4.6.7"
-when = "2026-09-14"
+version = "4.6.9"
+when = "2026-11-20"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
@@ -127,12 +132,32 @@ user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
 
+[[publisher.cmov]]
+version = "0.5.4"
+when = "2026-05-28"
+trusted-publisher = "github:RustCrypto/utils"
+
 [[publisher.colorchoice]]
 version = "1.0.5"
 when = "2026-03-13"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
+
+[[publisher.const-oid]]
+version = "0.10.3"
+when = "2026-11-10"
+trusted-publisher = "github:RustCrypto/formats"
+
+[[publisher.ctutils]]
+version = "0.4.8"
+when = "2026-11-02"
+trusted-publisher = "github:RustCrypto/utils"
+
+[[publisher.digest]]
+version = "0.11.3"
+when = "2026-05-03"
+trusted-publisher = "github:RustCrypto/traits"
 
 [[publisher.errno]]
 version = "0.3.14"
@@ -147,6 +172,11 @@ when = "2024-11-25"
 user-id = 2915
 user-login = "Amanieu"
 user-name = "Amanieu d'Antras"
+
+[[publisher.hmac]]
+version = "0.13.0"
+when = "2026-03-29"
+trusted-publisher = "github:RustCrypto/MACs"
 
 [[publisher.id-arena]]
 version = "2.3.0"
@@ -169,12 +199,22 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.keccak]]
+version = "0.2.2"
+when = "2026-08-21"
+trusted-publisher = "github:RustCrypto/sponges"
+
 [[publisher.linux-raw-sys]]
 version = "0.12.1"
 when = "2025-12-23"
 user-id = 6825
 user-login = "sunfishcode"
 user-name = "Dan Gohman"
+
+[[publisher.log]]
+version = "0.4.35"
+when = "2026-10-30"
+trusted-publisher = "github:rust-lang/log"
 
 [[publisher.memchr]]
 version = "2.8.0"
@@ -189,6 +229,11 @@ when = "2025-10-21"
 user-id = 6743
 user-login = "epage"
 user-name = "Ed Page"
+
+[[publisher.pbkdf2]]
+version = "0.13.0"
+when = "2026-04-21"
+trusted-publisher = "github:RustCrypto/password-hashes"
 
 [[publisher.predicates]]
 version = "3.1.4"
@@ -219,15 +264,15 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.proc-macro2]]
-version = "1.0.106"
-when = "2026-01-21"
+version = "1.0.107"
+when = "2026-07-19"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.quote]]
-version = "1.0.45"
-when = "2026-03-03"
+version = "1.0.47"
+when = "2026-07-19"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -266,6 +311,13 @@ when = "2026-02-24"
 user-id = 189
 user-login = "BurntSushi"
 user-name = "Andrew Gallant"
+
+[[publisher.rpassword]]
+version = "7.5.5"
+when = "2026-11-10"
+user-id = 53
+user-login = "conradkleinespel"
+user-name = "Conrad Kleinespel"
 
 [[publisher.rustix]]
 version = "1.1.4"
@@ -309,12 +361,27 @@ user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
 
+[[publisher.sha2]]
+version = "0.11.1"
+when = "2026-10-12"
+trusted-publisher = "github:RustCrypto/hashes"
+
+[[publisher.sha3]]
+version = "0.12.0"
+when = "2026-05-15"
+trusted-publisher = "github:RustCrypto/hashes"
+
 [[publisher.slab]]
 version = "0.4.12"
 when = "2026-01-31"
 user-id = 6741
 user-login = "Darksonn"
 user-name = "Alice Ryhl"
+
+[[publisher.sponge-cursor]]
+version = "0.1.0"
+when = "2026-05-08"
+trusted-publisher = "github:RustCrypto/utils"
 
 [[publisher.syn]]
 version = "2.0.117"
@@ -324,8 +391,8 @@ user-login = "dtolnay"
 user-name = "David Tolnay"
 
 [[publisher.syn]]
-version = "3.0.3"
-when = "2026-07-22"
+version = "3.0.10"
+when = "2026-11-09"
 user-id = 3618
 user-login = "dtolnay"
 user-name = "David Tolnay"
@@ -569,6 +636,11 @@ trusted-publisher = "github:bytecodealliance/wasm-tools"
 version = "0.244.0"
 when = "2026-01-06"
 trusted-publisher = "github:bytecodealliance/wasm-tools"
+
+[[publisher.zeroize]]
+version = "1.9.2"
+when = "2026-11-17"
+trusted-publisher = "github:RustCrypto/utils"
 
 [[audits.bytecode-alliance.wildcard-audits.bumpalo]]
 who = "Nick Fitzgerald <fitzgen@gmail.com>"
@@ -908,11 +980,6 @@ criteria = "safe-to-deploy"
 delta = "0.243.0 -> 0.244.0"
 notes = "The Bytecode Alliance is the author of this crate"
 
-[[audits.bytecode-alliance.audits.zeroize]]
-who = "Pat Hickey <p.hickey@f5.com>"
-criteria = "safe-to-deploy"
-delta = "1.8.1 -> 1.8.2"
-
 [[audits.embark.audits.cfg_aliases]]
 who = "Johan Andersson <opensource@embark-studios.com>"
 criteria = "safe-to-deploy"
@@ -1234,32 +1301,6 @@ No `unsafe` introduced or affected in:
 """
 aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
 
-[[audits.google.audits.log]]
-who = "danakj <danakj@chromium.org>"
-criteria = "safe-to-deploy"
-version = "0.4.22"
-notes = """
-Unsafe review in https://docs.google.com/document/d/1IXQbD1GhTRqNHIGxq6yy7qHqxeO4CwN5noMFXnqyDIM/edit?usp=sharing
-
-Unsafety is generally very well-documented, with one exception, which we
-describe in the review doc.
-"""
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.log]]
-who = "Lukasz Anforowicz <lukasza@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "0.4.22 -> 0.4.25"
-notes = "No impact on `unsafe` usage in `lib.rs`."
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
-[[audits.google.audits.log]]
-who = "Daniel Cheng <dcheng@chromium.org>"
-criteria = "safe-to-deploy"
-delta = "0.4.25 -> 0.4.26"
-notes = "Only trivial code and documentation changes."
-aggregated-from = "https://chromium.googlesource.com/chromium/src/+/main/third_party/rust/chromium_crates_io/supply-chain/audits.toml?format=TEXT"
-
 [[audits.google.audits.nom]]
 who = "danakj@chromium.org"
 criteria = "safe-to-deploy"
@@ -1394,21 +1435,6 @@ delta = "0.4.0 -> 0.4.1"
 who = "David Cook <dcook@divviup.org>"
 criteria = "safe-to-deploy"
 version = "0.12.1"
-
-[[audits.isrg.audits.keccak]]
-who = "David Cook <dcook@divviup.org>"
-criteria = "safe-to-deploy"
-version = "0.1.2"
-
-[[audits.isrg.audits.keccak]]
-who = "Brandon Pitman <bran@bran.land>"
-criteria = "safe-to-deploy"
-delta = "0.1.2 -> 0.1.3"
-
-[[audits.isrg.audits.keccak]]
-who = "Brandon Pitman <bran@bran.land>"
-criteria = "safe-to-deploy"
-delta = "0.1.3 -> 0.1.4"
 
 [[audits.isrg.audits.rand]]
 who = "David Cook <dcook@divviup.org>"
@@ -1762,18 +1788,6 @@ delta = "2.11.4 -> 2.14.0"
 notes = "Mostly internal refactorings.  No new unsafe code."
 aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
 
-[[audits.mozilla.audits.keccak]]
-who = "Erich Gubler <erichdongubler@gmail.com>"
-criteria = "safe-to-deploy"
-delta = "0.1.4 -> 0.1.6"
-aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.log]]
-who = "Erich Gubler <erichdongubler@gmail.com>"
-criteria = "safe-to-deploy"
-delta = "0.4.26 -> 0.4.29"
-aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
-
 [[audits.mozilla.audits.rand]]
 who = "Alex Franchuk <afranchuk@mozilla.com>"
 criteria = "safe-to-deploy"
@@ -1884,16 +1898,6 @@ delta = "0.7.32 -> 0.8.27"
 notes = """
 There are a lot of changes here, however they look reasonable. Unsafe code is
 heavily documented, and there are extensive tests for the changes.
-"""
-aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
-
-[[audits.mozilla.audits.zeroize]]
-who = "Benjamin Beurdouche <beurdouche@mozilla.com>"
-criteria = "safe-to-deploy"
-version = "1.8.1"
-notes = """
-This code DOES contain unsafe code required to internally call volatiles
-for deleting data. This is expected and documented behavior.
 """
 aggregated-from = "https://raw.githubusercontent.com/mozilla-firefox/firefox/main/supply-chain/audits.toml"
 

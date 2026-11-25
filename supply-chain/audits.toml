@@ -622,6 +622,13 @@ user-id = 539 # Josh Stone (cuviper)
 start = "2019-05-22"
 end = "2027-10-14"
 
+[[trusted.block-buffer]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-02-24"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/utils."
+
 [[trusted.bstr]]
 criteria = "safe-to-run"
 user-id = 189 # Andrew Gallant (BurntSushi)
@@ -664,11 +671,39 @@ user-id = 6743 # Ed Page (epage)
 start = "2022-04-15"
 end = "2027-10-14"
 
+[[trusted.cmov]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-04-02"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/utils."
+
 [[trusted.colorchoice]]
 criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-04-13"
 end = "2027-10-14"
+
+[[trusted.const-oid]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/formats"
+start = "2026-11-10"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/formats."
+
+[[trusted.ctutils]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-04-02"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/utils."
+
+[[trusted.digest]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/traits"
+start = "2026-02-12"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/traits."
 
 [[trusted.errno]]
 criteria = "safe-to-deploy"
@@ -687,6 +722,13 @@ criteria = "safe-to-deploy"
 user-id = 2915 # Amanieu d'Antras (Amanieu)
 start = "2019-04-02"
 end = "2027-10-14"
+
+[[trusted.hmac]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/MACs"
+start = "2026-03-20"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/MACs."
 
 [[trusted.id-arena]]
 criteria = "safe-to-deploy"
@@ -712,11 +754,25 @@ user-id = 1 # Alex Crichton (alexcrichton)
 start = "2019-03-04"
 end = "2027-10-14"
 
+[[trusted.keccak]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/sponges"
+start = "2026-02-26"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/sponges."
+
 [[trusted.linux-raw-sys]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
 start = "2021-06-12"
 end = "2027-10-14"
+
+[[trusted.log]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:rust-lang/log"
+start = "2026-10-30"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:rust-lang/log."
 
 [[trusted.memchr]]
 criteria = "safe-to-deploy"
@@ -729,6 +785,13 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2025-05-22"
 end = "2027-10-14"
+
+[[trusted.pbkdf2]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/password-hashes"
+start = "2026-04-21"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/password-hashes."
 
 [[trusted.predicates]]
 criteria = "safe-to-run"
@@ -796,6 +859,13 @@ user-id = 189 # Andrew Gallant (BurntSushi)
 start = "2019-03-30"
 end = "2027-10-14"
 
+[[trusted.rpassword]]
+criteria = "safe-to-deploy"
+user-id = 53 # Conrad Kleinespel (conradkleinespel)
+start = "2019-03-20"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher conradkleinespel."
+
 [[trusted.rustix]]
 criteria = "safe-to-deploy"
 user-id = 6825 # Dan Gohman (sunfishcode)
@@ -832,11 +902,32 @@ user-id = 3618 # David Tolnay (dtolnay)
 start = "2019-02-28"
 end = "2027-10-14"
 
+[[trusted.sha2]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-03-25"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/hashes."
+
+[[trusted.sha3]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/hashes"
+start = "2026-02-26"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/hashes."
+
 [[trusted.slab]]
 criteria = "safe-to-run"
 user-id = 6741 # Alice Ryhl (Darksonn)
 start = "2021-10-13"
 end = "2027-10-14"
+
+[[trusted.sponge-cursor]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-05-08"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/utils."
 
 [[trusted.syn]]
 criteria = "safe-to-deploy"
@@ -1011,3 +1102,10 @@ criteria = "safe-to-deploy"
 user-id = 6743 # Ed Page (epage)
 start = "2023-02-22"
 end = "2027-11-04"
+
+[[trusted.zeroize]]
+criteria = "safe-to-deploy"
+trusted-publisher = "github:RustCrypto/utils"
+start = "2026-06-12"
+end = "2027-11-25"
+notes = "Maintainer's trust decision (2026-11-25): publisher github:RustCrypto/utils."

@@ -22,6 +22,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The fuzz-target type check in CI runs on nightly as intended;
   `rust-toolchain.toml` had been selecting stable for it.
 
+### Dependencies
+
+- The hash half of the RustCrypto wave planned in 0.0.11 (#252):
+  `sha2` 0.10 -> 0.11, `sha3` 0.10 -> 0.12, `digest` 0.10 -> 0.11,
+  `hmac` 0.12 -> 0.13 and `pbkdf2` 0.12 -> 0.13 (pure function API,
+  `hmac` feature only). `hsh-kms` builds its HMAC key through
+  `KeyInit`, where `new_from_slice` now lives. Digest, PBKDF2 and
+  pepper outputs are unchanged: new RFC 7914 (PBKDF2-HMAC-SHA256)
+  and RFC 4231 (HMAC-SHA256 pepper) known-answer tests pass on both
+  the old and the new stack, as do the digest KATs. The PHC half (`password-hash` 0.6, `argon2` 0.6, `scrypt`
+  0.12) is not part of this release: argon2 and scrypt still bring
+  their own `digest` 0.10 stack.
+- `log` 0.4.35 and `rpassword` 7.5.5 (#258); eight GitHub Actions
+  updates (#259).
+
 ## [0.0.12] - 2026-10-11
 
 ### Changed

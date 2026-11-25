@@ -170,3 +170,19 @@ fn policy_builder_requires_primary_when_blank() {
     let err = PolicyBuilder::new().build().unwrap_err();
     assert!(matches!(err, hsh::Error::InvalidPolicy(_)));
 }
+
+/// RFC 7914 section 11 PBKDF2-HMAC-SHA256 vector (P = "passwd",
+/// S = "salt", c = 1, dkLen = 64) as a PHC string: pins the derived
+/// key across sha2 / hmac / pbkdf2 upgrades. hsh feeds PBKDF2 the PHC
+/// salt field's characters, so the field is the literal `salt`.
+#[test]
+fn pbkdf2_sha256_matches_rfc7914_vector() {
+    let policy = fast_pbkdf2_policy();
+    let phc = "$pbkdf2-sha256$i=1,l=64$salt$VawEblbjCJ/sFpHCJUS2BflBhSFt3gRl5oudV8INrLxJypzM8Xm2RZkWZLOdd+8xfHG4RbHjC9UJESBB06GXgw";
+
+    let ok = api::verify_and_upgrade(&policy, "passwd", phc).unwrap();
+    assert!(matches!(ok, Outcome::Valid { .. }));
+
+    let bad = api::verify_and_upgrade(&policy, "passwe", phc).unwrap();
+    assert!(matches!(bad, Outcome::Invalid));
+}

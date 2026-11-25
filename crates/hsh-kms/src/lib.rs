@@ -83,7 +83,7 @@ pub mod vault;
 use std::collections::BTreeMap;
 use std::fmt;
 
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use sha2::Sha256;
 use zeroize::Zeroize;
 
@@ -179,7 +179,7 @@ impl Pepper for LocalPepper {
             .get(&version)
             .ok_or(PepperError::UnknownVersion(version))?;
 
-        let mut mac = <Hmac<Sha256> as Mac>::new_from_slice(key)
+        let mut mac = <Hmac<Sha256> as KeyInit>::new_from_slice(key)
             .map_err(|e| PepperError::Backend(e.to_string()))?;
         mac.update(password);
         let tag = mac.finalize().into_bytes();

@@ -186,3 +186,29 @@ fn pepper_unknown_version_errors() {
         .unwrap_err();
     assert!(matches!(err, PepperError::UnknownVersion(_)));
 }
+
+// ---------------------------------------------------------------- KAT
+/// RFC 4231 test case 6 (131-byte key): pins the HMAC-SHA256 pepper
+/// output across sha2 / hmac upgrades.
+#[test]
+fn local_pepper_matches_rfc4231_case_6() {
+    let pepper = LocalPepper::builder()
+        .add(KeyVersion::new(1), vec![0xaa; 131])
+        .build()
+        .unwrap();
+    let tag = pepper
+        .apply(
+            KeyVersion::new(1),
+            b"Test Using Larger Than Block-Size Key - Hash Key First",
+        )
+        .unwrap();
+    assert_eq!(
+        tag,
+        [
+            0x60, 0xe4, 0x31, 0x59, 0x1e, 0xe0, 0xb6, 0x7f, 0x0d, 0x8a,
+            0x26, 0xaa, 0xcb, 0xf5, 0xb7, 0x7f, 0x8e, 0x0b, 0xc6, 0x21,
+            0x37, 0x28, 0xc5, 0x14, 0x05, 0x46, 0x04, 0x0f, 0x0e, 0xe3,
+            0x7f, 0x54,
+        ]
+    );
+}
