@@ -65,12 +65,12 @@ jobs:
           DURATION: ${{ inputs.duration_seconds || '600' }}
         working-directory: fuzz
         run: |
-          mkdir -p corpus/${TARGET} artifacts/${TARGET}
+          mkdir -p "corpus/${TARGET}" "artifacts/${TARGET}"
           cargo +nightly fuzz run "${TARGET}" \
-            corpus/${TARGET} \
+            "corpus/${TARGET}" \
             -- \
             -max_total_time="${DURATION}" \
-            -artifact_prefix=artifacts/${TARGET}/
+            -artifact_prefix="artifacts/${TARGET}/"
 
       - name: Upload crash artefacts
         if: failure() || always()

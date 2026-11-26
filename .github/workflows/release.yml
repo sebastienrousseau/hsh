@@ -113,7 +113,7 @@ jobs:
         run: |
           mkdir -p artifacts
           cargo about generate --output-file artifacts/NOTICE.md doc/about.md.hbs \
-            || echo "no template yet — emitting `cargo about` raw output instead" \
+            || echo "no template yet; emitting cargo about raw output instead" \
             && cargo about generate --output-file artifacts/NOTICE.md \
                 <(echo '{{#each licenses}}- {{name}} ({{spdx_id}}){{/each}}') \
             || true
@@ -134,7 +134,9 @@ jobs:
   # ---------------------------------------------------------------------
   attest:
     runs-on: ubuntu-latest
-    needs: sbom
+    # verify-version too: the artefact name below reads its version
+    # output, which a job can only see from a job it lists in needs.
+    needs: [verify-version, sbom]
     permissions:
       contents: read
       id-token: write
@@ -226,22 +228,39 @@ jobs:
         # `cargo publish` for hsh / hsh-cli fails-fast if the transitive
         # crates haven't appeared on crates.io yet. The `sleep` between
         # publishes lets the registry index propagate before the next
-        # dependent crate tries to resolve. hsh-backend-awslc is a
-        # non-workspace member, so it's published via --manifest-path
-        # rather than -p.
+        # dependent crate tries to resolve. Every crate is published via
+        # --manifest-path because hsh-backend-awslc is a non-workspace
+        # member, which -p cannot reach.
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        #
+        # Re-runnable: a crate whose version is already on crates.io is
+        # skipped. v0.0.13 stopped half-way (hsh-backend-awslc had no
+        # trusted publisher), and a re-run then failed on the first crate
+        # with "already exists", so nothing after it could ever publish.
         run: |
-          cargo publish -p hsh-kms     --token "$CARGO_REGISTRY_TOKEN"
-          sleep 30
-          cargo publish -p hsh-digest  --token "$CARGO_REGISTRY_TOKEN"
-          sleep 30
-          cargo publish --manifest-path crates/hsh-backend-awslc/Cargo.toml \
-                        --token "$CARGO_REGISTRY_TOKEN"
-          sleep 30
-          cargo publish -p hsh         --token "$CARGO_REGISTRY_TOKEN"
-          sleep 30
-          cargo publish -p hsh-cli     --token "$CARGO_REGISTRY_TOKEN"
+          set -euo pipefail
+          publish() {
+            local name="$1" manifest="$2" version code
+            version=$(cargo metadata --manifest-path "$manifest" --no-deps --format-version 1 |
+              jq -r --arg n "$name" '.packages[] | select(.name == $n) | .version')
+            code=$(curl -sS -o /dev/null -w '%{http_code}' \
+              -A 'hsh-release (https://github.com/sebastienrousseau/hsh)' \
+              "https://crates.io/api/v1/crates/${name}/${version}")
+            case "$code" in
+              200) echo "skip    ${name} ${version}: already on crates.io"; return 0 ;;
+              404) ;;
+              *) echo "::error::crates.io answered ${code} for ${name} ${version}"; return 1 ;;
+            esac
+            cargo publish --manifest-path "$manifest" --token "$CARGO_REGISTRY_TOKEN"
+            echo "publish ${name} ${version}"
+            sleep 30
+          }
+          publish hsh-kms           crates/hsh-kms/Cargo.toml
+          publish hsh-digest        crates/hsh-digest/Cargo.toml
+          publish hsh-backend-awslc crates/hsh-backend-awslc/Cargo.toml
+          publish hsh               crates/hsh/Cargo.toml
+          publish hsh-cli           crates/hsh-cli/Cargo.toml
 
   # ---------------------------------------------------------------------
   # Create the GitHub Release page and attach the signed artefacts +
