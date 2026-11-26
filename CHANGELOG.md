@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.14] - 2026-11-26
+
+0.0.14 is the first release since 0.0.10 to publish all five crates to
+crates.io. 0.0.13 reached crates.io only as hsh-kms and hsh-digest:
+publishing stopped at hsh-backend-awslc, which had no trusted publisher,
+so hsh, hsh-cli and hsh-backend-awslc 0.0.13 do not exist there. 0.0.11
+and 0.0.12 stopped at the same crate. The code of 0.0.13 is unchanged in
+0.0.14 apart from the fixes below.
+
+### Fixed
+
+- The release workflow's crates.io step can be re-run after a partial
+  publish: each crate whose version is already on crates.io is skipped,
+  where a re-run used to fail on the first one with "already exists".
+  hsh-backend-awslc now has its crates.io trusted publisher
+  (sebastienrousseau/hsh, release.yml, environment crates-io), as the
+  other four crates already did.
+- The attest job's release artefact was named without its version: it
+  read `needs.verify-version.outputs.version` without listing
+  verify-version in `needs`, so the expression was empty.
+- The NOTICE step's fallback message ran `cargo about` through
+  backticks inside an echo instead of printing the words.
+- fuzz.yml quotes its corpus and artefact paths (actionlint, SC2086).
+
+### Dependencies
+
+- Five GitHub Actions updates, including taiki-e/install-action 2.90.8
+  and github/codeql-action 4.39.4, from Dependabot (#263).
+
 ## [0.0.13] - 2026-11-26
 
 ### Changed
